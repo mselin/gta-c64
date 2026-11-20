@@ -33,24 +33,49 @@ without in-between shades.
 
 ## People on foot
 
-`js/figures.js` holds the pixel art, and `js/sprites.js` turns it.
+`js/figures.js` draws people, and `js/sprites.js` only paints the frames it makes.
 
 People are seen from above, about the size of a swimmer's splash, so that they read at a glance.
 
+- **Pixels:**
+  - Hard pixels, each one of the 16 colours, with no smoothing at any angle.
+  - People are drawn in chunky 2 × 2 blocks (`CELL`). They read as pixel art next to the cars, which use
+    single pixels.
 - **Size:**
-  - 10 pixels across the shoulders and 12 with the outline.
-  - Each person is drawn on a 14 × 14 grid, facing right.
-  - Turned into 16 directions, each frame 18 × 18.
-- **Shape:**
-  - Shoulders across the body, with the head over them and poking out in front, so the outline shows which way
-    someone faces.
-  - Walking takes two frames: one with the left hand swinging forward and the left foot trailing, the other its
-    mirror image.
+  - 12 pixels across, hands included: 8 of shoulders and a hand each side. Add the outline to that.
+  - Each frame is 24 × 24, with room for an arm held out and two outlines at any angle.
+  - 16 directions.
+- **How a figure is made:**
+  - A few plain shapes, facing right: square shoulders with the corners cut, a round head over them that pokes
+    out in front, two hands at the sides, and two feet in the trousers' colour.
+  - For each frame, the shapes are turned and sampled once in the middle of each 2 × 2 block, so every block
+    is one colour.
+  - The head shows which way someone faces: hair at the back, the face (skin) in front, or a police cap with
+    its black peak in front.
+- **Walking: five poses** (`STRIDES`), from a full stride one way to a full stride the other:
+  - Hands and feet swing opposite ways. When the left foot is out in front, the right hand is forward and the
+    left hand and the right foot are back.
+  - At a full stride a foot shows about 3.4 pixels in front of or behind the middle, and a hand swings about
+    2.2 pixels forward or back.
+  - The walk cycles 3, 4, 5, 4, 3, 2, 1, 2 (pose 3 is standing), four frames to a step, so one cycle is two
+    steps.
+  - Steps go with the speed: a passer-by takes 0.15 steps for each pixel walked; the player takes 9 steps a
+    second at a walking speed of 58.
+  - Standing still is pose 3: hands at the sides and both feet under the body.
+- **Arm out:**
+  - When the player fires, the right arm goes straight out in front, the hand about 7 pixels ahead of the
+    middle, with a short dark grey (11) gun beyond it. The other hand stays at the side.
+  - When the player punches (fire with no ammo), the same arm goes out with a bigger fist and no gun.
+  - A police officer firing does the same as the player firing.
+  - The arm stays out for 0.2 seconds (`ARM_OUT_T`), then the walk carries on.
+- **Not walking:**
+  - A scooter rider stands on the deck, hands on the handlebar.
+  - A cultist stands in a wide robe, hands held together in front, the hood hanging down the back.
+  - Neither swings arms or feet.
 - **Outline:**
   - Everyone has a one-pixel black outline, drawn after turning, so it is unbroken at every angle.
   - The player alone has a second, white outline outside the black one.
-  - The grid is smoothed with Scale2x before it is turned, so diagonal frames do not break up.
-- **Shading:** the back of the shoulders and the sleeves use a darker colour of the shirt (`SHADE`).
+- **Shading:** the back of the shoulders is a darker colour of the shirt (`SHADE`).
 
 | Who | Shirt | Trousers | Head | Extra |
 |---|---|---|---|---|
@@ -83,9 +108,12 @@ distance is measured from the person's middle.
 pixel or two. The arrest distance stays at 7.
 
 > **C64 note.** A figure at this size is larger than a character cell: 2 × 2 characters at least, or a
-> sprite. A hi-res sprite (24 × 21) holds one easily, outline included. A multicolour sprite halves the
-> horizontal detail and allows three colours plus transparent, so the player's yellow, black and white, or a
-> police officer's light blue, blue and white cap, are what to keep.
+> sprite. In 2 × 2 blocks a standing figure is 6 blocks across, and with the arm out it reaches 5 blocks
+> ahead of its middle. A multicolour sprite (12 double-wide pixels by 21 lines) is about 12 × 10 such blocks,
+> each block one double-wide pixel two lines tall, which holds a figure at most angles. It has three colours
+> plus transparent, so the player's yellow, black and white, or a police officer's light blue, blue and white
+> cap, are what to keep. The five walking poses and the arm out are seven frames for each of the directions
+> the C64 version keeps.
 
 ## Cars
 

@@ -35,7 +35,9 @@ const freshPlayer = () => ({
   ammo: 12,
   car: null,
   cd: 0,
-  anim: 0,
+  anim: 0, // steps walked: the walking pose (figures.js)
+  arm: 0, // the pose with the arm out, and how long it is held
+  armT: 0,
   hitT: 0,
   // A yellow jacket that nobody else wears, black jeans and, for the player alone, a white outline (figures.js).
   shirt: 7,

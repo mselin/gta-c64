@@ -5,7 +5,7 @@ import { R, clamp, hyp, mod } from './util.js';
 import { cx, g, scr } from './screen.js';
 import { ctext, text } from './font.js';
 import { ARW, carSpr, pedSpr } from './sprites.js';
-import { PLAYER_OUTLINE } from './figures.js';
+import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
 import { G, P, onScreen, ppos, touch } from './state.js';
@@ -78,13 +78,13 @@ function drawWorld() {
     text(d[0], sx, sy, d[2]);
   }
   for (const p of G.peds) {
-    if (!onScreen(p.x, p.y, 10)) continue;
+    if (!onScreen(p.x, p.y, FRAME / 2)) continue;
     if (waterAt(p.x, p.y)) drawSwimmer(p);
-    else drawSpr(pedSpr(p, Math.floor(p.anim) & 1), Math.atan2(p.dy, p.dx), p.x, p.y);
+    else drawSpr(pedSpr(p, poseOf(p)), Math.atan2(p.dy, p.dx), p.x, p.y);
   }
   if (!P.car && G.screen !== 'down' && !(P.hitT > 0 && Math.floor(G.clock * 20) & 1)) {
     if (waterAt(P.x, P.y)) drawSwimmer(P);
-    else drawSpr(pedSpr(P, Math.floor(P.anim) & 1), P.a, P.x, P.y);
+    else drawSpr(pedSpr(P, poseOf(P)), P.a, P.x, P.y);
   }
   for (const c of G.cars) {
     if (!onScreen(c.x, c.y, 20)) continue;

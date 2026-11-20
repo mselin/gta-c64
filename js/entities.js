@@ -73,6 +73,8 @@ export function mkPed(x, y, type) {
     fy: 0,
     jay: false,
     anim: R() * 9,
+    arm: 0,
+    armT: 0,
     cd: 1,
   };
 }

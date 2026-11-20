@@ -7,6 +7,7 @@ import { sfx } from './audio.js';
 import { G, P, msg, onScreen, pop, ppos } from './state.js';
 import { crime } from './heat.js';
 import { down } from './player.js';
+import { ARM_OUT_T, SHOOT } from './figures.js';
 
 let immunity = false;
 export function resetPeds() {
@@ -105,6 +106,7 @@ export function updPeds(dt) {
   const pl = ppos();
   for (const p of G.peds.slice()) {
     p.anim += dt * p.spd * 0.15;
+    p.armT -= dt;
     if (p.type === 'cult') continue; // deep in ceremony: nothing moves them
     if (p.type === 'cop' && G.heat > 0 && G.screen === 'play') {
       const dx = pl.x - p.x,
@@ -116,6 +118,8 @@ export function updPeds(dt) {
       p.cd -= dt;
       if (G.heat >= 3 && d < 95 && p.cd <= 0) {
         p.cd = 1.1 + R() * 0.6;
+        p.arm = SHOOT;
+        p.armT = ARM_OUT_T;
         G.bullets.push({
           x: p.x,
           y: p.y,
