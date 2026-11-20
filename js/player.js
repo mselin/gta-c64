@@ -11,6 +11,7 @@ import { carPhys, sidePos } from './cars.js';
 import { killPed, scare } from './peds.js';
 import { failJob } from './missions.js';
 import { radio } from './radio.js';
+import { ARM_OUT_T, PUNCH, SHOOT } from './figures.js';
 
 let downKind = '';
 let skidT = 0;
@@ -160,6 +161,7 @@ export function driveToward(c, tx, ty) {
 export function updPlayer(dt) {
   if (G.screen !== 'play') return;
   P.hitT -= dt;
+  P.armT -= dt;
   const c = P.car;
   if (c) {
     const aim = touchTarget(),
@@ -210,7 +212,7 @@ export function updPlayer(dt) {
       if (stuck || !footHits(P.x + dx * s, P.y)) P.x += dx * s;
       if (stuck || !footHits(P.x, P.y + dy * s)) P.y += dy * s;
       P.anim += dt * 9;
-    }
+    } else P.anim = 0; // standing still: the middle pose
     P.cd -= dt;
     if (K.fire && P.cd <= 0 && !swim) {
       const fx = Math.cos(P.a),
@@ -218,12 +220,16 @@ export function updPlayer(dt) {
       if (P.ammo > 0) {
         P.ammo--;
         P.cd = 0.22;
+        P.arm = SHOOT;
+        P.armT = ARM_OUT_T;
         G.bullets.push({ x: P.x + fx * 5, y: P.y + fy * 5, vx: fx * 240, vy: fy * 240, l: 0.55, own: 0 });
         sfx.shot();
         crime(1.5);
         scare(P.x, P.y, 110, 4);
       } else {
         P.cd = 0.35;
+        P.arm = PUNCH;
+        P.armT = ARM_OUT_T;
         sfx.punch();
         const hx = P.x + fx * 7,
           hy = P.y + fy * 7;

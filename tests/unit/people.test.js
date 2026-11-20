@@ -1,12 +1,32 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// People on foot: how big they are drawn, who looks like whom, and hits that match what is on screen.
+// People on foot: how big they are drawn, hard pixels, the walk and the arm out, who looks like whom, and
+// hits that match what is on screen.
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { HIT, KIND } from '../../js/config.js';
 import { genMap } from '../../js/world.js';
 import { G, K, P, resetState } from '../../js/state.js';
 import { CIV_HAIR, CIV_LEGS, CIV_SHIRTS, mkCar, mkPed } from '../../js/entities.js';
-import { COP, FIG, FRAME, OUTLINE, PLAYER_OUTLINE, figure, lookOf, outlineOf } from '../../js/figures.js';
+import {
+  ARM_OUT_T,
+  CELL,
+  COP,
+  FRAME,
+  OUTLINE,
+  PLAYER_OUTLINE,
+  POSES,
+  PUNCH,
+  SHOOT,
+  STAND,
+  WALK_CYCLE,
+  colourAt,
+  frame,
+  lookOf,
+  outlineOf,
+  pixels,
+  poseOf,
+  walkPose,
+} from '../../js/figures.js';
 import { updBullets } from '../../js/items.js';
 import { updPeds } from '../../js/peds.js';
 import { updPlayer } from '../../js/player.js';
@@ -14,8 +34,11 @@ import { updCars } from '../../js/cars.js';
 
 const DT = 1 / 60;
 const TYPES = ['civ', 'scoot', 'cop', 'cult'];
-/** The filled cells of a figure, as [x, y] pairs. */
-const cells = (grid) => [...grid].flatMap((c, i) => (c >= 0 ? [[i % FIG, Math.floor(i / FIG)]] : []));
+const ANGLES = Array.from({ length: 16 }, (_, a) => (a / 16) * Math.PI * 2);
+/** The filled pixels of a frame, as [x, y] pairs. */
+const cells = (px) => [...px].flatMap((c, i) => (c >= 0 ? [[i % FRAME, Math.floor(i / FRAME)]] : []));
+const same = (a, b) => a.every((c, i) => c === b[i]);
+const everyone = () => [P, ...TYPES.map((t) => mkPed(0, 0, t))];
 
 before(() => genMap());
 beforeEach(() => {
@@ -25,37 +48,144 @@ beforeEach(() => {
 });
 
 test('people are drawn about as big as a swimmer: 10 to 12 px across, and fit their frames', () => {
-  for (const p of [P, ...TYPES.map((t) => mkPed(0, 0, t))])
-    for (const f of [0, 1]) {
-      const c = cells(figure(p, f)),
-        ys = c.map(([, y]) => y),
-        across = Math.max(...ys) - Math.min(...ys) + 1;
-      assert.ok(across >= 10 && across <= 12, `${p.type} is ${across} px across`);
-      // The farthest corner of any cell from the middle, plus the outlines, must fit inside the frame
-      // whichever way the figure is turned.
-      const reach = Math.max(
-        ...c.map(([x, y]) =>
-          Math.hypot(
-            Math.max(Math.abs(x - FIG / 2), Math.abs(x + 1 - FIG / 2)),
-            Math.max(Math.abs(y - FIG / 2), Math.abs(y + 1 - FIG / 2)),
-          ),
-        ),
-      );
-      assert.ok(reach + outlineOf(p).length < FRAME / 2, `${p.type} fits its frame`);
-      for (const [x, y] of c) {
-        const col = figure(p, f)[y * FIG + x];
-        assert.ok(Number.isInteger(col) && col >= 0 && col < 16, `${p.type} uses only the 16 colours`);
-      }
-    }
+  for (const p of everyone()) {
+    const ys = cells(pixels(p, STAND, 0)).map(([, y]) => y),
+      across = Math.max(...ys) - Math.min(...ys) + 1;
+    assert.ok(across >= 10 && across <= 12, `${p.type} is ${across} px across`);
+    // Whatever the pose and whichever way they face, there is room in the frame for every outline round it.
+    const n = outlineOf(p).length;
+    for (let pose = 0; pose < POSES; pose++)
+      for (const an of ANGLES)
+        for (const [x, y] of cells(pixels(p, pose, an)))
+          assert.ok(
+            Math.min(x, y, FRAME - 1 - x, FRAME - 1 - y) >= n,
+            `${p.type} pose ${pose} fits its frame`,
+          );
+  }
 });
 
-test('walkers have two strides; scooter riders and cultists hold still', () => {
-  const same = (p) => figure(p, 0).every((c, i) => c === figure(p, 1)[i]);
-  assert.equal(same(P), false);
-  assert.equal(same(mkPed(0, 0, 'civ')), false);
-  assert.equal(same(mkPed(0, 0, 'cop')), false);
-  assert.equal(same(mkPed(0, 0, 'scoot')), true);
-  assert.equal(same(mkPed(0, 0, 'cult')), true);
+test('hard pixels: one of the 16 colours each, in whole CELL x CELL blocks at every angle', () => {
+  assert.ok(CELL === 1 || CELL === 2);
+  for (const p of everyone())
+    for (let pose = 0; pose < POSES; pose++)
+      for (const an of ANGLES) {
+        for (const c of frame(p, pose, an)) assert.ok(c === -1 || (Number.isInteger(c) && c >= 0 && c < 16));
+        // Before the outlines go round it, the figure is made of whole blocks, each one colour.
+        const px = pixels(p, pose, an);
+        for (let y = 0; y < FRAME; y += CELL)
+          for (let x = 0; x < FRAME; x += CELL)
+            for (let j = 0; j < CELL; j++)
+              for (let i = 0; i < CELL; i++)
+                assert.equal(
+                  px[(y + j) * FRAME + x + i],
+                  px[y * FRAME + x],
+                  `${p.type} pose ${pose}: a whole block`,
+                );
+      }
+});
+
+test('outlines: one unbroken black ring round everyone, and a white one round the player alone', () => {
+  for (const p of everyone()) {
+    const rings = outlineOf(p),
+      px = frame(p, STAND, ANGLES[3]),
+      inner = pixels(p, STAND, ANGLES[3]),
+      on = (a, x, y) => x >= 0 && y >= 0 && x < FRAME && y < FRAME && a[y * FRAME + x] >= 0;
+    // Every pixel beside the figure is the first ring's colour.
+    for (const [x, y] of cells(px))
+      if (
+        !on(inner, x, y) &&
+        [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ].some(([i, j]) => on(inner, x + i, y + j))
+      )
+        assert.equal(px[y * FRAME + x], rings[0], `${p.type}: black right round`);
+    if (lookOf(p) === 'player') assert.ok(px.includes(PLAYER_OUTLINE[1]), 'white round the black');
+  }
+});
+
+test('the walk: five poses, arms and feet swinging opposite ways, in a cycle of steps', () => {
+  const civ = Object.assign(mkPed(0, 0, 'civ'), { legs: 12, skin: 10 });
+  const walk = [0, 1, 2, 3, 4].map((pose) => pixels(civ, pose, 0));
+  for (let i = 0; i < 5; i++)
+    for (let j = i + 1; j < 5; j++) assert.equal(same(walk[i], walk[j]), false, `poses ${i} and ${j} differ`);
+  // Full stride: the left foot is out in front with the right hand, the right foot and the left hand behind.
+  const shoe = civ.legs;
+  assert.equal(colourAt(civ, 4, 3.6, -1.9), shoe, 'left foot forward');
+  assert.equal(colourAt(civ, 4, -3.6, 1.9), shoe, 'right foot back');
+  assert.equal(colourAt(civ, 4, 2.2, 5), civ.skin, 'right hand forward');
+  assert.equal(colourAt(civ, 4, -2.2, -5), civ.skin, 'left hand back');
+  // And the other way round at the other end of the stride.
+  assert.equal(colourAt(civ, 0, -3.6, -1.9), shoe);
+  assert.equal(colourAt(civ, 0, 3.6, 1.9), shoe);
+  assert.equal(colourAt(civ, 0, -2.2, 5), civ.skin);
+  assert.equal(colourAt(civ, 0, 2.2, -5), civ.skin);
+  // Standing, both feet are under the body and both hands at the sides.
+  assert.equal(colourAt(civ, STAND, 3.6, -1.9), -1);
+  assert.equal(colourAt(civ, STAND, 0, 5), civ.skin);
+  // The cycle goes through every pose, a step at a time, and starts and stops standing.
+  assert.deepEqual([...new Set(WALK_CYCLE)].sort(), [0, 1, 2, 3, 4]);
+  for (let i = 0; i < WALK_CYCLE.length; i++)
+    assert.equal(Math.abs(WALK_CYCLE[i] - WALK_CYCLE[(i + 1) % WALK_CYCLE.length]), 1);
+  assert.equal(walkPose(0), STAND);
+  // Scooter riders and cultists hold still whatever the walk is doing.
+  for (const type of ['scoot', 'cult']) {
+    const p = mkPed(0, 0, type);
+    for (let pose = 1; pose < 5; pose++)
+      assert.ok(same(pixels(p, 0, 0), pixels(p, pose, 0)), `${type} holds still`);
+  }
+});
+
+test('the player walks, and stands in the middle pose once they stop', () => {
+  Object.assign(P, { x: 226, y: 304, a: 0 });
+  G.peds = [];
+  G.cars = [];
+  K.right = true;
+  const seen = new Set();
+  for (let i = 0; i < 60; i++) {
+    updPlayer(DT);
+    seen.add(poseOf(P));
+  }
+  assert.deepEqual([...seen].sort(), [0, 1, 2, 3, 4], 'a second of walking shows all five poses');
+  K.right = false;
+  updPlayer(DT);
+  assert.equal(poseOf(P), STAND);
+});
+
+test('the arm goes out in front, with a gun or a fist, when the player fires or punches', () => {
+  const p = P;
+  for (const pose of [SHOOT, PUNCH]) {
+    const hand = cells(pixels(p, pose, 0)).filter(([x, y]) => pixels(p, pose, 0)[y * FRAME + x] === p.skin);
+    assert.ok(Math.max(...hand.map(([x]) => x)) - FRAME / 2 >= 7, 'the hand is at least 7 px out in front');
+  }
+  assert.ok(pixels(p, SHOOT, 0).includes(11), 'a dark grey gun in it');
+  assert.ok(!pixels(p, PUNCH, 0).includes(11), 'and none in a fist');
+  // Firing with ammo, then punching with none: each holds the arm out for ARM_OUT_T, then the walk comes back.
+  Object.assign(P, { x: 226, y: 304, a: 0, ammo: 1, cd: 0 });
+  G.peds = [];
+  G.cars = [];
+  K.fire = true;
+  updPlayer(DT);
+  assert.equal(poseOf(P), SHOOT);
+  assert.equal(P.ammo, 0);
+  K.fire = false;
+  for (let t = 0; t < ARM_OUT_T + 0.4; t += DT) updPlayer(DT);
+  assert.equal(poseOf(P), STAND);
+  K.fire = true;
+  updPlayer(DT);
+  assert.equal(poseOf(P), PUNCH);
+});
+
+test('a police officer puts an arm out when they fire', () => {
+  G.heat = 3;
+  const cop = Object.assign(mkPed(P.x + 40, P.y, 'cop'), { cd: 0 });
+  G.peds = [cop];
+  G.cars = [];
+  updPeds(DT);
+  assert.equal(G.bullets.length, 1);
+  assert.equal(poseOf(cop), SHOOT);
 });
 
 test("no pedestrian can get the player's look or a police officer's", () => {
@@ -89,7 +219,7 @@ test("no pedestrian can get the player's look or a police officer's", () => {
 });
 
 test("a police officer's white cap and gold badge are drawn, and no passer-by wears the uniform", () => {
-  const has = (p, col) => [0, 1].some((f) => figure(p, f).includes(col));
+  const has = (p, col) => ANGLES.some((an) => pixels(p, STAND, an).includes(col));
   const cop = mkPed(0, 0, 'cop');
   assert.ok(has(cop, COP.cap) && has(cop, 7), 'white cap, gold badge');
   for (let i = 0; i < 200; i++) assert.equal(has(mkPed(0, 0, 'civ'), COP.shirt), false);

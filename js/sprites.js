@@ -3,14 +3,10 @@
 import { PI, RGB } from './config.js';
 import { hash } from './util.js';
 import { sinkStage } from './entities.js';
-import { FIG, FRAME, figure, lookOf, outlineOf } from './figures.js';
+import { FRAME, frame, lookOf } from './figures.js';
 
-/**
- * Turn a w x h grid of palette indexes (-1 for empty) into NA frames, S pixels square, each turned a step
- * further round. `k` is how many grid cells make one screen pixel. Each colour in `rings` draws an outline
- * round the turned figure, innermost first, so outlines stay unbroken whichever way the figure faces.
- */
-function mkSprite(src, w, h, NA, S, rings = [], k = 1) {
+/** Turn a w x h grid of palette indexes (-1 for empty) into NA frames, S pixels square, each turned a step further round. */
+function mkSprite(src, w, h, NA, S) {
   const fr = [];
   for (let a = 0; a < NA; a++) {
     const c = document.createElement('canvas');
@@ -22,8 +18,8 @@ function mkSprite(src, w, h, NA, S, rings = [], k = 1) {
       sn = Math.sin(an);
     for (let y = 0; y < S; y++)
       for (let x = 0; x < S; x++) {
-        const dx = (x + 0.5 - S / 2) * k,
-          dy = (y + 0.5 - S / 2) * k,
+        const dx = x + 0.5 - S / 2,
+          dy = y + 0.5 - S / 2,
           sx = Math.floor(cs * dx + sn * dy + w / 2),
           sy = Math.floor(-sn * dx + cs * dy + h / 2);
         if (sx >= 0 && sy >= 0 && sx < w && sy < h) {
@@ -38,44 +34,10 @@ function mkSprite(src, w, h, NA, S, rings = [], k = 1) {
           }
         }
       }
-    for (const col of rings) outline(id.data, S, RGB[col]);
     q.putImageData(id, 0, 0);
     fr.push(c);
   }
   return fr;
-}
-/** Colour every empty pixel that has a filled one beside it, above it or below it. */
-function outline(d, S, c3) {
-  const on = (x, y) => x >= 0 && y >= 0 && x < S && y < S && d[(y * S + x) * 4 + 3] === 255,
-    ring = [];
-  for (let y = 0; y < S; y++)
-    for (let x = 0; x < S; x++)
-      if (!on(x, y) && (on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1)))
-        ring.push((y * S + x) * 4);
-  for (const o of ring) d.set([c3[0], c3[1], c3[2], 255], o);
-}
-/**
- * Double an n x n grid with Scale2x, which rounds off its stair-steps. Turning a smoothed grid gives rounder,
- * steadier shapes than turning the blocky original, while every pixel drawn is still one palette colour.
- */
-function scale2x(src, n) {
-  const at = (x, y) => (x < 0 || y < 0 || x >= n || y >= n ? -1 : src[y * n + x]),
-    m = n * 2,
-    out = new Int8Array(m * m);
-  for (let y = 0; y < n; y++)
-    for (let x = 0; x < n; x++) {
-      const p = at(x, y),
-        a = at(x, y - 1),
-        b = at(x + 1, y),
-        c = at(x - 1, y),
-        d = at(x, y + 1),
-        o = y * 2 * m + x * 2;
-      out[o] = c === a && c !== d && a !== b ? a : p;
-      out[o + 1] = a === b && a !== c && b !== d ? b : p;
-      out[o + m] = d === c && d !== b && c !== a ? c : p;
-      out[o + m + 1] = b === d && b !== a && d !== c ? d : p;
-    }
-  return out;
 }
 function carSrc(k, col) {
   const L = k.L,
@@ -185,14 +147,24 @@ export function carSpr(c) {
   return (sprC[key] = mkSprite(src, c.kind.L, c.kind.W, 32, 34));
 }
 const pedC = {};
-/** Someone on foot facing 16 ways round, in walking frame `f` (0 or 1). See figures.js for the pixel art. */
-export function pedSpr(p, f) {
-  const key = [lookOf(p), p.shirt, p.hair, p.skin, p.legs, f].join('_');
+/** Someone on foot facing 16 ways round, in pose `pose` (see figures.js, which draws them). */
+export function pedSpr(p, pose) {
+  const key = [lookOf(p), p.shirt, p.hair, p.skin, p.legs, pose].join('_');
   if (pedC[key]) return pedC[key];
-  // Smoothed three times over: eight grid cells to a screen pixel.
-  let src = figure(p, f);
-  for (let n = FIG; n < FIG * 8; n *= 2) src = scale2x(src, n);
-  return (pedC[key] = mkSprite(src, FIG * 8, FIG * 8, 16, FRAME, outlineOf(p), 8));
+  const fr = [];
+  for (let a = 0; a < 16; a++) {
+    const px = frame(p, pose, (a / 16) * PI * 2),
+      c = document.createElement('canvas');
+    c.width = c.height = FRAME;
+    const q = c.getContext('2d'),
+      id = q.createImageData(FRAME, FRAME);
+    px.forEach((col, i) => {
+      if (col >= 0) id.data.set([...RGB[col], 255], i * 4);
+    });
+    q.putImageData(id, 0, 0);
+    fr.push(c);
+  }
+  return (pedC[key] = fr);
 }
 export const ARW = (() => {
   const rows = ['...#...', '...##..', '######.', '#######', '######.', '...##..', '...#...'];
