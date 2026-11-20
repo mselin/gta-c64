@@ -1,0 +1,29 @@
+name: Feature
+description: Something new or different in the game, the presence bridge or the desktop app.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: What should be new or different, as a player would see it.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What it is for, or what is wrong now.
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: How to tell it works, for example as a checklist. These become the tests.
+      placeholder: |
+        - [ ] ...
+  - type: checkboxes
+    id: design
+    attributes:
+      label: Design
+      options:
+        - label: It changes the game's rules or look, so specs/design.md changes too (the Commodore 64 version follows that document).

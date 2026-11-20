@@ -1,0 +1,17 @@
+name: Implementation
+description: Work to build, release, set up or test something, rather than a change to the game itself.
+labels: [implementation]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What and why
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: A checklist; tick the steps off as they are done.
+      placeholder: |
+        - [ ] ...
