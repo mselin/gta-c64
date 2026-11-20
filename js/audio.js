@@ -98,6 +98,11 @@ export const sfx = {
     tone(660, 1320, 0.09, 'square', 0.25);
     tone(990, 1980, 0.09, 'square', 0.2, 0.08);
   },
+  honk() {
+    // Two nasal blasts, the second lower and longer: a goose.
+    tone(370, 330, 0.12, 'sawtooth', 0.3);
+    tone(340, 280, 0.16, 'sawtooth', 0.3, 0.17);
+  },
   horn() {
     tone(310, 310, 0.22, 'square', 0.25);
     tone(390, 390, 0.22, 'square', 0.2);

@@ -424,7 +424,7 @@ function explode(c) {
       decals.ctx.fillRect(Math.floor(c.x + Math.cos(a) * r), Math.floor(c.y + Math.sin(a) * r), 1, 1);
     }
   }
-  for (const p of G.peds.slice()) if (hyp(p.x - c.x, p.y - c.y) < 30) killPed(p, false);
+  for (const p of G.peds.slice()) if (hyp(p.x - c.x, p.y - c.y) < 30) killPed(p, false, c);
   for (const o of G.cars) if (o !== c && !o.dead && hyp(o.x - c.x, o.y - c.y) < 32) o.hp -= 55;
   if (P.car === c) {
     P.car = null;

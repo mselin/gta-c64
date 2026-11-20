@@ -5,7 +5,7 @@ import { R, clamp, hyp } from './util.js';
 import { HOSP, parkSpots } from './world.js';
 import { engineSound } from './audio.js';
 import { G, P, edge, msg, ppos, resetState } from './state.js';
-import { mkCar } from './entities.js';
+import { mkCar, mkHonk } from './entities.js';
 import { resetHeat, updHeat } from './heat.js';
 import { updCars } from './cars.js';
 import { resetPeds, updPeds } from './peds.js';
@@ -135,6 +135,7 @@ export function initWorld() {
   c.parked = true;
   G.cars.push(c);
   for (let i = 0; i < 34; i++) G.pickups.push(placePickup({}));
+  G.peds.push(mkHonk());
   G.camX = clamp(P.x - SW / 2, 0, WPX - SW);
   G.camY = clamp(P.y - VH / 2, 0, WPX - VH);
 }

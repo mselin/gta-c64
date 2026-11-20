@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// People on foot, seen from above: passers-by, police, scooter riders, cultists and the player.
+// People on foot, seen from above: passers-by, police, scooter riders, cultists and the player; and Big Honk.
 // Each is a few plain shapes (shoulders, head, arms, legs) facing right. Every frame is the figure turned and
 // sampled straight onto hard pixels: no smoothing, and every pixel one of the 16 colours. No drawing here, so
 // the tests can check the frames themselves; sprites.js only paints them.
@@ -29,6 +29,15 @@ export const STRIDES = [-1, -0.5, 0, 0.5, 1],
   SHOOT = 5,
   PUNCH = 6,
   POSES = 7;
+/**
+ * Big Honk's own poses, after everyone's: wings out to the sides and wings swept back, which he flaps between
+ * when something would have hurt anyone else (FLAP_T seconds, FLAP_RATE beats a second), and afloat.
+ */
+export const FLAP_OUT = 7,
+  FLAP_BACK = 8,
+  FLOAT = 9,
+  HONK_POSES = 10,
+  FLAP_RATE = 12;
 /** One step after another: a walking cycle of eight frames, each pose in turn, that swings back and forth. */
 export const WALK_CYCLE = [2, 3, 4, 3, 2, 1, 0, 1];
 /** Frames of the walking cycle per step taken, so a cycle is two steps: left foot, then right. */
@@ -36,14 +45,24 @@ export const FRAMES_PER_STEP = 4;
 /** How long the arm stays out after a shot or a punch, in seconds. */
 export const ARM_OUT_T = 0.2;
 
-/** How someone is drawn: 'player', 'cop', 'scoot', 'cult', or 'civ' for everyone else. */
-export const lookOf = (p) => (['player', 'cop', 'scoot', 'cult'].includes(p.type) ? p.type : 'civ');
+/** How someone is drawn: 'player', 'cop', 'scoot', 'cult', 'honk', or 'civ' for everyone else. */
+export const lookOf = (p) => (['player', 'cop', 'scoot', 'cult', 'honk'].includes(p.type) ? p.type : 'civ');
 /** The outlines for a person, innermost first. */
 export const outlineOf = (p) => (lookOf(p) === 'player' ? PLAYER_OUTLINE : OUTLINE);
 /** The walking pose `anim` steps into a walk. Standing still is anim 0: the middle pose. */
 export const walkPose = (anim) => WALK_CYCLE[Math.floor(anim * FRAMES_PER_STEP) % WALK_CYCLE.length];
 /** The pose to draw someone in now: arm out just after a shot or a punch, otherwise walking. */
-export const poseOf = (p) => (p.armT > 0 ? p.arm : walkPose(p.anim));
+export const poseOf = (p) => {
+  if (p.type === 'honk')
+    return p.flap > 0
+      ? Math.floor(p.flap * FLAP_RATE) & 1
+        ? FLAP_OUT
+        : FLAP_BACK
+      : p.swim
+        ? FLOAT
+        : walkPose(p.anim);
+  return p.armT > 0 ? p.arm : walkPose(p.anim);
+};
 
 /** True if (x, y) is within r of the line from (ax, ay) to (bx, by). */
 function nearLine(x, y, ax, ay, bx, by, r) {
@@ -58,6 +77,7 @@ function nearLine(x, y, ax, ay, bx, by, r) {
  * where there is nothing. Shapes are drawn in order, so a later one covers an earlier one.
  */
 export function colourAt(p, pose, x, y) {
+  if (p.type === 'honk') return gooseAt(pose, x, y);
   const look = lookOf(p),
     walker = look !== 'scoot' && look !== 'cult',
     out = walker && (pose === SHOOT || pose === PUNCH),
@@ -107,6 +127,35 @@ export function colourAt(p, pose, x, y) {
   }
   // A cultist's hood hangs down the back.
   if (look === 'cult' && box(-3, 0.6, -2.4, 2.4) && c !== -1) c = p.hair;
+  return c;
+}
+
+/**
+ * Big Honk, Sleazeburg's crime boss: a white goose seen from above, in black sunglasses and a gold chain,
+ * facing +x like everyone else. Laid out on the 2 x 2 blocks, back to front: a grey tail, the body with its
+ * wings folded along the back in grey, the chain, the neck, the shades (wider than his head), the front of his
+ * head and an orange beak. Walking, his orange feet paddle out at the sides; afloat they do not show. Flapping,
+ * his wings go out to the sides and then back, and his beak opens wide.
+ */
+function gooseAt(pose, x, y) {
+  const box = (x0, x1, y0, y1) => x >= x0 && x <= x1 && y >= y0 && y <= y1,
+    flap = pose === FLAP_OUT || pose === FLAP_BACK,
+    ay = Math.abs(y);
+  let c = -1;
+  if (pose === FLAP_OUT && ay >= 4 && ay <= 10 && box(-4, 0, -10, 10)) c = ay > 8 ? 15 : 1;
+  if (pose === FLAP_BACK && ay >= 4 && ay <= 9 && Math.abs(x + 2 + (ay - 4) * 0.8) <= 2) c = ay > 7 ? 15 : 1;
+  if (!flap && pose !== FLOAT)
+    for (const side of [-1, 1]) {
+      const f = -3 - side * (STRIDES[pose] ?? 0) * 2;
+      if (box(f - 1, f + 1, side * 5 - 1, side * 5 + 1)) c = 8;
+    }
+  if (box(-8, -6, -2, 2)) c = 15;
+  if (box(-6, 0, -4, 4) && Math.abs(x + 3) / 3 + ay / 4 <= 1.6) c = !flap && x < -2 && ay > 2 ? 15 : 1;
+  if (box(0, 2, -2, 2)) c = 7;
+  if (box(2, 4, -2, 2)) c = 1;
+  if (box(4, 6, -4, 4)) c = 0;
+  if (box(6, 8, -2, 2)) c = 1;
+  if (box(8, 10, flap ? -3 : -1.5, flap ? 3 : 1.5)) c = 8;
   return c;
 }
 

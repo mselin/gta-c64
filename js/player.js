@@ -235,7 +235,7 @@ export function updPlayer(dt) {
           hy = P.y + fy * 7;
         for (const q of G.peds.slice())
           if (hyp(q.x - hx, q.y - hy) < 7) {
-            killPed(q, true);
+            killPed(q, true, P);
             break;
           }
       }

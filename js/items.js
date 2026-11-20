@@ -26,7 +26,7 @@ export function updBullets(dt) {
     if (b.own === 0) {
       for (const p of G.peds.slice())
         if (hyp(p.x - b.x, p.y - b.y) < HIT.shot) {
-          killPed(p, true);
+          killPed(p, true, b);
           b.l = 0;
           break;
         }

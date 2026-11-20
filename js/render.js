@@ -79,7 +79,8 @@ function drawWorld() {
   }
   for (const p of G.peds) {
     if (!onScreen(p.x, p.y, FRAME / 2)) continue;
-    if (waterAt(p.x, p.y)) drawSwimmer(p);
+    // A goose floats: Big Honk is drawn the same in the water, just without his feet.
+    if (waterAt(p.x, p.y) && p.type !== 'honk') drawSwimmer(p);
     else drawSpr(pedSpr(p, poseOf(p)), Math.atan2(p.dy, p.dx), p.x, p.y);
   }
   if (!P.car && G.screen !== 'down' && !(P.hitT > 0 && Math.floor(G.clock * 20) & 1)) {

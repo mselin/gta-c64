@@ -46,7 +46,7 @@ npm test
 | `js/config.js` | Constants and all the game's text. |
 | `js/state.js` | Shared game state (`G`), the player (`P`) and message helpers. |
 | `js/world.js`, `js/worldview.js` | City generation and collision queries; drawing the map. |
-| `js/cars.js`, `js/peds.js`, `js/player.js` | Car handling and AI, pedestrians and police on foot, the player. |
+| `js/cars.js`, `js/peds.js`, `js/player.js` | Car handling and AI, pedestrians and police on foot, Big Honk, the player. |
 | `js/heat.js`, `js/missions.js`, `js/spawner.js`, `js/items.js` | Wanted level, jobs, populating the streets, bullets and pickups. |
 | `js/game.js`, `js/render.js`, `js/input.js` | Per-frame update, drawing, keyboard and touch. |
 | `js/endings.js` | The game-over and victory screens. |
@@ -55,7 +55,7 @@ npm test
 | `specs/` | The [game design](specs/design.md): the rules and the look, with the numbers, for every version including the Commodore 64 one. Feature specs: [playing on a phone](specs/touch-controls.md) lists every touch-screen requirement and the tests for each. |
 | `assets/` | Picture files: the two end screens. |
 | `js/screen.js`, `js/font.js`, `js/sprites.js`, `js/audio.js` | Canvas, bitmap font, sprites, sound effects and the built-in tune. |
-| `js/figures.js` | People on foot as pixel art: passers-by, police, scooter riders, cultists and the player. |
+| `js/figures.js` | People on foot as pixel art: passers-by, police, scooter riders, cultists and the player; and Big Honk, the goose. |
 | `js/playlist.js`, `js/radio.js`, `js/info.js` | Playlist parsing, the radio, the information page. |
 | `js/presence.js` | Optional Discord Rich Presence: tells the presence bridge what the game is doing. Off by default. |
 | `terms.html`, `privacy.html` | Terms of use and privacy policy, linked from the game and from the Discord application. |

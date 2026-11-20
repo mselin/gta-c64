@@ -242,3 +242,49 @@ test('both end screens show their picture from the assets folder', async () => {
   await game.wait(200);
   assert.ok((await colours()) >= 6, 'the office picture is on screen');
 });
+
+test('Big Honk is in the city, drawn pixel for pixel as figures.js has him, and a shot only makes him flap and honk', async () => {
+  await game.start();
+  const { frame, poseOf } = await import('../../js/figures.js');
+  const { RGB } = await import('../../js/config.js');
+  // Hold him still on his bank, facing north, with the player beside him and nobody else about.
+  await game.read((s) => {
+    const h = s.G.peds.find((p) => p.type === 'honk');
+    Object.assign(h, { spd: 0, t: 1e9, dx: 0, dy: -1, flap: 0, anim: 0 });
+    s.G.peds = [h];
+    s.G.cars = [];
+    Object.assign(s.P, { x: h.x - 30, y: h.y, a: 0, car: null, ammo: 5 });
+  });
+  await game.wait(1500); // for the view to settle on the player
+  const shot = await game.page.evaluate(() => {
+    const s = window.sleazeburg,
+      h = s.G.peds.find((p) => p.type === 'honk'),
+      sx = 32 + Math.round(h.x - Math.round(s.G.camX) - 12),
+      sy = 36 + Math.round(h.y - Math.round(s.G.camY) - 12);
+    return {
+      h: { ...h },
+      data: [...document.getElementById('c').getContext('2d').getImageData(sx, sy, 24, 24).data],
+    };
+  });
+  const want = frame(shot.h, poseOf(shot.h), (12 / 16) * Math.PI * 2); // north is the 12th of 16 directions
+  let wrong = 0,
+    drawn = 0;
+  want.forEach((c, i) => {
+    if (c < 0) return;
+    drawn++;
+    if (RGB[c].some((v, k) => v !== shot.data[i * 4 + k])) wrong++;
+  });
+  assert.ok(drawn > 100, 'he is a decent size');
+  assert.equal(wrong, 0, `${wrong} of his ${drawn} pixels are not as figures.js draws them`);
+
+  // The player faces him: shoot, holding fire long enough for the game to see it.
+  await game.page.keyboard.down('Space');
+  await game.until((s) => s.G.peds.some((p) => p.type === 'honk' && p.flap > 0));
+  await game.page.keyboard.up('Space');
+  const after = await game.read((s) => ({
+    honks: s.G.peds.filter((p) => p.type === 'honk').length,
+    pops: s.G.pops.map((p) => p.t),
+  }));
+  assert.equal(after.honks, 1, 'still there');
+  assert.ok(after.pops.includes('HONK!'));
+});

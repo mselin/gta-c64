@@ -45,6 +45,21 @@ export const T = 16,
   MW = NB * PB + 2,
   WPX = MW * T,
   BLK = PB * T;
+/**
+ * Big Honk, Sleazeburg's crime boss, a goose. He lives on The Moat: its banks and the canal between them, x0 to
+ * x1, the whole length of the city. Where a new game finds him, his speed waddling and running off (px/s), how
+ * long he flaps when something would have hurt anyone else (s), and how often he will cross a road.
+ */
+export const HONK = {
+  x0: (4 * PB + 2) * T,
+  x1: 5 * PB * T,
+  x: (4 * PB + 2) * T + 8,
+  y: (4 * PB + 4) * T + 8,
+  spd: 18,
+  run: 44,
+  flapT: 1.2,
+  jay: 0.3,
+};
 export const ROAD = 0,
   WALK = 1,
   BLD = 2,
