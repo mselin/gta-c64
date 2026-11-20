@@ -89,8 +89,7 @@ function infoRender() {
     pl.appendChild(ul);
   }
 }
-const BRIDGE_HELP =
-  'https://github.com/mselin/mselin.github.io/tree/main/gta-c64/tools/presence-bridge#readme';
+const BRIDGE_HELP = 'https://github.com/mselin/gta-c64/tree/main/tools/presence-bridge#readme';
 // What the player is told for each state the Discord setting can be in.
 const PRESENCE_TEXT = {
   off: 'Off. Nothing is sent anywhere.',

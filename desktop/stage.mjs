@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copies the game into dist/ for the app to package. Only what the game loads goes in: not the tests, the
-// tooling or node_modules, which the folder above also holds.
+// Copies the game into dist/ for the app to package, or into the folder given, for GitHub Pages. Only what the
+// game loads goes in: not the tests, the tooling or node_modules, which the folder above also holds.
+//
+//   node stage.mjs [folder]
 import { cpSync, mkdirSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const game = join(here, '..');
-const dist = join(here, 'dist');
+const dist = process.argv[2] ? resolve(process.argv[2]) : join(here, 'dist');
 export const FILES = [
   'index.html',
   'terms.html',
@@ -18,6 +20,7 @@ export const FILES = [
   'assets',
   'radio/stations.json',
   'usbsid-player/LICENSE',
+  'usbsid-player/README.md',
   'usbsid-player/usbsid.esm.js',
   'usbsid-player/usbsid.wasm',
   'usbsid-player/usplayer-audio.js',

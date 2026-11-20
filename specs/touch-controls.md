@@ -4,7 +4,7 @@
 |---|---|
 | Status | Implemented in [pull request 17](https://github.com/mselin/mselin.github.io/pull/17) |
 | Owner | [mselin](https://github.com/mselin) |
-| Applies to | The browser game in `gta-c64/`, on touch screens |
+| Applies to | The browser game, on touch screens |
 | Written | 20 November 2026 |
 
 ## Why

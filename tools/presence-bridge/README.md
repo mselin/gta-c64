@@ -24,7 +24,7 @@ for the game: the game tells it what is happening, and it tells the Discord app 
   only, the 120 lines of the [helper window](relay/), plus tests. [`main.go`](main.go) is the place to start.
 - **Build it yourself, or check the download.** Building from source comes first below. For downloads, check
   the SHA-256 checksum against the `SHA256SUMS` file published with the release, and, from 0.2.0, where the
-  file was built: `gh attestation verify <file> --repo mselin/mselin.github.io` checks GitHub's signed record
+  file was built: `gh attestation verify <file> --repo mselin/gta-c64` checks GitHub's signed record
   that the release workflow built it from the tagged source.
 - **Downloads are unsigned.** Windows and macOS warn about unsigned programs. The warning appears because
   the file is not signed, not because anything was found in it. See your system's section below.
@@ -70,11 +70,11 @@ The game looks for the bridge on port **26464** of your own computer.
 Needs [Go](https://go.dev/dl/) 1.22 or later and Git.
 
 ```bash
-git clone --depth 1 https://github.com/mselin/mselin.github.io.git
+git clone --depth 1 https://github.com/mselin/gta-c64.git
 ```
 
 ```bash
-cd mselin.github.io/gta-c64/tools/presence-bridge
+cd gta-c64/tools/presence-bridge
 ```
 
 ```bash
@@ -88,13 +88,13 @@ with.
 Or let Go fetch and build a tagged release in one step. The program it installs is called `presence-bridge`:
 
 ```bash
-go install github.com/mselin/mselin.github.io/gta-c64/tools/presence-bridge@latest
+go install github.com/mselin/gta-c64/tools/presence-bridge@latest
 ```
 
 ### Linux
 
 From a release: download `sleazeburg-presence-linux-amd64` and `SHA256SUMS` from the
-[releases page](https://github.com/mselin/mselin.github.io/releases), then check and install it:
+[releases page](https://github.com/mselin/gta-c64/releases), then check and install it:
 
 ```bash
 sha256sum --check --ignore-missing SHA256SUMS
@@ -283,9 +283,9 @@ name and version into the `.exe`; it is not linked into the program.
 
 ### Releasing
 
-Releases are tagged `gta-c64/tools/presence-bridge/vX.Y.Z`. That is the form `go install` needs for a module
+Releases are tagged `tools/presence-bridge/vX.Y.Z`. That is the form `go install` needs for a module
 in a subfolder, and it cannot be confused with anything else in the repository. Pushing such a tag runs
-[the release workflow](../../../.github/workflows/presence-bridge-release.yml), which tests on Linux, Windows
+[the release workflow](../../.github/workflows/presence-bridge-release.yml), which tests on Linux, Windows
 and macOS, builds the Linux and Windows binaries, rebuilds them on a second machine to check they are
 reproducible, and publishes a GitHub Release with `SHA256SUMS` and the rendered Homebrew formula. Copy that
 formula to `Formula/sleazeburg-presence.rb` in the `mselin/homebrew-tap` repository.

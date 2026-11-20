@@ -1,7 +1,7 @@
 # Code signing policy
 
 This policy covers the Windows releases of the Sleazeburg 64 presence bridge, published on the
-[releases page](https://github.com/mselin/mselin.github.io/releases) of this repository.
+[releases page](https://github.com/mselin/gta-c64/releases) of this repository.
 
 ## Current state
 

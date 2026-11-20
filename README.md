@@ -6,7 +6,8 @@ A top-down crime satire for the browser, made to look and sound like a Commodore
 A version for a real Commodore 64, in 6502 assembly, is being written in its own repository,
 [mselin/Sleazeburg64](https://github.com/mselin/Sleazeburg64). Play it at https://mselin.github.io/Sleazeburg64/ .
 
-The game is plain JavaScript modules with no build step. GitHub Pages serves this folder as it is.
+The game is plain JavaScript modules with no build step. When a change reaches `main` and every check has passed,
+CI publishes the game with GitHub Pages (see [The repository](#the-repository)).
 
 ## Run it locally
 
@@ -75,6 +76,46 @@ on their own computer. The setting is on the information page and is off by defa
 it on, the game makes no request to their computer. The bridge's README covers installing it, what it sends,
 and its [code signing policy](tools/presence-bridge/CODE_SIGNING_POLICY.md).
 
+## The repository
+
+The game used to live in the `gta-c64/` folder of [mselin/mselin.github.io](https://github.com/mselin/mselin.github.io),
+the homepage's repository, and moved here with its history on 20 November 2026. Its address did not change: a
+repository's GitHub Pages site is served at `https://mselin.github.io/<repository>/`. The homepage and the
+profile page link here.
+
+**CI** ([`ci.yml`](.github/workflows/ci.yml)) runs on every pull request and every change to `main`:
+
+| Job | What it checks |
+|---|---|
+| Site checks | The HTML pages are valid (`html-validate`). |
+| Repository checks | [`check_repo.py`](.github/scripts/check_repo.py): JSON and SVG files parse, local links point at files that exist, and no private addresses or private terms. |
+| Sleazeburg 64 tests | Lint, the unit tests, and the browser tests, these with the real presence bridge. |
+| Presence bridge on Linux, Windows and macOS | `gofmt`, `go vet`, the tests (with the race detector on Linux) and the release builds. |
+| Presence bridge builds are reproducible | The builds from all three systems are byte for byte the same. |
+| Homebrew formula on macOS | The formula installs from this commit and passes its test. |
+| Desktop app on Linux, Windows and macOS | `rustfmt`, `clippy`, the Rust tests and a build; on Linux, a smoke test of the real app. |
+| All checks passed | The one check `main` requires: it passes only if every job above did. |
+
+**Publishing:** after **All checks passed** on `main`, the **Publish the game** job puts the files the game
+loads (the ones [`desktop/stage.mjs`](desktop/stage.mjs) lists) on GitHub Pages; the tests, tools and sources
+are not published. The repository's Pages source is "GitHub Actions".
+
+[`check_repo.py`](.github/scripts/check_repo.py) also reads an optional `PRIVATE_TERMS` repository secret:
+host names, domains and similar, one per line, that must never appear in the repository. A match fails the
+check and is reported by file and line only, never by the term itself, because Actions logs on a public
+repository are public.
+
+**Making changes:** `main` takes changes only through pull requests, and only once **All checks passed** is
+green. The actions in the workflows are pinned to exact commits, and Dependabot opens a pull request once a
+month to update them.
+
+**Releasing the presence bridge:** pushing a tag of the form `tools/presence-bridge/vX.Y.Z` starts
+[`presence-bridge-release.yml`](.github/workflows/presence-bridge-release.yml). It tests on three systems,
+builds the Linux and Windows binaries, checks the builds are reproducible, records where they were built, and
+publishes the release. Version 0.1.0 was released from the homepage's repository, under the tag
+`gta-c64/tools/presence-bridge/v0.1.0`; later versions are released here. The bridge's
+[README](tools/presence-bridge/README.md) has the details.
+
 ## Licence and credits
 
 Copyright (C) 2026 mselin.
@@ -84,7 +125,7 @@ Public License as published by the Free Software Foundation, either version 2 of
 option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY.
 See [LICENSE](LICENSE).
 
-This covers the game's code, graphics and built-in tune in this folder. It does not cover:
+This covers the game's code, graphics and built-in tune in this repository. It does not cover:
 
 - **The music on the radio.** No tunes are stored here. They are streamed from the
   [High Voltage SID Collection](https://www.hvsc.c64.org/) and remain the property of their composers and
