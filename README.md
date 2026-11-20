@@ -105,6 +105,12 @@ host names, domains and similar, one per line, that must never appear in the rep
 check and is reported by file and line only, never by the term itself, because Actions logs on a public
 repository are public.
 
+**Planning work:** features and implementation work are tracked as [issues](https://github.com/mselin/gta-c64/issues),
+with a form for each: **Feature** (labelled `enhancement`) for something new or different in the game, and
+**Implementation** (labelled `implementation`) for building, releasing, setting up or testing. A pull request
+says which issue it closes ("Closes #12"). A change to the game's rules or look also updates
+[`specs/design.md`](specs/design.md), which the Commodore 64 version follows.
+
 **Making changes:** `main` takes changes only through pull requests, and only once **All checks passed** is
 green. The actions in the workflows are pinned to exact commits, and Dependabot opens a pull request once a
 month to update them.
