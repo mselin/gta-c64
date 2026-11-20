@@ -12,7 +12,7 @@
 //   - The game never depends on it. Every failure ends in a status line on the information page, and nothing
 //     here can throw into the game loop.
 //
-// In the desktop app (gta-c64/desktop) there is no bridge: the page reports to the app itself, which talks to
+// In the desktop app (desktop/) there is no bridge: the page reports to the app itself, which talks to
 // Discord, through the one command the app allows it.
 //
 // Some browsers, Safari among them, will not let this https page reach http://127.0.0.1 at all. For those the

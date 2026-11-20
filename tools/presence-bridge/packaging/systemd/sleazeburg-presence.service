@@ -12,7 +12,7 @@
 
 [Unit]
 Description=Sleazeburg 64 presence bridge (Discord Rich Presence for the browser game)
-Documentation=https://github.com/mselin/mselin.github.io/tree/main/gta-c64/tools/presence-bridge
+Documentation=https://github.com/mselin/gta-c64/tree/main/tools/presence-bridge
 PartOf=graphical-session.target
 After=graphical-session.target
 
