@@ -160,7 +160,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Linux is pinned: the ubuntu-latest image (Ubuntu 26.04 since November 2026) offers no Ubuntu packages
+        # to apt, so the web view's libraries cannot be installed there.
+        os: [ubuntu-24.04, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     defaults:
@@ -214,7 +216,9 @@ jobs:
   # Actions".)
   pages:
     name: Publish the game
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # On every push to main, and when started by hand on main (Actions, CI, Run workflow), for example right after
+    # the Pages source has been switched to GitHub Actions.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: [ok]
     runs-on: ubuntu-latest
     timeout-minutes: 10
