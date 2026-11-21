@@ -34,6 +34,7 @@ const freshPlayer = () => ({
   a: PI / 2,
   hp: 100,
   ammo: 12,
+  knife: false, // found on the street or dropped; lost when wasted or busted
   car: null,
   cd: 0,
   anim: 0, // steps walked: the walking pose (figures.js)
@@ -98,5 +99,10 @@ export function pop(x, y, t, col) {
   G.pops.push({ x, y, t, col: col || 1, l: 1.2 });
 }
 export const ppos = () => P.car || P;
+/** What fire does on foot now: 'gun' while there is ammo, then 'knife' if the player has one, else 'fist'. */
+export const weapon = () => (P.ammo > 0 ? 'gun' : P.knife ? 'knife' : 'fist');
+/** The HUD's word for it: the ammo left (AMMO12), or KNIFE or FIST once it runs out. */
+export const weaponLabel = () =>
+  weapon() === 'gun' ? 'AMMO' + String(P.ammo).padStart(2, '0') : weapon().toUpperCase();
 export const onScreen = (x, y, m) =>
   x > G.camX - m && x < G.camX + SW + m && y > G.camY - m && y < G.camY + VH + m;

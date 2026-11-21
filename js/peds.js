@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Pedestrians and police on foot.
-import { DIRS, GRASS, HIT, LOT, PAL, PLAZA, ROAD, WALK } from './config.js';
+import { DIRS, GRASS, HIT, KNIFE, KO, LOT, PAL, PLAZA, ROAD, WALK } from './config.js';
 import { R, hyp } from './util.js';
 import { decals, nearestLand, solidAt, tileAt, wallAt, waterAt } from './world.js';
 import { sfx } from './audio.js';
@@ -39,9 +39,30 @@ export function killPed(p, byPlayer) {
       G.job.n++;
       pop(p.x, p.y - 8, G.job.n + '/' + G.job.def.n, 7);
     } else if (p.type === 'scoot') pop(p.x, p.y - 8, '+$0 (PUBLIC SERVICE)', 13);
-    else if (R() < 0.4)
-      G.pickups.push({ x: p.x, y: p.y, type: 'cash', v: 10 + Math.floor(R() * 9) * 10, temp: 20, t: 0 });
+    else {
+      const r = R();
+      if (r < 0.4)
+        G.pickups.push({ x: p.x, y: p.y, type: 'cash', v: 10 + Math.floor(R() * 9) * 10, temp: 20, t: 0 });
+      else if (!P.knife && r < 0.4 + KNIFE.drop)
+        G.pickups.push({ x: p.x, y: p.y, type: 'knife', temp: 20, t: 0 });
+    }
   }
+}
+/** A punch: down on their back for KO.t seconds, then up and away. Half the heat of a kill. */
+export function knockDown(p) {
+  p.ko = KO.t;
+  p.armT = 0;
+  crime(p.type === 'cop' ? KO.copCrime : KO.crime);
+  scare(p.x, p.y, 60, 2);
+  if (onScreen(p.x, p.y, 0)) pop(p.x, p.y - 8, 'OOF', 10);
+}
+/** Back on their feet: a passer-by runs from the player; the police carry on where they left off. */
+function getUp(p) {
+  if (p.type === 'cop' || p.type === 'cult') return;
+  const pl = ppos();
+  p.flee = 3 + R() * 2;
+  p.fx = pl.x;
+  p.fy = pl.y;
 }
 export function scare(x, y, r, t) {
   for (const q of G.peds)
@@ -107,6 +128,11 @@ export function updPeds(dt) {
   for (const p of G.peds.slice()) {
     p.anim += dt * p.spd * 0.15;
     p.armT -= dt;
+    if (p.ko > 0) {
+      p.ko -= dt;
+      if (p.ko <= 0) getUp(p);
+      continue;
+    }
     if (p.type === 'cult') continue; // deep in ceremony: nothing moves them
     if (p.type === 'cop' && G.heat > 0 && G.screen === 'play') {
       const dx = pl.x - p.x,

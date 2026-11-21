@@ -8,7 +8,7 @@ import { ARW, carSpr, pedSpr } from './sprites.js';
 import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
-import { G, P, onScreen, ppos, touch } from './state.js';
+import { G, P, onScreen, ppos, touch, weapon, weaponLabel } from './state.js';
 import { npText, radio, radioAudible } from './radio.js';
 import { drawEnding } from './endings.js';
 import { help } from './help.js';
@@ -32,7 +32,13 @@ function marker(x, y, ch, c1, c2) {
   g.fillRect(sx - 5, sy - 5, 10, 10);
   text(ch, sx - 4, sy - 4, f ? c1 : c2);
 }
-const PKI = { ammo: ['A', 8, 7], cash: ['$', 5, 13], donut: ['O', 10, 1], med: ['+', 1, 2] };
+const PKI = {
+  ammo: ['A', 8, 7],
+  cash: ['$', 5, 13],
+  donut: ['O', 10, 1],
+  med: ['+', 1, 2],
+  knife: ['K', 15, 0],
+};
 /** Someone in the water: just a head and one arm above the surface, with ripples round them. */
 function drawSwimmer(p) {
   const sx = Math.round(p.x - camXi),
@@ -81,6 +87,20 @@ function drawWorld() {
     if (!onScreen(p.x, p.y, FRAME / 2)) continue;
     if (waterAt(p.x, p.y)) drawSwimmer(p);
     else drawSpr(pedSpr(p, poseOf(p)), Math.atan2(p.dy, p.dx), p.x, p.y);
+    if (p.ko > 0) {
+      // Two little stars going round just over the head of someone knocked down.
+      const a = Math.atan2(p.dy, p.dx),
+        hx = p.x + Math.cos(a) * 5 - camXi,
+        hy = p.y + Math.sin(a) * 5 - camYi - 6;
+      g.fillStyle = PAL[7];
+      for (const o of [0, PI]) {
+        const t = G.clock * 6 + o;
+        const sx = Math.round(hx + Math.cos(t) * 5),
+          sy = Math.round(hy + Math.sin(t) * 2);
+        g.fillRect(sx - 1, sy, 3, 1);
+        g.fillRect(sx, sy - 1, 1, 3);
+      }
+    }
   }
   if (!P.car && G.screen !== 'down' && !(P.hitT > 0 && Math.floor(G.clock * 20) & 1)) {
     if (waterAt(P.x, P.y)) drawSwimmer(P);
@@ -201,13 +221,17 @@ function drawWorld() {
   g.fillStyle = PAL[P.hp > 30 ? 5 : 2];
   g.fillRect(169, VH + 3, Math.round(P.hp * 0.4), 4);
   if (P.car) {
-    text('CAR', 216, VH + 1, 15);
+    // Room on its right for the ammo: AMMO99 takes the last 48 pixels.
+    text('CAR', 214, VH + 1, 15);
     g.fillStyle = PAL[11];
-    g.fillRect(244, VH + 2, 32, 6);
+    g.fillRect(240, VH + 2, 28, 6);
     g.fillStyle = PAL[P.car.hp > 40 ? 3 : 2];
-    g.fillRect(245, VH + 3, Math.round(clamp(P.car.hp / P.car.kind.hp, 0, 1) * 30), 4);
+    g.fillRect(241, VH + 3, Math.round(clamp(P.car.hp / P.car.kind.hp, 0, 1) * 26), 4);
   }
-  text('A' + String(P.ammo).padStart(3, '0'), 288, VH + 1, 7);
+  // What fire does on foot: the ammo left, or the knife or fists once it runs out.
+  const wpn = weapon(),
+    label = weaponLabel();
+  text(label, SW - label.length * 8, VH + 1, wpn === 'gun' ? 7 : wpn === 'knife' ? 15 : 10);
   if (G.job) {
     const d = G.job.def,
       t = Math.max(0, Math.ceil(G.job.t)),

@@ -21,19 +21,21 @@ export const SHADE = [0, 15, 9, 12, 6, 9, 0, 8, 9, 0, 2, 0, 11, 5, 6, 12];
 
 /**
  * The poses. 0 to 4 are the walk: how far the left foot is ahead, from a full stride back to a full stride
- * forward, the right foot and the left hand the other way. 2 is standing. SHOOT and PUNCH put the right arm
- * straight out in front, with a gun or a fist at the end of it.
+ * forward, the right foot and the left hand the other way. 2 is standing. SHOOT, PUNCH and STAB put the right
+ * arm straight out in front, with a gun, a fist or a knife at the end of it. DOWN is knocked flat on their back.
  */
 export const STRIDES = [-1, -0.5, 0, 0.5, 1],
   STAND = 2,
   SHOOT = 5,
   PUNCH = 6,
-  POSES = 7;
+  STAB = 7,
+  DOWN = 8,
+  POSES = 9;
 /** One step after another: a walking cycle of eight frames, each pose in turn, that swings back and forth. */
 export const WALK_CYCLE = [2, 3, 4, 3, 2, 1, 0, 1];
 /** Frames of the walking cycle per step taken, so a cycle is two steps: left foot, then right. */
 export const FRAMES_PER_STEP = 4;
-/** How long the arm stays out after a shot or a punch, in seconds. */
+/** How long the arm stays out after a shot, a punch or a stab, in seconds. */
 export const ARM_OUT_T = 0.2;
 
 /** How someone is drawn: 'player', 'cop', 'scoot', 'cult', or 'civ' for everyone else. */
@@ -42,8 +44,8 @@ export const lookOf = (p) => (['player', 'cop', 'scoot', 'cult'].includes(p.type
 export const outlineOf = (p) => (lookOf(p) === 'player' ? PLAYER_OUTLINE : OUTLINE);
 /** The walking pose `anim` steps into a walk. Standing still is anim 0: the middle pose. */
 export const walkPose = (anim) => WALK_CYCLE[Math.floor(anim * FRAMES_PER_STEP) % WALK_CYCLE.length];
-/** The pose to draw someone in now: arm out just after a shot or a punch, otherwise walking. */
-export const poseOf = (p) => (p.armT > 0 ? p.arm : walkPose(p.anim));
+/** The pose to draw someone in now: flat out if knocked down, arm out just after a blow, otherwise walking. */
+export const poseOf = (p) => (p.ko > 0 ? DOWN : p.armT > 0 ? p.arm : walkPose(p.anim));
 
 /** True if (x, y) is within r of the line from (ax, ay) to (bx, by). */
 function nearLine(x, y, ax, ay, bx, by, r) {
@@ -58,9 +60,10 @@ function nearLine(x, y, ax, ay, bx, by, r) {
  * where there is nothing. Shapes are drawn in order, so a later one covers an earlier one.
  */
 export function colourAt(p, pose, x, y) {
-  const look = lookOf(p),
-    walker = look !== 'scoot' && look !== 'cult',
-    out = walker && (pose === SHOOT || pose === PUNCH),
+  const look = lookOf(p);
+  if (pose === DOWN) return lyingAt(p, look, x, y);
+  const walker = look !== 'scoot' && look !== 'cult',
+    out = walker && (pose === SHOOT || pose === PUNCH || pose === STAB),
     s = walker && !out ? STRIDES[pose] : 0,
     legs = p.legs ?? 11;
   let c = -1;
@@ -97,7 +100,9 @@ export function colourAt(p, pose, x, y) {
     else if (out) [hx, hy] = [1.2, -4.4];
     if (nearLine(x, y, 0, side * 4, hx * 0.6, hy, 1.1)) c = p.shirt;
     if (disc(hx, hy, out && side > 0 && pose === PUNCH ? 1.6 : 1.3)) c = p.skin;
-    if (out && side > 0 && pose === SHOOT && box(hx + 0.6, hx + 2.8, hy - 0.7, hy + 0.7)) c = 11;
+    // A dark grey gun, or a white blade that shows on pavement and road alike.
+    if (out && side > 0 && pose !== PUNCH && box(hx + 0.6, hx + 2.8, hy - 0.7, hy + 0.7))
+      c = pose === SHOOT ? 11 : 1;
   }
   // The head: hair, a police cap with its badge and black peak, or a hood; the face to the front.
   if (disc(0.6, 0, 2.7)) {
@@ -107,6 +112,30 @@ export function colourAt(p, pose, x, y) {
   }
   // A cultist's hood hangs down the back.
   if (look === 'cult' && box(-3, 0.6, -2.4, 2.4) && c !== -1) c = p.hair;
+  return c;
+}
+
+/**
+ * Someone knocked flat on their back, head to the front: legs out straight behind, arms flung wide, face up with
+ * the hair or cap at the crown. A cultist's robe covers their legs; a scooter rider's scooter lies beside them.
+ */
+function lyingAt(p, look, x, y) {
+  let c = -1;
+  const box = (x0, x1, y0, y1) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
+  const disc = (cx, cy, r) => (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
+  if (look === 'scoot') {
+    if (box(-6, 4, 5.2, 6.8)) c = 12;
+    if (disc(-6, 6, 1.2) || disc(4, 6, 1.2)) c = 0;
+  }
+  if (look !== 'cult')
+    for (const side of [-1, 1]) if (box(-8, -2, side * 1.7 - 1.1, side * 1.7 + 1.1)) c = p.legs ?? 11;
+  if (box(look === 'cult' ? -8 : -2.6, 3, -3.4, 3.4)) c = p.shirt;
+  for (const side of [-1, 1]) {
+    if (nearLine(x, y, 2, side * 3, 3.6, side * 6, 1.1)) c = p.shirt;
+    if (disc(3.8, side * 6.4, 1.2)) c = p.skin;
+  }
+  if (disc(5.4, 0, 2.4))
+    c = x > 6.2 ? (look === 'cop' ? COP.cap : p.hair) : look === 'cult' && Math.abs(y) > 1 ? p.hair : p.skin;
   return c;
 }
 
