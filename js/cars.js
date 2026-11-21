@@ -1,6 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Car handling, collisions, traffic and police driving, damage and explosions.
-import { BLK, DIRS, GRASS, GRIP, HIT, KIND, LOT, NB, PAL, PI, PLAZA, ROAD, WALK } from './config.js';
+import {
+  BLK,
+  DIRS,
+  GRASS,
+  GRIP,
+  HANDLING,
+  HIT,
+  KIND,
+  LOT,
+  NB,
+  PAL,
+  PI,
+  PLAZA,
+  ROAD,
+  WALK,
+} from './config.js';
 import { R, angDiff, clamp, hyp, mod, pick } from './util.js';
 import { decals, footClear, tileAt, wallAt, waterAt } from './world.js';
 import { sfx } from './audio.js';
@@ -188,6 +203,7 @@ export function carPhys(c, thr, steer, dt, hb) {
       c.y += c.vy * dt;
     }
     c.slide = 0;
+    c.w = 0;
     skid(c, false);
     return;
   }
@@ -195,33 +211,61 @@ export function carPhys(c, thr, steer, dt, hb) {
     oa = c.a;
   let fx = Math.cos(c.a),
     fy = Math.sin(c.a);
-  const f0 = c.vx * fx + c.vy * fy;
-  c.a += steer * 3 * clamp(f0 / 55, -1, 1) * (hb ? 1.3 : 1) * dt;
+  const f0 = c.vx * fx + c.vy * fy,
+    // Wading: the more of the car is in the water, the more it drags, and the less the tyres can do.
+    wet = wetness(c),
+    grass = tileAt(c.x, c.y) === GRASS,
+    // What the tyres can hold sideways, in pixels a second each second.
+    grip =
+      GRIP[k.n] *
+      (hb ? 0.28 : thr < 0 && f0 > 5 ? 0.6 : 1) *
+      (c.hp < 40 ? 0.85 : 1) *
+      (1 - 0.5 * wet) *
+      (grass ? HANDLING.grassGrip : 1);
+  // Steering. Slowly, the car turns on its tightest circle, a radius of about 18; from 55 px/s at most 3 radians a
+  // second. But never sharper than the tyres can hold: turning at w radians a second at speed v asks them for v·w
+  // sideways, so the turn is kept to grip / v, and a fast car takes a wider line. The handbrake lets the back
+  // go: then the car turns faster than that, and slides.
+  let yaw = 3 * clamp(f0 / 55, -1, 1) * (hb ? 1.3 : 1);
+  if (!hb) {
+    const most = grip / Math.max(1, Math.abs(f0));
+    yaw = clamp(yaw, -most, most);
+  }
+  // A spin from a knock turns the car too, and the tyres stop it.
+  c.a += (steer * yaw + c.w) * dt;
+  if (c.w) {
+    const stop = grip * HANDLING.spinGrip * dt;
+    c.w = Math.abs(c.w) <= stop ? 0 : c.w - Math.sign(c.w) * stop;
+  }
   // A turn that would swing the car into a wall does not happen. (Checking for a wall only after turning used to
   // count the car as already stuck in it, which let it drive straight through.)
-  if (c.a !== oa && carHits(c, c.x, c.y)) c.a = oa;
+  if (c.a !== oa && carHits(c, c.x, c.y)) {
+    c.a = oa;
+    c.w = 0;
+  }
   fx = Math.cos(c.a);
   fy = Math.sin(c.a);
   let fwd = c.vx * fx + c.vy * fy,
     lat = -c.vx * fy + c.vy * fx;
   const braking = thr < 0 && fwd > 5,
-    spin = thr > 0 && fwd < 45 && fwd > -5 && k.acc > 150;
-  // Wading: the more of the car is in the water, the more it drags, and the less the tyres can do.
-  const wet = wetness(c);
+    wheelspin = thr > 0 && fwd < 45 && fwd > -5 && k.acc > 150;
   if (thr > 0) fwd += k.acc * thr * (1 - 0.6 * wet) * dt;
   else if (thr < 0) fwd -= (fwd > 5 ? k.acc * 2.2 : k.acc * 0.6) * -thr * dt;
   if (hb) fwd -= Math.sign(fwd) * Math.min(Math.abs(fwd), k.acc * 1.2 * dt);
   fwd -= fwd * 0.5 * dt;
   if (!thr) fwd -= Math.sign(fwd) * Math.min(Math.abs(fwd), 45 * dt);
   fwd -= fwd * 4 * wet * dt;
+  // Grass is hard going as well as slippery.
+  if (grass) fwd -= fwd * HANDLING.grassDrag * dt;
   const mx = k.max * (c.hp < 40 ? 0.7 : 1) * (1 - 0.7 * wet);
   fwd = clamp(fwd, -mx * 0.4, mx);
-  let grip = GRIP[k.n] * (hb ? 0.28 : braking ? 0.6 : 1) * (c.hp < 40 ? 0.85 : 1) * (1 - 0.5 * wet);
-  if (tileAt(c.x, c.y) === GRASS) grip *= 0.55;
   lat -= Math.sign(lat) * Math.min(Math.abs(lat), grip * dt);
   lat *= Math.max(0, 1 - 1.2 * dt);
   c.slide = Math.abs(lat);
-  skid(c, c.slide > 26 || (braking && fwd > 75) || (hb && Math.abs(fwd) > 30) || spin);
+  skid(
+    c,
+    c.slide > 26 || (braking && fwd > 75) || (hb && Math.abs(fwd) > 30) || wheelspin || Math.abs(c.w) > 2,
+  );
   c.vx = fx * fwd - fy * lat;
   c.vy = fy * fwd + fx * lat;
   // Each way separately, so a car that hits a wall at an angle bounces off it and slides along it.
@@ -248,6 +292,18 @@ export function carPhys(c, thr, steer, dt, hb) {
       s: 2,
     });
   if (wetness(c) >= 1) flood(c);
+}
+/**
+ * A knock: the change of speed (dvx, dvy) from a crash at the point (px, py). A knock off the car's middle
+ * spins it as well, the more the further off the middle and the shorter the car.
+ */
+function push(c, dvx, dvy, px, py) {
+  c.vx += dvx;
+  c.vy += dvy;
+  const rx = px - c.x,
+    ry = py - c.y,
+    inertia = (HANDLING.spinInertia * (c.kind.L * c.kind.L + c.kind.W * c.kind.W)) / 12;
+  c.w += (rx * dvy - ry * dvx) / inertia;
 }
 function trafficAI(c, dt) {
   const D = DIRS[c.dir];
@@ -441,6 +497,7 @@ export function updCars(dt) {
     sinkStep(c, dt);
     if (c.dead) {
       if (hyp(c.vx, c.vy) > 2) carPhys(c, 0, 0, dt);
+      else c.w = 0;
       if (!c.flooded && R() < dt * 4)
         G.parts.push({ x: c.x, y: c.y, vx: (R() - 0.5) * 8, vy: -14, l: 1, col: R() < 0.5 ? 11 : 12, s: 2 });
       continue;
@@ -448,7 +505,7 @@ export function updCars(dt) {
     if (c === P.car) {
     } else if (c.ai === 'traffic') trafficAI(c, dt);
     else if (c.ai === 'cop') copAI(c, dt);
-    else if (hyp(c.vx, c.vy) > 1) carPhys(c, 0, 0, dt);
+    else if (hyp(c.vx, c.vy) > 1 || c.w) carPhys(c, 0, 0, dt);
     else {
       c.vx = c.vy = 0;
     }
@@ -497,7 +554,10 @@ export function updCars(dt) {
       if (at && bt) continue;
       let best = 0,
         nx = 0,
-        ny = 0;
+        ny = 0,
+        px = 0,
+        py = 0,
+        weight = 0;
       for (const s of [-1, 1])
         for (const u of [-1, 1]) {
           const ax = a.x + Math.cos(a.a) * 5 * s,
@@ -513,8 +573,17 @@ export function updCars(dt) {
             nx = dx / d;
             ny = dy / d;
           }
+          // Where they touch: half way between each pair of ends that meet, weighted by how far they overlap.
+          // (Just the nearest pair would put a knock square on a car's middle off to one end or the other.)
+          if (ov > 0) {
+            px += ((ax + bx) / 2) * ov;
+            py += ((ay + by) / 2) * ov;
+            weight += ov;
+          }
         }
       if (best <= 0) continue;
+      px /= weight;
+      py /= weight;
       const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny,
         hard = rv < -35;
       const mvA = !at || hard,
@@ -545,20 +614,20 @@ export function updCars(dt) {
         }
       }
       if (rv < 0) {
-        const im = rv * 0.65;
-        if (mvA) {
-          a.vx += nx * im;
-          a.vy += ny * im;
-        }
-        if (mvB) {
-          b.vx -= nx * im;
-          b.vy -= ny * im;
-        }
+        // Momentum: they part with HANDLING.bounce of the speed they closed at, and the heavier car is pushed
+        // the less. Against traffic that stays on its rails, a car takes the push alone, as against a wall.
+        const ma = a.kind.m,
+          mb = b.kind.m,
+          both = mvA && mvB,
+          ia = both ? (1 + HANDLING.bounce) * rv * (mb / (ma + mb)) : rv * 0.65,
+          ib = both ? (1 + HANDLING.bounce) * rv * (ma / (ma + mb)) : rv * 0.65;
+        if (mvA) push(a, nx * ia, ny * ia, px, py);
+        if (mvB) push(b, -nx * ib, -ny * ib, px, py);
         if (rv < -40) {
+          // The lighter car comes off worse. A flooded car is already written off; knocks do not set it alight.
           const dm = (-rv - 40) * 0.22;
-          // A flooded car is already written off; knocks do not set it alight.
-          if (!a.dead && !a.flooded) a.hp -= dm;
-          if (!b.dead && !b.flooded) b.hp -= dm;
+          if (!a.dead && !a.flooded) a.hp -= dm * ((2 * mb) / (ma + mb));
+          if (!b.dead && !b.flooded) b.hp -= dm * ((2 * ma) / (ma + mb));
           if (onScreen(a.x, a.y, 0)) sfx.crash(-rv / 250);
           const mine = a === P.car ? b : b === P.car ? a : null;
           if (mine) {
