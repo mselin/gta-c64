@@ -2,6 +2,7 @@
 // Shared game state, the player, held keys, and the on-screen message helpers.
 import { PI, SW, VH } from './config.js';
 import { HOSP } from './world.js';
+import { wrapEven } from './util.js';
 
 /** The parts of the state that belong to one game, as they are when it starts. */
 const freshGame = () => ({
@@ -33,6 +34,7 @@ const freshPlayer = () => ({
   a: PI / 2,
   hp: 100,
   ammo: 12,
+  knife: false, // found on the street or dropped; lost when wasted or busted
   car: null,
   cd: 0,
   anim: 0, // steps walked: the walking pose (figures.js)
@@ -77,12 +79,30 @@ export function msg(s) {
   G.msgT = Math.max(4, s.length * 0.14 + 1.5);
   G.msgAge = 0;
 }
+/** Characters a line of small text may have in a banner: 38 of the screen's 40, so it keeps a margin. */
+export const BANNER_COLS = (SW - 16) / 8;
+/**
+ * Large text across the middle of the screen, with a line or more of small text under it, for `dur` seconds.
+ * The small text is broken into even lines that fit the screen. A title too long for big letters is drawn small.
+ */
 export function bigText(t, sub, col, dur) {
-  G.banner = { t, sub, col, d: dur || 2.5 };
+  G.banner = {
+    t,
+    sub,
+    col,
+    d: dur || 2.5,
+    big: t.length * 16 <= SW - 16,
+    lines: sub ? wrapEven(sub, BANNER_COLS) : [],
+  };
 }
 export function pop(x, y, t, col) {
   G.pops.push({ x, y, t, col: col || 1, l: 1.2 });
 }
 export const ppos = () => P.car || P;
+/** What fire does on foot now: 'gun' while there is ammo, then 'knife' if the player has one, else 'fist'. */
+export const weapon = () => (P.ammo > 0 ? 'gun' : P.knife ? 'knife' : 'fist');
+/** The HUD's word for it: the ammo left (AMMO12), or KNIFE or FIST once it runs out. */
+export const weaponLabel = () =>
+  weapon() === 'gun' ? 'AMMO' + String(P.ammo).padStart(2, '0') : weapon().toUpperCase();
 export const onScreen = (x, y, m) =>
   x > G.camX - m && x < G.camX + SW + m && y > G.camY - m && y < G.camY + VH + m;

@@ -73,6 +73,7 @@ export function mkHonk() {
     arm: 0,
     armT: 0,
     cd: 1,
+    ko: 0, // never knocked down: a punch only ruffles him
     flap: 0,
     swim: false,
   };
@@ -104,6 +105,7 @@ export function mkPed(x, y, type) {
     anim: R() * 9,
     arm: 0,
     armT: 0,
+    ko: 0, // seconds left lying knocked down
     cd: 1,
   };
 }

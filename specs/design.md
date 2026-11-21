@@ -65,9 +65,14 @@ People are seen from above, about the size of a swimmer's splash, so that they r
 - **Arm out:**
   - When the player fires, the right arm goes straight out in front, the hand about 7 pixels ahead of the
     middle, with a short dark grey (11) gun beyond it. The other hand stays at the side.
-  - When the player punches (fire with no ammo), the same arm goes out with a bigger fist and no gun.
+  - When the player punches, the same arm goes out with a bigger fist and no gun.
+  - When the player stabs, the same arm goes out with a short white (1) blade where the gun would be.
   - A police officer firing does the same as the player firing.
   - The arm stays out for 0.2 seconds (`ARM_OUT_T`), then the walk carries on.
+- **Knocked down:** flat on their back, head to the front: legs out straight behind in the trousers' colour,
+  arms flung wide, face up with the hair (or a police officer's cap) at the crown. A cultist's robe covers the
+  legs; a scooter rider's scooter lies on its side beside them. Two small yellow (7) stars go round just above
+  the head until they get up.
 - **Not walking:**
   - A scooter rider stands on the deck, hands on the handlebar.
   - A cultist stands in a wide robe, hands held together in front, the hood hanging down the back.
@@ -115,6 +120,43 @@ pixel or two. The arrest distance stays at 7.
 > cap, are what to keep. The five walking poses and the arm out are seven frames for each of the directions
 > the C64 version keeps.
 
+## Fighting on foot
+
+`js/player.js` (fire), `js/peds.js` (`knockDown`), `MELEE`, `KO`, `KNIFE` and `AMMO_MAX` in `js/config.js`.
+
+Fire on foot uses the gun while there is ammo. Out of ammo, the player fights hand to hand: with the knife if
+they have one, otherwise with their fists. Nobody fires in the water.
+
+| | Gun | Knife | Fists |
+|---|---|---|---|
+| When | ammo left | no ammo, knife | no ammo, no knife |
+| Reach | a bullet | the first person within 7 of the point 10 ahead | the first person within 7 of the point 7 ahead |
+| Wait before the next | 0.22 s | 0.28 s | 0.35 s |
+| What it does | kills | kills, even someone already down | knocks down; passes over anyone already down |
+| Heat | 1.5 a shot, then 6 a kill (28 a police officer) | 6 a kill (28 a police officer) | 3 (14 a police officer): half a kill |
+
+**Knocked down:**
+- They lie flat for 4 seconds (`KO.t`), and can still be run over, shot or stabbed.
+- People within 60 of them run for 2 seconds.
+- Then they get up. A passer-by runs from where the player is; a police officer carries on chasing; a cultist
+  goes back to the meeting.
+- A police officer who is down cannot arrest, shoot or notice the player, so the heat keeps cooling with them
+  lying there.
+
+**The knife:**
+- A pickup marked **K** (black on light grey). 6% of the pickups around the city are knives, and someone the
+  player kills drops one 8% of the time, unless the player already has one.
+- Picking it up says so. A spare one is pawned for $10.
+- The player keeps it until they are wasted or busted.
+
+**Ammo** stops at 99. An ammo pickup gives up to 12, as many as fit.
+
+**The HUD** shows what fire does, at the right of its top line, in place of the old `A012`:
+- `AMMO12` in yellow (7) while there is ammo, always two digits;
+- `KNIFE` in light grey (15), or `FIST` in light red (10), once it runs out.
+
+The car's health bar is 28 pixels wide, so `AMMO99` fits beside it.
+
 ## Big Honk
 
 Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can hurt him. The numbers are in
@@ -142,7 +184,8 @@ Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can 
     canal.
   - He walks at 18 px/s and swims just as fast: he is a goose.
   - The spawner never clears him away, however far off the player is, and gunfire does not scare him.
-- **Nothing hurts him:** shot, punched, run over or caught in a blast, he does not die. Instead:
+- **Nothing hurts him:** shot, stabbed, punched, run over or caught in a blast, he does not die and is not
+  knocked down. Instead:
   - he flaps for 1.2 seconds (`HONK.flapT`), honks (two nasal blasts, `sfx.honk`) and says `HONK!` in yellow;
   - he runs off away from what hit him at 44 px/s;
   - nothing ruffles him again until he stops flapping;

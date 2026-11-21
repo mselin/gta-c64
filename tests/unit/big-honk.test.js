@@ -18,7 +18,7 @@ import {
   poseOf,
 } from '../../js/figures.js';
 import { updBullets } from '../../js/items.js';
-import { killPed, updPeds } from '../../js/peds.js';
+import { killPed, knockDown, updPeds } from '../../js/peds.js';
 import { spawner } from '../../js/spawner.js';
 import { initWorld } from '../../js/game.js';
 
@@ -95,7 +95,7 @@ test('flapping, his wings spread well beyond his body, out to the sides and then
   );
 });
 
-test('nothing hurts him: shot, run over, punched or blown up, he flaps and honks, and no crime is counted', () => {
+test('nothing hurts him: shot, run over, stabbed, punched or blown up, he flaps and honks, and no crime is counted', () => {
   const ruffled = (h) => G.peds.includes(h) && h.flap > 0;
   // Shot.
   let h = honk();
@@ -111,10 +111,17 @@ test('nothing hurts him: shot, run over, punched or blown up, he flaps and honks
   G.cars = [c];
   updPeds(DT);
   assert.ok(ruffled(h), 'run over');
-  // Punched, or caught in a blast: the same call, from the player or from a car.
+  // Stabbed, or caught in a blast: the same call, from the player or from a car.
   h = honk();
   killPed(h, true, P);
+  assert.ok(ruffled(h), 'stabbed');
+  // Punched: anyone else would be knocked down.
+  h = honk();
+  Object.assign(P, { x: h.x - 8, y: h.y });
+  knockDown(h);
   assert.ok(ruffled(h), 'punched');
+  assert.ok(!(h.ko > 0), 'and not knocked down');
+  assert.equal(h.fx, P.x, 'ruffled from where the player stands');
   h = honk();
   killPed(h, false, { x: h.x, y: h.y - 10 });
   assert.ok(ruffled(h), 'blown up');

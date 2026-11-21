@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The player on foot and at the wheel: movement, weapons, getting in and out of cars, dying and getting arrested.
-import { DIRS, HIT, JACK, KIND } from './config.js';
+import { DIRS, HIT, JACK, KIND, MELEE } from './config.js';
 import { angDiff, clamp, hyp, pick } from './util.js';
 import { COPS, HOSP, footClear, waterAt } from './world.js';
 import { noise, sfx } from './audio.js';
-import { G, K, P, bigText, edge, msg, touch } from './state.js';
+import { G, K, P, bigText, edge, msg, touch, weapon } from './state.js';
 import { mkPed } from './entities.js';
 import { crime } from './heat.js';
 import { carPhys, sidePos } from './cars.js';
-import { killPed, scare } from './peds.js';
+import { killPed, knockDown, scare } from './peds.js';
 import { failJob } from './missions.js';
 import { radio } from './radio.js';
-import { ARM_OUT_T, PUNCH, SHOOT } from './figures.js';
+import { ARM_OUT_T, PUNCH, SHOOT, STAB } from './figures.js';
 
 let downKind = '';
 let skidT = 0;
@@ -30,6 +30,7 @@ export function down(kind, why) {
   G.screen = 'down';
   downKind = kind;
   G.downT = 3.2;
+  P.knife = false; // confiscated, or lost in the ambulance
   if (P.car) {
     P.car.driver = false;
     P.car = null;
@@ -227,15 +228,20 @@ export function updPlayer(dt) {
         crime(1.5);
         scare(P.x, P.y, 110, 4);
       } else {
-        P.cd = 0.35;
-        P.arm = PUNCH;
+        // Out of ammo: a stab with the knife kills; a punch knocks someone down. Either passes over nobody
+        // already down except a stab, which finishes the job.
+        const knife = weapon() === 'knife',
+          w = knife ? MELEE.knife : MELEE.fist,
+          hx = P.x + fx * w.ahead,
+          hy = P.y + fy * w.ahead;
+        P.cd = w.cd;
+        P.arm = knife ? STAB : PUNCH;
         P.armT = ARM_OUT_T;
         sfx.punch();
-        const hx = P.x + fx * 7,
-          hy = P.y + fy * 7;
         for (const q of G.peds.slice())
-          if (hyp(q.x - hx, q.y - hy) < 7) {
-            killPed(q, true, P);
+          if ((knife || !(q.ko > 0)) && hyp(q.x - hx, q.y - hy) < w.r) {
+            if (knife) killPed(q, true, P);
+            else knockDown(q);
             break;
           }
       }

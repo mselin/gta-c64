@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Keeps traffic, pedestrians, police and pickups populated around the player.
-import { BLK, DIRS, GRASS, KIND, MW, NB, NOTICE, PI, PLAZA, WALK, WPX } from './config.js';
+import { BLK, DIRS, GRASS, KIND, KNIFE, MW, NB, NOTICE, PI, PLAZA, WALK, WPX } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { map, tileAt } from './world.js';
 import { G, P, onScreen, ppos } from './state.js';
@@ -86,7 +86,8 @@ export function placePickup(pk) {
       pk.x = tx * 16 + 8;
       pk.y = ty * 16 + 8;
       const r = R();
-      pk.type = r < 0.34 ? 'ammo' : r < 0.62 ? 'cash' : r < 0.8 ? 'donut' : 'med';
+      pk.type =
+        r < 0.34 ? 'ammo' : r < 0.62 ? 'cash' : r < 0.8 ? 'donut' : r < 1 - KNIFE.map ? 'med' : 'knife';
       pk.v = 50 + Math.floor(R() * 6) * 50;
       pk.t = 0;
       return pk;
