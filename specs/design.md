@@ -314,6 +314,35 @@ who is not knocked down):
 > **C64 note.** The C64 version keeps few cars at once (six, by the sprite multiplexer). That leaves few patrol
 > cars, so the cruiser is noticed less often there unless chasing cars spawn sooner.
 
+## Banners
+
+`bigText` in `js/state.js`, drawn by `drawWorld` in `js/render.js`.
+
+Big text across the middle of the screen, with small text under it:
+
+| Banner | Colour | Under it | Seconds |
+|---|---|---|---|
+| BUSTED | light blue (14) | the reason, or YOU HAVE THE RIGHT TO REMAIN BROKE | 3.2 |
+| FLATLINED | red (2) | the reason, or THOUGHTS AND PRAYERS HAVE BEEN DISPATCHED | 3.2 |
+| A job's title, when it starts | yellow (7) | REWARD $ and the pay | 2.5 |
+| JOB DONE | light green (13) | +$ and the pay, (UNDECLARED) | 2.5 |
+| JOB BOTCHED | red (2) | why, or TIME IS MONEY AND YOU HAVE NEITHER | 2.5 |
+
+**Everything fits the screen.** The screen is 40 characters across (320 pixels in 8-pixel letters):
+- **The title** is in double-size letters if it has at most 19 characters, with a margin; otherwise in
+  ordinary letters. Every title the game has today fits in double size.
+- **The text under it** is broken at spaces into lines of at most 38 characters, a character's margin each side.
+  It uses as few lines as it can, and makes them as even as they go, so no word is left alone on a line
+  (`wrapEven` in `js/util.js`). A word is cut only if it is longer than a line.
+- **The box** is black, the width of the screen, with a line of the title's colour above and below. It grows down
+  10 pixels for each line of text after the first. A test checks that every text the code puts in a banner takes
+  at most 3 lines.
+- **The bug it fixes:** before mselin/gta-c64#14, the text was not broken into lines, and anything over 40
+  characters ran off both sides. THOUGHTS AND PRAYERS HAVE BEEN DISPATCHED is 41.
+
+> **C64 note.** The C64 text screen is 40 columns, the same as the browser game's 320 pixels in 8-pixel letters,
+> so the same limits hold: 38 characters a line under the title, and 19 for a title in double-size letters.
+
 ## Title screen and icon
 
 **Title** (`drawTitle` in `js/render.js`):
