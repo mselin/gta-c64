@@ -275,6 +275,21 @@ Heat is in `js/heat.js`, and the police in `js/spawner.js` and `js/cars.js`.
 **Cooling down:** with heat above 0 and no chasing car or officer near, the heat drops one level every
 9 seconds. Its points fall to that level's threshold.
 
+**The siren:** with heat above 0 and the police near (a chasing car within 150, or an officer on foot within 120
+who is not knocked down):
+- **Sound:** it wails every 0.7 seconds, two square-wave notes of 0.33 seconds, 620 Hz then 830 Hz.
+- **Border:** the screen border flashes red (2) and blue (6), changing every half second.
+- **Only while they are near:** both stop the moment the police are out of range. The wail starts afresh when
+  they come back.
+- **Only in play:** not on the busted or flatlined screen, while paused, or behind the return-to-title dialog or
+  the info page (`sirenFlash` in `js/state.js`).
+- **The bug it fixes:** before mselin/gta-c64#18, the border kept flashing with no police about for as long as
+  there was any heat, including after the player came back from the title screen.
+
+> **C64 note.** The border is the VIC-II border colour (`$D020`): one write a frame, the colour changing every
+> 25 frames on PAL. Two colour changes a second stays well below the three flashes a second that can set off
+> photosensitive seizures.
+
 **The response:**
 - **Chasing cars:** while heat is above 0, the police keep up to `min(5, heat)` cars chasing, adding one every
   2.2 seconds.
@@ -323,3 +338,21 @@ These are not part of the game's design and are not expected on the C64:
 - **The radio,** which streams from the High Voltage SID Collection. The C64 version has its own music; see
   its roadmap.
 - **Skid marks and other decals** painted onto the map.
+- **The browser check** (`js/compat.js`), on the loading screen. It is a classic script in ES5, so it runs even
+  where the game's modules cannot.
+  - **Fatal:** the game's place is taken by a `?BROWSER ERROR` box that lists what is missing, and suggests a
+    current Firefox, Chrome, Edge or Safari, or updating a phone. The game cannot run without:
+    - JavaScript modules;
+    - JavaScript from 2022 (`Object.hasOwn`, `Array.prototype.at`);
+    - a 2D canvas;
+    - animation frames;
+    - Pointer Events, on a touch-only device.
+  - **A note** at the bottom of the loading screen, with OK, for what only part of the game needs:
+    - no Web Audio: no sound;
+    - no WebAssembly, AudioWorklet or 64-bit typed arrays: no radio music;
+    - storage blocked: settings are not kept;
+    - on a touch-only device that was not started from the home screen, no full screen.
+
+    Once dismissed, the same note is not shown again. It also goes away once the game is under way.
+  - **Did not start:** if the game has not started 3 seconds after the page has loaded, the box says so, with the
+    first error, and offers a reload.
