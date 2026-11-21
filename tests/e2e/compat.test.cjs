@@ -5,7 +5,8 @@
 /* global HTMLCanvasElement, Document */
 const { test, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { chromium, devices } = require('playwright');
+const playwright = require('playwright');
+const { ENGINE, contextOptions, launchOptions, onlyIn } = require('./helpers.cjs');
 const { serve } = require('../server.cjs');
 
 let open = [];
@@ -20,14 +21,10 @@ afterEach(async () => {
  */
 async function page(init, options = {}) {
   const server = await serve(0);
-  const browser = await chromium.launch();
-  open.push(
-    () => server.close(),
-    () => browser.close(),
-  );
-  const context = await browser.newContext(
-    options.device ? devices[options.device] : { viewport: { width: 960, height: 680 } },
-  );
+  open.push(() => server.close());
+  const browser = await playwright[ENGINE].launch(launchOptions());
+  open.push(() => browser.close());
+  const context = await browser.newContext(contextOptions(options.device));
   const p = await context.newPage();
   if (init) await p.addInitScript(init);
   if (options.route) await p.route(options.route.url, options.route.handler);
@@ -105,21 +102,30 @@ test('a game that does not start says so, with what went wrong, and offers a rel
   assert.equal(await box(p).getByRole('button', { name: 'RELOAD' }).count(), 1);
 });
 
-test('a phone that cannot go full screen gets a note about it; a complete one gets none', async () => {
-  const phone = 'Pixel 7';
-  const p = await page(
-    () => {
-      Object.defineProperty(Document.prototype, 'fullscreenEnabled', { get: () => false });
-    },
-    { device: phone },
-  );
-  await started(p);
-  await box(p).waitFor();
-  assert.match(await box(p).innerText(), /NO FULL SCREEN/);
-  // Above the turn-your-phone sign, so it can be read and put away.
-  await box(p).getByRole('button', { name: 'OK' }).click();
-  assert.equal(await box(p).count(), 0);
-  const q = await page(null, { device: phone });
-  await started(q);
-  assert.deepEqual(await q.evaluate(() => window.sleazeburgCompat.result.warn.map((i) => i.id)), []);
-});
+test(
+  'a phone that cannot go full screen gets a note about it; a complete one gets none',
+  {
+    skip: onlyIn(
+      ['chromium', 'webkit'],
+      'it needs a phone emulated, with a touch screen as its only pointer',
+    ),
+  },
+  async () => {
+    const phone = 'Pixel 7';
+    const p = await page(
+      () => {
+        Object.defineProperty(Document.prototype, 'fullscreenEnabled', { get: () => false });
+      },
+      { device: phone },
+    );
+    await started(p);
+    await box(p).waitFor();
+    assert.match(await box(p).innerText(), /NO FULL SCREEN/);
+    // Above the turn-your-phone sign, so it can be read and put away.
+    await box(p).getByRole('button', { name: 'OK' }).click();
+    assert.equal(await box(p).count(), 0);
+    const q = await page(null, { device: phone });
+    await started(q);
+    assert.deepEqual(await q.evaluate(() => window.sleazeburgCompat.result.warn.map((i) => i.id)), []);
+  },
+);

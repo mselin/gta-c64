@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 const { test, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { openGame, testTune } = require('./helpers.cjs');
+const { onlyIn, openGame, testTune } = require('./helpers.cjs');
 const stations = require('../../radio/stations.json');
 
 let game;
@@ -205,20 +205,24 @@ test('a browser without WebAssembly is told so at once, and no tunes are downloa
   game.errors.length = 0;
 });
 
-test('a device too slow for the emulator gets economy mode, then an explanation', async () => {
-  await game.press('KeyM');
-  await game.until((s) => s.radioState().playing && !s.radioState().busy, 15000);
-  assert.equal((await radio()).health.economy, false);
-  // Make this machine forty times slower, far past what any setting can rescue.
-  const cdp = await game.page.context().newCDPSession(game.page);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 40 });
-  await game.until((s) => s.radioState().health.economy, 60000);
-  await game.until((s) => s.radioState().health.struggling, 60000);
-  assert.match(await game.read((s) => s.G.msgTxt), /CANNOT KEEP UP/);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-  assert.equal(
-    (await radio()).station,
-    stations.stations[0].name,
-    "it keeps playing; the choice is the listener's",
-  );
-});
+test(
+  'a device too slow for the emulator gets economy mode, then an explanation',
+  { skip: onlyIn(['chromium'], 'it slows the CPU with the Chrome DevTools Protocol') },
+  async () => {
+    await game.press('KeyM');
+    await game.until((s) => s.radioState().playing && !s.radioState().busy, 15000);
+    assert.equal((await radio()).health.economy, false);
+    // Make this machine forty times slower, far past what any setting can rescue.
+    const cdp = await game.page.context().newCDPSession(game.page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 40 });
+    await game.until((s) => s.radioState().health.economy, 60000);
+    await game.until((s) => s.radioState().health.struggling, 60000);
+    assert.match(await game.read((s) => s.G.msgTxt), /CANNOT KEEP UP/);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    assert.equal(
+      (await radio()).station,
+      stations.stations[0].name,
+      "it keeps playing; the choice is the listener's",
+    );
+  },
+);

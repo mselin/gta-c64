@@ -1,17 +1,24 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The game on a phone: steering by holding a finger on the screen, the icon buttons, and full screen.
-const { test, beforeEach, afterEach } = require('node:test');
+const { test: nodeTest, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { openGame } = require('./helpers.cjs');
+const { onlyIn, openGame } = require('./helpers.cjs');
+
+// The fingers on the screen are sent with the Chrome DevTools Protocol, so these run in Chromium only. The other
+// engines still load the page as a phone in the browser check's tests (compat.test.cjs).
+const skip = onlyIn(['chromium'], 'the fingers are sent with the Chrome DevTools Protocol');
+const test = (name, fn) => nodeTest(name, { skip }, fn);
 
 const PHONE = 'Pixel 8 Pro landscape';
 let game, cdp;
 
 beforeEach(async () => {
+  if (skip) return;
   game = await openGame({ device: PHONE });
   cdp = await game.page.context().newCDPSession(game.page);
 });
 afterEach(async () => {
+  if (skip) return;
   const errors = game.errors;
   await game.close();
   assert.deepEqual(errors, [], 'the page logged errors');
