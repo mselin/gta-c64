@@ -152,7 +152,10 @@ Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can 
 
 > **C64 note.** He fits a sprite, at most 22 × 22 pixels with his wings out. A multicolour sprite has three
 > colours and transparent. His white and black are two of them, which leaves one for the beak and feet (orange)
-> or the chain (yellow): one of those goes, or a second sprite lies over the first.
+> or the chain (yellow): one of those goes, or a second sprite lies over the first. The C64 version keeps the
+> chain and draws his beak yellow too, with his grey tail and wings white and no feet. It has a frame for each
+> way he faces and one with his wings out, and sways him a pixel from side to side as he walks instead of
+> paddling his feet. Its traffic does not stop for him yet, and he has no honk until it has sound.
 
 ## Cars
 
