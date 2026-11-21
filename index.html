@@ -35,6 +35,17 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;outli
 #ibox button{font:inherit;background:#6c5eb5;color:#fff;border:2px solid #b6adeb;border-radius:3px;padding:4px 10px;margin:3px 4px 3px 0;cursor:pointer}
 #ibox button:hover,#ibtn:hover{background:#8a7dd0}
 #ibox .small{font-size:13px;color:#b6adeb}
+/* The browser check (js/compat.js): in place of the game when it cannot run, or a note on the loading screen.
+   Old CSS only (no inset or min()), as it is for browsers too old for the game. */
+#compat{box-sizing:border-box;color:#fff;font:15px/1.5 ui-monospace,Menlo,Consolas,monospace;-webkit-user-select:text;user-select:text;touch-action:auto}
+#compat.fatal{position:fixed;top:0;right:0;bottom:0;left:0;z-index:20;display:flex;align-items:center;justify-content:center;background:#352879;padding:16px}
+#compat.fatal .box{width:640px;max-width:100%;box-sizing:border-box;border:10px solid #6c5eb5;padding:16px 20px;color:#b6adeb}
+#compat.warn{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:9;width:560px;max-width:94vw;background:#352879;border:4px solid #6c5eb5;padding:10px 14px;color:#b6adeb}
+#compat .big{color:#fff;font-weight:bold;letter-spacing:2px;margin:0 0 6px}
+#compat p{margin:6px 0}#compat ul{margin:4px 0;padding-left:20px}#compat li{margin:2px 0;color:#fff}
+#compat .small{font-size:13px;color:#9ad284;overflow-wrap:anywhere}
+#compat button{font:inherit;min-width:64px;min-height:44px;background:#6c5eb5;color:#fff;border:2px solid #b6adeb;border-radius:3px;padding:4px 12px;margin-top:6px;cursor:pointer}
+#compat button:focus-visible{outline:3px solid #b8c76f;outline-offset:2px}
 /* After the #ibtn rule, so that it wins: 44 pixels is the smallest comfortable target for a finger. */
 @media (pointer:coarse){#ibtn{width:44px;height:44px;font-size:22px}}
 </style></head><body>
@@ -78,4 +89,5 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;outli
 <p class="small"><a href="terms.html" target="_blank" rel="noopener">Terms of use</a> &middot; <a href="privacy.html" target="_blank" rel="noopener">Privacy</a> &middot; <a href="https://github.com/mselin/gta-c64" target="_blank" rel="noopener">Source code</a></p>
 <p><button id="iclose">CLOSE</button></p>
 </div></div>
+<script src="js/compat.js"></script>
 <script type="module" src="js/main.js"></script></body></html>

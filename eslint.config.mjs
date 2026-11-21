@@ -1,7 +1,15 @@
 import globals from 'globals';
 
 export default [
-  { ignores: ['usbsid-player/**', 'node_modules/**', 'desktop/dist/**', 'desktop/node_modules/**', 'desktop/src-tauri/**'] },
+  {
+    ignores: [
+      'usbsid-player/**',
+      'node_modules/**',
+      'desktop/dist/**',
+      'desktop/node_modules/**',
+      'desktop/src-tauri/**',
+    ],
+  },
   {
     // The desktop app's build and test scripts, run with Node.
     files: ['desktop/*.mjs'],
@@ -16,7 +24,16 @@ export default [
   {
     files: ['js/**/*.js', 'sidplayer.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: globals.browser },
-    rules: { 'no-undef': 'error', 'no-unused-vars': ['warn', { caughtErrors: 'none', argsIgnorePattern: '^_' }] },
+    rules: {
+      'no-undef': 'error',
+      'no-unused-vars': ['warn', { caughtErrors: 'none', argsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    // The browser check: a classic script in ES5, so that it runs in browsers too old for the game itself.
+    files: ['js/compat.js'],
+    languageOptions: { ecmaVersion: 5, sourceType: 'script', globals: globals.browser },
+    rules: { 'no-undef': 'error', 'no-unused-vars': ['warn', { caughtErrors: 'none' }] },
   },
   {
     // The bridge's helper window: a classic script in its own page.
@@ -31,7 +48,11 @@ export default [
   },
   {
     files: ['tests/**/*.cjs'],
-    languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: { ...globals.node, window: 'readonly', document: 'readonly' } },
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: { ...globals.node, window: 'readonly', document: 'readonly' },
+    },
     rules: { 'no-undef': 'error' },
   },
 ];
