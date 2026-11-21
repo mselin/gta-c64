@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Pedestrians and police on foot.
-import { DIRS, GRASS, HIT, KNIFE, KO, LOT, PAL, PLAZA, ROAD, WALK } from './config.js';
+// Pedestrians and police on foot, and Big Honk.
+import { DIRS, GRASS, HIT, HONK, KNIFE, KO, LOT, PAL, PLAZA, ROAD, WALK, WATER } from './config.js';
 import { R, hyp } from './util.js';
 import { decals, nearestLand, solidAt, tileAt, wallAt, waterAt } from './world.js';
 import { sfx } from './audio.js';
@@ -27,7 +27,15 @@ function stain(p) {
   decals.ctx.fillStyle = PAL[p.shirt];
   decals.ctx.fillRect(Math.floor(p.x) - 2, Math.floor(p.y) - 3, 5, 6);
 }
-export function killPed(p, byPlayer) {
+/**
+ * Someone is killed: shot, punched, run over or caught in a blast, by the player or not. `from` is where it
+ * came from. Big Honk is the exception: nothing hurts him, it only ruffles him.
+ */
+export function killPed(p, byPlayer, from = null) {
+  if (p.type === 'honk') {
+    ruffle(p, from);
+    return;
+  }
   const i = G.peds.indexOf(p);
   if (i < 0) return;
   G.peds.splice(i, 1);
@@ -48,8 +56,15 @@ export function killPed(p, byPlayer) {
     }
   }
 }
-/** A punch: down on their back for KO.t seconds, then up and away. Half the heat of a kill. */
+/**
+ * A punch: down on their back for KO.t seconds, then up and away. Half the heat of a kill. Big Honk cannot be
+ * knocked down: a punch from the player only ruffles him.
+ */
 export function knockDown(p) {
+  if (p.type === 'honk') {
+    ruffle(p, P);
+    return;
+  }
   p.ko = KO.t;
   p.armT = 0;
   crime(p.type === 'cop' ? KO.copCrime : KO.crime);
@@ -66,7 +81,7 @@ function getUp(p) {
 }
 export function scare(x, y, r, t) {
   for (const q of G.peds)
-    if (q.type !== 'cop' && hyp(q.x - x, q.y - y) < r) {
+    if (q.type !== 'cop' && q.type !== 'honk' && hyp(q.x - x, q.y - y) < r) {
       q.flee = t;
       q.fx = x;
       q.fy = y;
@@ -123,6 +138,74 @@ function pedPick(p) {
   }
   p.t = 1 + R() * 5;
 }
+/**
+ * What would hurt anyone else only ruffles Big Honk: he flaps his wings, honks, and runs off away from it,
+ * flapping, for HONK.flapT seconds, during which nothing ruffles him again.
+ */
+function ruffle(p, from) {
+  if (p.flap > 0) return;
+  p.flap = HONK.flapT;
+  p.fx = from ? from.x : p.x - p.dx;
+  p.fy = from ? from.y : p.y - p.dy;
+  if (onScreen(p.x, p.y, 10)) {
+    sfx.honk();
+    pop(p.x, p.y - 12, 'HONK!', 7);
+  }
+}
+/**
+ * Whether Big Honk will head a way: onto a bank, the water or grass ahead, and not off The Moat. Sometimes
+ * (jay) a road too: he crosses the bridges, and so gets up and down the whole canal.
+ */
+function honkWants(p, dx, dy) {
+  const x = p.x + dx * 9,
+    t = tileAt(x, p.y + dy * 9);
+  return (
+    x >= HONK.x0 &&
+    x < HONK.x1 &&
+    (t === WALK || t === WATER || t === GRASS || t === PLAZA || (p.jay && t === ROAD))
+  );
+}
+function honkPick(p) {
+  p.jay = R() < HONK.jay;
+  const o = [0, 1, 2, 3].sort(() => R() - 0.5);
+  let ch = o
+    .map((i) => DIRS[i])
+    .find((d) => !(d[0] === -p.dx && d[1] === -p.dy && R() < 0.8) && honkWants(p, d[0], d[1]));
+  // Nothing he likes: anywhere he can go on The Moat, a bridge's road included.
+  ch ??= o
+    .map((i) => DIRS[i])
+    .find((d) => {
+      const x = p.x + d[0] * 9;
+      return x >= HONK.x0 && x < HONK.x1 && !solidAt(x, p.y + d[1] * 9);
+    });
+  if (ch) {
+    p.dx = ch[0];
+    p.dy = ch[1];
+  }
+  p.t = 1 + R() * 5;
+}
+/** Move Big Honk, never off The Moat or into a wall. A goose swims as fast as he walks. */
+function honkMove(p, vx, vy, dt) {
+  const nx = p.x + vx * dt,
+    ny = p.y + vy * dt;
+  if (nx >= HONK.x0 && nx < HONK.x1 && !wallAt(nx, p.y)) p.x = nx;
+  if (!wallAt(p.x, ny)) p.y = ny;
+  p.swim = waterAt(p.x, p.y);
+}
+/** Big Honk wanders the banks of The Moat and paddles in it, as he pleases; ruffled, he runs off flapping. */
+function updHonk(p, dt) {
+  if (p.flap > 0) {
+    p.flap -= dt;
+    const dx = p.x - p.fx,
+      dy = p.y - p.fy,
+      d = hyp(dx, dy) || 1;
+    honkMove(p, (dx / d) * HONK.run, (dy / d) * HONK.run, dt);
+    return;
+  }
+  p.t -= dt;
+  if (p.t <= 0 || !honkWants(p, p.dx, p.dy)) honkPick(p);
+  honkMove(p, p.dx * p.spd, p.dy * p.spd, dt);
+}
 export function updPeds(dt) {
   const pl = ppos();
   for (const p of G.peds.slice()) {
@@ -134,6 +217,10 @@ export function updPeds(dt) {
       continue;
     }
     if (p.type === 'cult') continue; // deep in ceremony: nothing moves them
+    if (p.type === 'honk') {
+      updHonk(p, dt);
+      continue;
+    }
     if (p.type === 'cop' && G.heat > 0 && G.screen === 'play') {
       const dx = pl.x - p.x,
         dy = pl.y - p.y,
@@ -219,7 +306,7 @@ export function updPeds(dt) {
     for (const p of G.peds.slice())
       if (hyp(p.x - c.x, p.y - c.y) < HIT.car || hyp(p.x - fx, p.y - fy) < HIT.nose) {
         const mine = c === P.car;
-        killPed(p, mine);
+        killPed(p, mine, c);
         if (c.ai === 'cop' && !immunity) {
           immunity = true;
           msg('POLICE STATEMENT: "THE PEDESTRIAN WAS RESISTING."');

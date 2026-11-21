@@ -157,6 +157,49 @@ they have one, otherwise with their fists. Nobody fires in the water.
 
 The car's health bar is 28 pixels wide, so `AMMO99` fits beside it.
 
+## Big Honk
+
+Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can hurt him. The numbers are in
+`HONK` in `js/config.js`, his look is `gooseAt` in `js/figures.js`, and what he does is in `js/peds.js`.
+
+- **Look:** a white (1) goose seen from above, in the same 2 × 2 blocks as people. From his tail to his beak:
+  - a light grey (15) tail;
+  - his body, with the wings folded along its back half in light grey;
+  - a gold chain, yellow (7), round the bottom of his neck;
+  - black (0) sunglasses across his head, wider than it;
+  - the white front of his head, and an orange (8) beak.
+
+  He has a black outline, as everyone but the player does. He is about 12 pixels across, his feet
+  included, and 18 long.
+- **Poses:**
+  - Walking, his orange feet paddle out at his sides, on the same five-pose walk as people.
+  - Afloat, his feet do not show. He is drawn as himself in the water, not as a swimmer.
+  - Flapping, his wings go out to the sides and then back, 12 beats a second (`FLAP_RATE`), and his beak
+    opens wide.
+- **Where:** The Moat, the canal down the middle of the city and its two banks, x from 800 to 960, the whole
+  length of the city.
+  - A new game finds him on the west bank at (808, 840).
+  - He wanders like a passer-by, preferring the banks, the water and grass. Each time he picks a way, he
+    is ready to cross a road three times in ten (`HONK.jay`), so he gets over the bridges and up and down the
+    canal.
+  - He walks at 18 px/s and swims just as fast: he is a goose.
+  - The spawner never clears him away, however far off the player is, and gunfire does not scare him.
+- **Nothing hurts him:** shot, stabbed, punched, run over or caught in a blast, he does not die and is not
+  knocked down. Instead:
+  - he flaps for 1.2 seconds (`HONK.flapT`), honks (two nasal blasts, `sfx.honk`) and says `HONK!` in yellow;
+  - he runs off away from what hit him at 44 px/s;
+  - nothing ruffles him again until he stops flapping;
+  - a bullet that hits him is spent, and hitting him is no crime (firing the shot still is).
+
+  Traffic brakes for him as it does for anyone.
+
+> **C64 note.** He fits a sprite, at most 22 × 22 pixels with his wings out. A multicolour sprite has three
+> colours and transparent. His white and black are two of them, which leaves one for the beak and feet (orange)
+> or the chain (yellow): one of those goes, or a second sprite lies over the first. The C64 version keeps the
+> chain and draws his beak yellow too, with his grey tail and wings white and no feet. It has a frame for each
+> way he faces and one with his wings out, and sways him a pixel from side to side as he walks instead of
+> paddling his feet. Its traffic does not stop for him yet, and he has no honk until it has sound.
+
 ## Cars
 
 The rules are in `js/cars.js` and the kinds in `KIND` in `js/config.js`.

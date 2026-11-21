@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Constructors for cars and pedestrians.
-import { CCOLS, DIRS } from './config.js';
+import { CCOLS, DIRS, HONK } from './config.js';
 import { R, pick } from './util.js';
 import { COP } from './figures.js';
 
@@ -48,6 +48,36 @@ export const sinkStage = (c) => (!c.flooded ? 0 : c.sink < 0.3 ? 1 : c.sink < 0.
 export const CIV_SHIRTS = [4, 8, 3, 2, 10, 9, 5, 1],
   CIV_HAIR = [0, 9, 8, 7, 0],
   CIV_LEGS = [11, 9, 0, 12];
+/**
+ * Big Honk (see HONK in config.js). A goose, so clothes do not come into it; made without any random numbers,
+ * so a new game is the same with him as without.
+ */
+export function mkHonk() {
+  return {
+    x: HONK.x,
+    y: HONK.y,
+    dx: 0,
+    dy: 1,
+    type: 'honk',
+    spd: HONK.spd,
+    shirt: 1,
+    hair: 1,
+    legs: 8,
+    skin: 8,
+    t: 0,
+    flee: 0,
+    fx: 0,
+    fy: 0,
+    jay: false,
+    anim: 0,
+    arm: 0,
+    armT: 0,
+    cd: 1,
+    ko: 0, // never knocked down: a punch only ruffles him
+    flap: 0,
+    swim: false,
+  };
+}
 export function mkPed(x, y, type) {
   const d = pick(DIRS),
     // Scooter riders wear light green and cultists purple robes with the hood up.

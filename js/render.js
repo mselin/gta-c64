@@ -85,7 +85,8 @@ function drawWorld() {
   }
   for (const p of G.peds) {
     if (!onScreen(p.x, p.y, FRAME / 2)) continue;
-    if (waterAt(p.x, p.y)) drawSwimmer(p);
+    // A goose floats: Big Honk is drawn the same in the water, just without his feet.
+    if (waterAt(p.x, p.y) && p.type !== 'honk') drawSwimmer(p);
     else drawSpr(pedSpr(p, poseOf(p)), Math.atan2(p.dy, p.dx), p.x, p.y);
     if (p.ko > 0) {
       // Two little stars going round just over the head of someone knocked down.

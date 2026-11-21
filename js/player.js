@@ -240,7 +240,7 @@ export function updPlayer(dt) {
         sfx.punch();
         for (const q of G.peds.slice())
           if ((knife || !(q.ko > 0)) && hyp(q.x - hx, q.y - hy) < w.r) {
-            if (knife) killPed(q, true);
+            if (knife) killPed(q, true, P);
             else knockDown(q);
             break;
           }
