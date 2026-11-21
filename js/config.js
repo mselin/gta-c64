@@ -95,6 +95,21 @@ export const HIT = {
   lane: 9, // traffic brakes for someone this far either side of the line it drives along
   ahead: 26, // and up to this far ahead of its middle, so it stops before its bumper gets there
 };
+/**
+ * Hand to hand, when the player is out of ammo: a blow lands at the point `ahead` px in front of the player and
+ * hits the first person within `r` of it; `cd` is the wait before the next. A punch knocks someone down; a stab
+ * kills, and reaches farther.
+ */
+export const MELEE = {
+  fist: { ahead: 7, r: 7, cd: 0.35 },
+  knife: { ahead: 10, r: 7, cd: 0.28 },
+};
+/** Knocked down: how long someone stays down, in seconds, and the heat for it, half of what a kill brings. */
+export const KO = { t: 4, crime: 3, copCrime: 14 };
+/** The most ammo the player can carry: two digits, as the HUD shows it (AMMO99). */
+export const AMMO_MAX = 99;
+/** How often a pickup on the map is a knife, and how often someone the player kills drops one. */
+export const KNIFE = { map: 0.06, drop: 0.08 };
 /** The numerology cult: which crossing they meet at (counting avenues from the west and streets from the north, from 1) and how many turn up. */
 export const CULT = { ave: 6, st: 7, members: 7 };
 /** The districts of the city: the id used in code and saved data, and the name shown on screen. */

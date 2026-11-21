@@ -75,6 +75,7 @@ export function mkPed(x, y, type) {
     anim: R() * 9,
     arm: 0,
     armT: 0,
+    ko: 0, // seconds left lying knocked down
     cd: 1,
   };
 }

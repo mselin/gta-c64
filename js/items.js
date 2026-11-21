@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Bullets and pickups.
-import { DIRS, HIT, HT, KIND, WATER } from './config.js';
+import { AMMO_MAX, DIRS, HIT, HT, KIND, WATER } from './config.js';
 import { R, hyp } from './util.js';
 import { solidAt, tileAt } from './world.js';
 import { sfx } from './audio.js';
@@ -74,8 +74,17 @@ export function updPickups(dt) {
         G.cash += k.v;
         pop(k.x, k.y - 8, '+$' + k.v, 13);
       } else if (k.type === 'ammo') {
-        P.ammo += 12;
-        pop(k.x, k.y - 8, '+12 AMMO', 7);
+        const got = Math.min(12, AMMO_MAX - P.ammo);
+        P.ammo += got;
+        pop(k.x, k.y - 8, got ? '+' + got + ' AMMO' : 'AMMO FULL', 7);
+      } else if (k.type === 'knife') {
+        if (P.knife) {
+          G.cash += 10;
+          pop(k.x, k.y - 8, 'SPARE KNIFE PAWNED +$10', 15);
+        } else {
+          P.knife = true;
+          msg('A KNIFE. FOR OPENING LETTERS. AND DISPUTES.');
+        }
       } else if (k.type === 'med') {
         P.hp = Math.min(100, P.hp + 40);
         G.cash = Math.max(0, G.cash - 20);

@@ -36,7 +36,7 @@ export function updHeat(dt) {
     }
   if (!near)
     for (const q of G.peds)
-      if (q.type === 'cop' && hyp(q.x - p.x, q.y - p.y) < NOTICE.foot) {
+      if (q.type === 'cop' && !(q.ko > 0) && hyp(q.x - p.x, q.y - p.y) < NOTICE.foot) {
         near = true;
         break;
       }
