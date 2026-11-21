@@ -117,8 +117,10 @@ pixel or two. The arrest distance stays at 7.
 > ahead of its middle. A multicolour sprite (12 double-wide pixels by 21 lines) is about 12 × 10 such blocks,
 > each block one double-wide pixel two lines tall, which holds a figure at most angles. It has three colours
 > plus transparent, so the player's yellow, black and white, or a police officer's light blue, blue and white
-> cap, are what to keep. The five walking poses and the arm out are seven frames for each of the directions
-> the C64 version keeps.
+> cap, are what to keep. A figure has nine poses for each direction the C64 version keeps: five walking, the arm
+> out with a gun, a fist or a knife, and lying knocked down. The C64 player on foot (mselin/Sleazeburg64#34)
+> draws the five walking poses in eight directions with this figure, from the same shapes, in its
+> `tools/assets.mjs`.
 
 ## Fighting on foot
 
