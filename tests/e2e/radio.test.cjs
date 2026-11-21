@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 const { test, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { openGame, testTune } = require('./helpers.cjs');
+const { ENGINE, onlyIn, openGame, testTune } = require('./helpers.cjs');
 const stations = require('../../radio/stations.json');
 
 let game;
@@ -86,8 +86,10 @@ test('in the game the radio plays in a car and stops on foot', async () => {
   await game.until((s) => s.radioState().playing, 15000);
   await game.press('Space');
   await game.until((s) => s.G.screen === 'play' && !s.radioState().playing);
+  // Walk right to the car parked there: about 25 pixels, however fast or slow this browser draws.
+  const x0 = await game.read((s) => s.P.x);
   await game.page.keyboard.down('ArrowRight');
-  await game.wait(500);
+  await game.until(`(s) => s.P.x > ${x0} + 25`);
   await game.page.keyboard.up('ArrowRight');
   await game.press('KeyE');
   await game.until((s) => s.P.car && s.radioState().playing);
@@ -192,8 +194,13 @@ test('a browser that cannot start any tune falls back to the built-in station in
 
 test('a browser without WebAssembly is told so at once, and no tunes are downloaded', async () => {
   await game.close();
-  // V8's jitless mode switches WebAssembly off altogether in this Chromium.
-  game = await openGame({ browserArgs: ['--js-flags=--jitless'] });
+  // V8's jitless mode switches WebAssembly off altogether in Chromium. The other engines have no such switch, so
+  // there it is taken away in the page before the game loads.
+  game = await openGame(
+    ENGINE === 'chromium'
+      ? { browserArgs: ['--js-flags=--jitless'] }
+      : { init: () => delete window.WebAssembly },
+  );
   assert.equal(await game.page.evaluate(() => typeof WebAssembly), 'undefined');
   await game.press('Space');
   await game.until((s) => s.G.screen === 'title');
@@ -205,20 +212,24 @@ test('a browser without WebAssembly is told so at once, and no tunes are downloa
   game.errors.length = 0;
 });
 
-test('a device too slow for the emulator gets economy mode, then an explanation', async () => {
-  await game.press('KeyM');
-  await game.until((s) => s.radioState().playing && !s.radioState().busy, 15000);
-  assert.equal((await radio()).health.economy, false);
-  // Make this machine forty times slower, far past what any setting can rescue.
-  const cdp = await game.page.context().newCDPSession(game.page);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 40 });
-  await game.until((s) => s.radioState().health.economy, 60000);
-  await game.until((s) => s.radioState().health.struggling, 60000);
-  assert.match(await game.read((s) => s.G.msgTxt), /CANNOT KEEP UP/);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-  assert.equal(
-    (await radio()).station,
-    stations.stations[0].name,
-    "it keeps playing; the choice is the listener's",
-  );
-});
+test(
+  'a device too slow for the emulator gets economy mode, then an explanation',
+  { skip: onlyIn(['chromium'], 'it slows the CPU with the Chrome DevTools Protocol') },
+  async () => {
+    await game.press('KeyM');
+    await game.until((s) => s.radioState().playing && !s.radioState().busy, 15000);
+    assert.equal((await radio()).health.economy, false);
+    // Make this machine forty times slower, far past what any setting can rescue.
+    const cdp = await game.page.context().newCDPSession(game.page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 40 });
+    await game.until((s) => s.radioState().health.economy, 60000);
+    await game.until((s) => s.radioState().health.struggling, 60000);
+    assert.match(await game.read((s) => s.G.msgTxt), /CANNOT KEEP UP/);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    assert.equal(
+      (await radio()).station,
+      stations.stations[0].name,
+      "it keeps playing; the choice is the listener's",
+    );
+  },
+);

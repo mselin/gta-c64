@@ -74,6 +74,37 @@ jobs:
         env:
           SLEAZEBURG_BRIDGE: ${{ runner.temp }}/sleazeburg-presence
 
+  # The same browser tests in the other two engines: Firefox, and WebKit, the engine of Safari and of every browser
+  # on an iPhone. Both run on macOS: it is the nearest CI has to Safari, and it has a sound device, which the radio
+  # tests need (on a Linux runner Firefox's audio never starts). Without the bridge built, its four tests skip;
+  # the game job runs them in Chromium.
+  engines:
+    name: Browser tests in ${{ matrix.engine }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: firefox
+            os: macos-latest
+          - engine: webkit
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - run: npm run test:e2e
+        env:
+          SLEAZEBURG_BROWSER: ${{ matrix.engine }}
+
   bridge:
     name: Presence bridge on ${{ matrix.os }}
     strategy:
@@ -202,7 +233,7 @@ jobs:
   ok:
     name: All checks passed
     if: always()
-    needs: [site, repo, game, bridge, bridge-reproducible, homebrew, desktop]
+    needs: [site, repo, game, engines, bridge, bridge-reproducible, homebrew, desktop]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

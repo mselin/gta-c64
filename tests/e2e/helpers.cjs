@@ -1,6 +1,33 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Shared set-up for the browser tests: a local server, a headless Chromium page, and a stand-in for HVSC.
-const { chromium, devices } = require('playwright');
+const playwright = require('playwright');
+const { devices } = playwright;
+
+/**
+ * The browser engine the tests run in: chromium (the default), firefox or webkit, from SLEAZEBURG_BROWSER. CI runs
+ * the whole suite in each; WebKit is the engine of Safari, and of every browser on an iPhone.
+ */
+const ENGINE = process.env.SLEAZEBURG_BROWSER || 'chromium';
+if (!['chromium', 'firefox', 'webkit'].includes(ENGINE))
+  throw new Error(`SLEAZEBURG_BROWSER: no engine ${ENGINE}`);
+/**
+ * How to start the engine. Sound may start without a click, as it does once a player has pressed a key: Chromium
+ * and Firefox each have a switch for that; WebKit counts the tests' key presses.
+ */
+function launchOptions(args = []) {
+  if (ENGINE === 'chromium') return { args: ['--autoplay-policy=no-user-gesture-required', ...args] };
+  if (ENGINE === 'firefox')
+    return { firefoxUserPrefs: { 'media.autoplay.default': 0, 'media.autoplay.blocking_policy': 0 } };
+  return {};
+}
+/** A page's settings: the desktop window, or a phone or tablet from Playwright's list (Firefox has no mobile mode). */
+function contextOptions(device) {
+  if (!device) return { viewport: { width: 960, height: 680 } };
+  const { isMobile, ...rest } = devices[device];
+  return ENGINE === 'firefox' ? rest : { ...rest, isMobile };
+}
+/** For `test(name, { skip: onlyIn([...], why) }, fn)`: false in the engines listed, else the reason it is skipped. */
+const onlyIn = (engines, why) => (engines.includes(ENGINE) ? false : `${why}, which ${ENGINE} does not have`);
 const { serve } = require('../server.cjs');
 
 /**
@@ -32,17 +59,21 @@ function testTune(title = 'Test Tune', author = 'Nobody', released = '2026 Tests
 /**
  * Open the game in a fresh page.
  * Requests to HVSC are answered locally with the test tune and counted in `game.hvscRequests`.
- * `options.browserArgs` adds Chromium command-line switches; `options.device` emulates a phone or tablet.
+ * `options.browserArgs` adds Chromium command-line switches; `options.device` emulates a phone or tablet;
+ * `options.init` runs in the page before its scripts.
  */
 async function openGame(options = {}) {
   const server = await serve(0);
-  const browser = await chromium.launch({
-    args: ['--autoplay-policy=no-user-gesture-required', ...(options.browserArgs || [])],
-  });
+  // A browser that will not start must not leave the server running, or the test process never ends.
+  let browser;
+  try {
+    browser = await playwright[ENGINE].launch(launchOptions(options.browserArgs));
+  } catch (e) {
+    await server.close();
+    throw e;
+  }
   // options.device names a phone or tablet from Playwright's list, for the touch-screen tests.
-  const context = await browser.newContext(
-    options.device ? devices[options.device] : { viewport: { width: 960, height: 680 } },
-  );
+  const context = await browser.newContext(contextOptions(options.device));
   const page = await context.newPage();
   const game = { page, errors: [], hvscRequests: [] };
   page.on('pageerror', (e) => game.errors.push(e.message));
@@ -53,6 +84,8 @@ async function openGame(options = {}) {
     game.hvscRequests.push(decodeURI(new URL(route.request().url()).pathname));
     route.fulfill({ body: testTune(), headers: { 'access-control-allow-origin': '*' } });
   });
+  // options.init runs in the page before any of its scripts, to take something away from the browser.
+  if (options.init) await page.addInitScript(options.init);
   await page.goto(server.url);
   try {
     await page.waitForFunction(() => window.sleazeburg, null, { timeout: 15000 });
@@ -98,4 +131,4 @@ async function openGame(options = {}) {
   return game;
 }
 
-module.exports = { openGame, testTune };
+module.exports = { openGame, testTune, ENGINE, launchOptions, contextOptions, onlyIn };

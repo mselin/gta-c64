@@ -28,11 +28,12 @@ test('boots, shows the title, and starts on fire', async () => {
 
 test('the player walks, takes a car and drives it', async () => {
   await game.start();
+  // Walk right until the player has gone 25 pixels: by the game's clock, which runs slow where frames are slow,
+  // as they are in a headless browser drawing without a graphics card.
   const x0 = await game.read((s) => s.P.x);
   await game.page.keyboard.down('ArrowRight');
-  await game.wait(500);
+  await game.until(`(s) => s.P.x > ${x0} + 25`);
   await game.page.keyboard.up('ArrowRight');
-  assert.ok((await game.read((s) => s.P.x)) > x0 + 15, 'walked right');
 
   await game.press('KeyE');
   await game.until((s) => s.P.car);
