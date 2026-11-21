@@ -2,7 +2,7 @@
 // Keeps traffic, pedestrians, police and pickups populated around the player.
 import { BLK, DIRS, GRASS, KIND, KNIFE, MW, NB, NOTICE, PI, PLAZA, WALK, WPX } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
-import { map, tileAt } from './world.js';
+import { COPS, HOSP, map, tileAt } from './world.js';
 import { G, P, onScreen, ppos } from './state.js';
 import { mkCar, mkPed } from './entities.js';
 
@@ -77,12 +77,19 @@ function spawnPed() {
     return;
   }
 }
+/**
+ * Where the player starts and comes back: the hospital and the police station. No pickup lies within SPAWN_CLEAR
+ * of either, or the player would pick it up the moment they appear there.
+ */
+export const SPAWN_CLEAR = 32;
+const nearSpawn = (x, y) =>
+  hyp(x - HOSP.x, y - HOSP.y) < SPAWN_CLEAR || hyp(x - COPS.x, y - COPS.y) < SPAWN_CLEAR;
 export function placePickup(pk) {
   for (let i = 0; i < 200; i++) {
     const tx = Math.floor(R() * MW),
       ty = Math.floor(R() * MW),
       t = map[ty * MW + tx];
-    if (t === WALK || t === GRASS || t === PLAZA) {
+    if ((t === WALK || t === GRASS || t === PLAZA) && !nearSpawn(tx * 16 + 8, ty * 16 + 8)) {
       pk.x = tx * 16 + 8;
       pk.y = ty * 16 + 8;
       const r = R();

@@ -159,6 +159,29 @@ they have one, otherwise with their fists. Nobody fires in the water.
 
 The car's health bar is 28 pixels wide, so `AMMO99` fits beside it.
 
+## Pickups
+
+`placePickup` in `js/spawner.js`, `updPickups` in `js/items.js`, drawn by `drawWorld` in `js/render.js`.
+
+- **On the map:** 34 at once, each in the middle of a pavement, grass or plaza tile picked at random.
+  - **Never where the player appears:** none within 32 pixels of the hospital or the police station
+    (`SPAWN_CLEAR`). Those two points sit between two tile middles, 8 pixels from each, so a pickup there used to
+    be picked up the moment the player started or came back (in about 1 game in 27).
+  - **Picked up** when the player, or the car they drive, comes within 11 of it.
+  - **Back** 40 to 70 seconds later, somewhere else.
+
+| Kind | Share | Letter (colours) | Does |
+|---|---|---|---|
+| Ammo | 34 % | `A` (yellow on orange) | up to 12 more, to at most 99 |
+| Cash | 28 % | `$` (light green on green) | $50 to $300, in steps of $50 |
+| Donut | 18 % | `O` (white on light red) | one level of heat less, or nothing with no heat |
+| Bandage | 14 % | `+` (red on white) | 40 health back, to at most 100, and costs $20 |
+| Knife | 6 % | `K` (black on light grey) | see [Fighting on foot](#fighting-on-foot) |
+
+- **Dropped by people the player kills** (except scooter riders, which pay $0): cash 40 % of the time
+  ($10 to $90 in steps of $10), or a knife 8 % if the player has none. A dropped pickup lasts 20 seconds and
+  flashes in its last 4.
+
 ## Big Honk
 
 Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can hurt him. The numbers are in
