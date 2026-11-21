@@ -2,6 +2,7 @@
 // Shared game state, the player, held keys, and the on-screen message helpers.
 import { PI, SW, VH } from './config.js';
 import { HOSP } from './world.js';
+import { wrapEven } from './util.js';
 
 /** The parts of the state that belong to one game, as they are when it starts. */
 const freshGame = () => ({
@@ -77,8 +78,21 @@ export function msg(s) {
   G.msgT = Math.max(4, s.length * 0.14 + 1.5);
   G.msgAge = 0;
 }
+/** Characters a line of small text may have in a banner: 38 of the screen's 40, so it keeps a margin. */
+export const BANNER_COLS = (SW - 16) / 8;
+/**
+ * Large text across the middle of the screen, with a line or more of small text under it, for `dur` seconds.
+ * The small text is broken into even lines that fit the screen. A title too long for big letters is drawn small.
+ */
 export function bigText(t, sub, col, dur) {
-  G.banner = { t, sub, col, d: dur || 2.5 };
+  G.banner = {
+    t,
+    sub,
+    col,
+    d: dur || 2.5,
+    big: t.length * 16 <= SW - 16,
+    lines: sub ? wrapEven(sub, BANNER_COLS) : [],
+  };
 }
 export function pop(x, y, t, col) {
   G.pops.push({ x, y, t, col: col || 1, l: 1.2 });

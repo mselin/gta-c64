@@ -150,14 +150,17 @@ function drawWorld() {
       text(p.t, (SW - w) / 2, 8, p.col);
     }
   if (G.banner) {
-    const w = G.banner.t.length * 16;
+    // The box grows down a line for each line of small text after the first.
+    const b = G.banner,
+      sc = b.big ? 2 : 1,
+      bottom = 91 + Math.max(1, b.lines.length) * 10;
     g.fillStyle = PAL[0];
-    g.fillRect(0, 58, SW, 44);
-    g.fillStyle = PAL[G.banner.col];
+    g.fillRect(0, 58, SW, bottom - 57);
+    g.fillStyle = PAL[b.col];
     g.fillRect(0, 58, SW, 1);
-    g.fillRect(0, 101, SW, 1);
-    text(G.banner.t, Math.floor((SW - w) / 2), 64, G.banner.col, 2);
-    if (G.banner.sub) ctext(G.banner.sub, 88, 1);
+    g.fillRect(0, bottom, SW, 1);
+    ctext(b.t, b.big ? 64 : 70, b.col, sc);
+    b.lines.forEach((line, i) => ctext(line, 88 + i * 10, 1));
   }
   if (G.paused) {
     g.fillStyle = PAL[0];
