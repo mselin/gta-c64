@@ -238,6 +238,47 @@ Traffic follows its lanes on rails and is not held by these rules. It may poke a
 turning there. The moment it leaves its lane (it is hit, or the player takes it), the rules apply, starting with
 the "already in a wall" step.
 
+### Water
+
+`wetness`, `flood` and `sinkStep` in `js/cars.js`; `sinkStage` in `js/entities.js`; the pictures in `submerge`
+in `js/sprites.js`.
+
+The canal and the fountain pools are water. Water is not a wall: a car drives into it, and pays for it.
+
+- **How wet:** three points along the car, its middle and `length/2 − 3` ahead of and behind it, are each over
+  water or not, so a car is 0, ⅓, ⅔ or wholly in the water. Call that w.
+- **Wading:**
+  - acceleration × (1 − 0.6 w);
+  - the car loses 4 w times its forward speed a second, on top of the usual drag;
+  - top speed × (1 − 0.7 w), and backwards 0.4 of that, as always;
+  - grip × (1 − 0.5 w), so it slides more;
+  - braking is as on land;
+  - spray flies up from it while it goes faster than 20.
+
+  Wholly in the water a sedan could do at most 45, and it gets nowhere near that.
+- **Flooding:** a car wholly in the water after it moves floods, once and for good.
+  - The engine dies: no more throttle or steering. It drifts to a stop, its speed falling by 4 times itself a
+    second.
+  - A fire goes out, and a wreck floods like any other car.
+  - It splashes.
+  - Traffic, a parked car or a police car is no one's any more: its driver has gone.
+  - **The player** in it is left in the water where it went down, swimming, with the message
+    `THE CAR IS GONE. SWIM FOR IT. THE WARRANTY DOES NOT COVER THIS.` If it was a job's car, the job fails.
+  - Nobody can get into it again.
+- **Sinking:** it goes down over 4 seconds, with bubbles rising, drawn in three stages:
+  1. for the first 30 %, awash to the sills: the waterline laps round its edge in light blue (14);
+  2. to 75 %, water over the bodywork: every other pixel is blue (6), light colours show through in light
+     blue, and its rim is gone;
+  3. then on the bottom: a dark shape in black and blue, with only the glass catching the light and ripples
+     across it. It stays there.
+
+  Smoke stops once it is 30 % down.
+- **On the bottom** it is out of the way: other cars pass over it, and bullets cannot reach it.
+
+> **C64 note.** The sinking pictures are the car's picture redrawn three ways in every direction it keeps: for
+> a car in 16 directions, 48 more sprite frames. Changing only the sprite's colour for each stage costs no
+> frames, and nor does putting it behind the water's characters, though the water's own colour then hides it.
+
 ## Heat and the police
 
 Heat is in `js/heat.js`, and the police in `js/spawner.js` and `js/cars.js`.
