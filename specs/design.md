@@ -345,6 +345,41 @@ Big text across the middle of the screen, with small text under it:
 > **C64 note.** The C64 text screen is 40 columns, the same as the browser game's 320 pixels in 8-pixel letters,
 > so the same limits hold: 38 characters a line under the title, and 19 for a title in double-size letters.
 
+## The status panel
+
+The 24 pixels under the city (`drawWorld` in `js/render.js`): three lines of text, 40 characters each, on
+black, under a dark grey (11) line. Positions are in pixels from the left; a character is 8.
+
+**Line 1: money, heat, health, the car and what fire does.**
+
+| What | At | Shown | Colour |
+|---|---|---|---|
+| Money | 0 | `$` and six digits, `$000000` | light green (13) |
+| Heat | 64 | `HEAT`, then five `*` from 100, 8 apart | the word light grey (15); a star for each level flashes red (2) and yellow (7), the rest dark grey (11) |
+| Health | 148 | `HP`, then a bar from 168, 42 wide | green (5), red (2) at 30 or below |
+| The car, only in one | 214 | `CAR`, then a bar from 240, 28 wide | cyan (3), red (2) under 40 |
+| What fire does | right-aligned | `AMMO` and two digits (`AMMO12`), else `KNIFE` or `FIST` | yellow (7), light grey (15) or light red (10) |
+
+`AMMO99` takes the last 48 pixels, from 272. Ammo stops at 99, so it is always two digits. See
+[Fighting on foot](#fighting-on-foot).
+
+**Line 2: the job.** Its title (the first 24 characters) in yellow (7). At 216 its progress in white: `2/3` for
+kills and wrecks, the seconds held and the target for surviving (`12/30S`), or the player's own crossing for the
+cult. At 280 the time left as `m:ss`, white, flashing red under 15 seconds. With no job:
+`NO JOB. FOLLOW THE ARROW TO A "J".` in grey (12).
+
+**Line 3: messages.**
+- **The latest message,** in white. One longer than 40 characters scrolls left after a second, at 70 pixels a
+  second, and stops at its end.
+- **Otherwise, in a car with the radio on,** `RADIO`, the station and what is playing, in light blue (14),
+  scrolling round when it is too long.
+- **Otherwise** `ELECTION FUND: $` and the money ` / $25000`, in dark grey (11).
+
+> **C64 note.** The panel is three rows of 40 characters, the same as the C64 version's panel under its raster
+> split. Some of the browser game's positions fall between character columns (the stars from 100, `HP` at 148,
+> `CAR` at 214), so the C64 version rounds them to whole columns. It draws the bars with characters filled a
+> pixel column at a time. `AMMO99` is columns 34-39.
+
 ## Title screen and icon
 
 **Title** (`drawTitle` in `js/render.js`):
