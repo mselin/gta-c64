@@ -98,7 +98,8 @@ profile page link here.
 
 **Publishing:** after **All checks passed** on `main`, the **Publish the game** job puts the files the game
 loads (the ones [`desktop/stage.mjs`](desktop/stage.mjs) lists) on GitHub Pages; the tests, tools and sources
-are not published. The repository's Pages source is "GitHub Actions".
+are not published. The repository's Pages source is "GitHub Actions". The deploy step gets three tries, with a
+wait between them, because GitHub's deploy action sometimes cannot find the page it was handed a moment before.
 
 [`check_repo.py`](.github/scripts/check_repo.py) also reads an optional `PRIVATE_TERMS` repository secret:
 host names, domains and similar, one per line, that must never appear in the repository. A match fails the

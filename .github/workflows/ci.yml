@@ -228,7 +228,8 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      # (whichever try deployed it)
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy_again.outputs.page_url || steps.deploy_last.outputs.page_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -241,5 +242,24 @@ jobs:
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ${{ runner.temp }}/site
+      # GitHub's deploy step sometimes cannot find the page it was handed a moment before ("No artifacts named
+      # github-pages were found"), though the upload just above succeeded: the list of the run's artifacts lags
+      # behind. A look a little later finds it. So the deploy gets three tries, with a wait before the second
+      # and the third, and the job fails only if the last one does. A try that fails this way has not started
+      # a deployment, so the next one starts clean.
       - id: deploy
+        continue-on-error: true
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      - name: Wait before the second try
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 30
+      - id: deploy_again
+        if: steps.deploy.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      - name: Wait before the last try
+        if: steps.deploy_again.outcome == 'failure'
+        run: sleep 90
+      - id: deploy_last
+        if: steps.deploy_again.outcome == 'failure'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
