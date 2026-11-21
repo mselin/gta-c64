@@ -59,7 +59,8 @@ function testTune(title = 'Test Tune', author = 'Nobody', released = '2026 Tests
 /**
  * Open the game in a fresh page.
  * Requests to HVSC are answered locally with the test tune and counted in `game.hvscRequests`.
- * `options.browserArgs` adds Chromium command-line switches; `options.device` emulates a phone or tablet.
+ * `options.browserArgs` adds Chromium command-line switches; `options.device` emulates a phone or tablet;
+ * `options.init` runs in the page before its scripts.
  */
 async function openGame(options = {}) {
   const server = await serve(0);
@@ -83,6 +84,8 @@ async function openGame(options = {}) {
     game.hvscRequests.push(decodeURI(new URL(route.request().url()).pathname));
     route.fulfill({ body: testTune(), headers: { 'access-control-allow-origin': '*' } });
   });
+  // options.init runs in the page before any of its scripts, to take something away from the browser.
+  if (options.init) await page.addInitScript(options.init);
   await page.goto(server.url);
   try {
     await page.waitForFunction(() => window.sleazeburg, null, { timeout: 15000 });

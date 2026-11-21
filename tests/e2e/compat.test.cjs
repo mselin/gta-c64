@@ -124,8 +124,16 @@ test(
     // Above the turn-your-phone sign, so it can be read and put away.
     await box(p).getByRole('button', { name: 'OK' }).click();
     assert.equal(await box(p).count(), 0);
+    // A phone with nothing taken away gets a note only if it really cannot go full screen: Chromium's phone mode
+    // can, WebKit's cannot, like an iPhone.
     const q = await page(null, { device: phone });
     await started(q);
-    assert.deepEqual(await q.evaluate(() => window.sleazeburgCompat.result.warn.map((i) => i.id)), []);
+    const full = await q.evaluate(
+      () => !!document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function',
+    );
+    assert.deepEqual(
+      await q.evaluate(() => window.sleazeburgCompat.result.warn.map((i) => i.id)),
+      full ? [] : ['fullscreen'],
+    );
   },
 );

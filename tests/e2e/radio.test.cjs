@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 const { test, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { onlyIn, openGame, testTune } = require('./helpers.cjs');
+const { ENGINE, onlyIn, openGame, testTune } = require('./helpers.cjs');
 const stations = require('../../radio/stations.json');
 
 let game;
@@ -86,8 +86,10 @@ test('in the game the radio plays in a car and stops on foot', async () => {
   await game.until((s) => s.radioState().playing, 15000);
   await game.press('Space');
   await game.until((s) => s.G.screen === 'play' && !s.radioState().playing);
+  // Walk right to the car parked there: about 25 pixels, however fast or slow this browser draws.
+  const x0 = await game.read((s) => s.P.x);
   await game.page.keyboard.down('ArrowRight');
-  await game.wait(500);
+  await game.until(`(s) => s.P.x > ${x0} + 25`);
   await game.page.keyboard.up('ArrowRight');
   await game.press('KeyE');
   await game.until((s) => s.P.car && s.radioState().playing);
@@ -192,8 +194,13 @@ test('a browser that cannot start any tune falls back to the built-in station in
 
 test('a browser without WebAssembly is told so at once, and no tunes are downloaded', async () => {
   await game.close();
-  // V8's jitless mode switches WebAssembly off altogether in this Chromium.
-  game = await openGame({ browserArgs: ['--js-flags=--jitless'] });
+  // V8's jitless mode switches WebAssembly off altogether in Chromium. The other engines have no such switch, so
+  // there it is taken away in the page before the game loads.
+  game = await openGame(
+    ENGINE === 'chromium'
+      ? { browserArgs: ['--js-flags=--jitless'] }
+      : { init: () => delete window.WebAssembly },
+  );
   assert.equal(await game.page.evaluate(() => typeof WebAssembly), 'undefined');
   await game.press('Space');
   await game.until((s) => s.G.screen === 'title');

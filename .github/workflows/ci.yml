@@ -75,7 +75,8 @@ jobs:
           SLEAZEBURG_BRIDGE: ${{ runner.temp }}/sleazeburg-presence
 
   # The same browser tests in the other two engines: Firefox, and WebKit, the engine of Safari and of every browser
-  # on an iPhone. WebKit runs on macOS, the nearest CI has to Safari. Without the bridge built, its four tests skip;
+  # on an iPhone. Both run on macOS: it is the nearest CI has to Safari, and it has a sound device, which the radio
+  # tests need (on a Linux runner Firefox's audio never starts). Without the bridge built, its four tests skip;
   # the game job runs them in Chromium.
   engines:
     name: Browser tests in ${{ matrix.engine }}
@@ -84,7 +85,7 @@ jobs:
       matrix:
         include:
           - engine: firefox
-            os: ubuntu-24.04
+            os: macos-latest
           - engine: webkit
             os: macos-latest
     runs-on: ${{ matrix.os }}

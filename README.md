@@ -38,8 +38,8 @@ npm test
 - The same tests run in Firefox and in WebKit, Safari's engine and that of every browser on an iPhone, with
   `SLEAZEBURG_BROWSER` set to `firefox` or `webkit` (after `npx playwright install firefox webkit`). Two tests
   that need the Chrome DevTools Protocol (fingers on a touch screen, a slowed-down CPU) run in Chromium only, and
-  the phone test of the browser check needs a mobile mode, which Firefox does not have. CI runs Firefox on Linux
-  and WebKit on macOS, the nearest it has to Safari.
+  the phone test of the browser check needs a mobile mode, which Firefox does not have. CI runs both on macOS, the
+  nearest it has to Safari, and with a sound device for the radio tests.
 - `npm run lint` and `npm run format` run ESLint and Prettier.
 
 ## Layout
