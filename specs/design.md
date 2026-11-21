@@ -280,3 +280,21 @@ These are not part of the game's design and are not expected on the C64:
 - **The radio,** which streams from the High Voltage SID Collection. The C64 version has its own music; see
   its roadmap.
 - **Skid marks and other decals** painted onto the map.
+- **The browser check** (`js/compat.js`), on the loading screen. It is a classic script in ES5, so it runs even
+  where the game's modules cannot.
+  - **Fatal:** the game's place is taken by a `?BROWSER ERROR` box that lists what is missing, and suggests a
+    current Firefox, Chrome, Edge or Safari, or updating a phone. The game cannot run without:
+    - JavaScript modules;
+    - JavaScript from 2022 (`Object.hasOwn`, `Array.prototype.at`);
+    - a 2D canvas;
+    - animation frames;
+    - Pointer Events, on a touch-only device.
+  - **A note** at the bottom of the loading screen, with OK, for what only part of the game needs:
+    - no Web Audio: no sound;
+    - no WebAssembly, AudioWorklet or 64-bit typed arrays: no radio music;
+    - storage blocked: settings are not kept;
+    - on a touch-only device that was not started from the home screen, no full screen.
+
+    Once dismissed, the same note is not shown again. It also goes away once the game is under way.
+  - **Did not start:** if the game has not started 3 seconds after the page has loaded, the box says so, with the
+    first error, and offers a reload.
