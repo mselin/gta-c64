@@ -24,7 +24,8 @@ const freshGame = () => ({
   msgAge: 0,
   banner: null, // large centre-screen text, or null
   downT: 0,
-  sirenT: 0,
+  sirenT: 0, // time to the next wail of the siren
+  siren: false, // the police are close and the siren is going
   job: null, // the active job, or null
   quitAsk: false, // the return-to-title dialog is open
 });
@@ -99,6 +100,11 @@ export function pop(x, y, t, col) {
   G.pops.push({ x, y, t, col: col || 1, l: 1.2 });
 }
 export const ppos = () => P.car || P;
+/**
+ * Whether the screen border flashes red and blue: only while the siren is actually going, in play, with the game
+ * running. Not on the busted or flatlined screen, not paused or behind a dialog, and not once the police are gone.
+ */
+export const sirenFlash = () => G.siren && G.screen === 'play' && !G.paused && !G.quitAsk && !G.infoOpen;
 /** What fire does on foot now: 'gun' while there is ammo, then 'knife' if the player has one, else 'fist'. */
 export const weapon = () => (P.ammo > 0 ? 'gun' : P.knife ? 'knife' : 'fist');
 /** The HUD's word for it: the ammo left (AMMO12), or KNIFE or FIST once it runs out. */

@@ -75,8 +75,10 @@ export function updHeat(dt) {
         tone(620, 620, 0.33, 'square', 0.07);
         tone(830, 830, 0.33, 'square', 0.07, 0.35);
       }
-    }
+    } else G.sirenT = 0; // out of earshot: it starts afresh when they are back
   }
+  // The siren, and the border flashing with it, only while the police are close in play.
+  G.siren = G.heat > 0 && near && G.screen === 'play';
   // cop cars boxing in
   if (P.car && G.heat > 0 && G.screen === 'play' && hyp(P.car.vx, P.car.vy) < 12) {
     let boxed = false;

@@ -8,7 +8,7 @@ import { ARW, carSpr, pedSpr } from './sprites.js';
 import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
-import { G, P, onScreen, ppos, touch, weapon, weaponLabel } from './state.js';
+import { G, onScreen, P, ppos, sirenFlash, touch, weapon, weaponLabel } from './state.js';
 import { npText, radio, radioAudible } from './radio.js';
 import { drawEnding } from './endings.js';
 import { help } from './help.js';
@@ -341,7 +341,7 @@ export function draw() {
     border = G.screen === 'win' ? 9 : 0;
   } else {
     drawWorld();
-    if (G.heat > 0 && G.sirenT > 0 && G.sirenT < 0.7) border = Math.floor(G.clock * 2) & 1 ? 2 : 6;
+    if (sirenFlash()) border = Math.floor(G.clock * 2) & 1 ? 2 : 6;
   }
   cx.fillStyle = PAL[border];
   cx.fillRect(0, 0, 384, 272);
