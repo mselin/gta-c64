@@ -30,13 +30,14 @@ export const SW = 320,
   BX = 32,
   BY = 36,
   PI = Math.PI;
+/** The kinds of car. `m` is the mass, a sedan's being 1: it decides who pushes whom in a crash. */
 export const KIND = {
-  sedan: { n: 'sedan', L: 20, W: 11, max: 150, acc: 120, hp: 100 },
-  sports: { n: 'sports', L: 20, W: 10, max: 215, acc: 180, hp: 80 },
-  van: { n: 'van', L: 22, W: 12, max: 120, acc: 85, hp: 150 },
-  taxi: { n: 'taxi', L: 20, W: 11, max: 150, acc: 120, hp: 100, col: 7 },
-  police: { n: 'police', L: 20, W: 11, max: 188, acc: 165, hp: 140, col: 1 },
-  limo: { n: 'limo', L: 28, W: 11, max: 140, acc: 100, hp: 170, col: 1 },
+  sedan: { n: 'sedan', L: 20, W: 11, max: 150, acc: 120, hp: 100, m: 1 },
+  sports: { n: 'sports', L: 20, W: 10, max: 215, acc: 180, hp: 80, m: 0.85 },
+  van: { n: 'van', L: 22, W: 12, max: 120, acc: 85, hp: 150, m: 1.6 },
+  taxi: { n: 'taxi', L: 20, W: 11, max: 150, acc: 120, hp: 100, m: 1, col: 7 },
+  police: { n: 'police', L: 20, W: 11, max: 188, acc: 165, hp: 140, m: 1.1, col: 1 },
+  limo: { n: 'limo', L: 28, W: 11, max: 140, acc: 100, hp: 170, m: 1.5, col: 1 },
 };
 export const CCOLS = [2, 4, 5, 8, 10, 13, 14, 3, 15];
 export const T = 16,
@@ -256,3 +257,11 @@ export const DIRS = [
   [0, -1],
 ];
 export const GRIP = { sedan: 450, sports: 490, van: 370, taxi: 450, police: 510, limo: 350 };
+/**
+ * The rest of the handling (js/cars.js, and specs/design.md under Cars):
+ * - grass: what is left of the grip there, and the extra drag that slows a car on it, per second;
+ * - spin: how much a knock off the middle turns a car (bigger is less), and how fast its tyres stop the spin, in
+ *   radians a second each second for each unit of grip;
+ * - bounce: what share of the closing speed two cars part with after a crash.
+ */
+export const HANDLING = { grassGrip: 0.55, grassDrag: 0.8, spinInertia: 3.5, spinGrip: 1 / 80, bounce: 0.3 };

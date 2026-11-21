@@ -227,16 +227,57 @@ Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can 
 
 ## Cars
 
-The rules are in `js/cars.js` and the kinds in `KIND` in `js/config.js`.
+The rules are in `js/cars.js`, the kinds in `KIND` and their grip in `GRIP` in `js/config.js`, and the rest of
+the handling in `HANDLING` there.
 
-| Kind | Length × width | Top speed | Acceleration | Strength (hp) |
-|---|---|---|---|---|
-| Sedan | 20 × 11 | 150 | 120 | 100 |
-| Sports car | 20 × 10 | 215 | 180 | 80 |
-| Van | 22 × 12 | 120 | 85 | 150 |
-| Taxi (yellow) | 20 × 11 | 150 | 120 | 100 |
-| Police (white) | 20 × 11 | 188 | 165 | 140 |
-| Limousine (white) | 28 × 11 | 140 | 100 | 170 |
+| Kind | Length × width | Top speed | Acceleration | Strength (hp) | Mass | Grip |
+|---|---|---|---|---|---|---|
+| Sedan | 20 × 11 | 150 | 120 | 100 | 1 | 450 |
+| Sports car | 20 × 10 | 215 | 180 | 80 | 0.85 | 490 |
+| Van | 22 × 12 | 120 | 85 | 150 | 1.6 | 370 |
+| Taxi (yellow) | 20 × 11 | 150 | 120 | 100 | 1 | 450 |
+| Police (white) | 20 × 11 | 188 | 165 | 140 | 1.1 | 510 |
+| Limousine (white) | 28 × 11 | 140 | 100 | 170 | 1.5 | 350 |
+
+### Handling
+
+Speeds are split into forward (along the car) and sideways. Each frame, in this order:
+
+- **Steering.**
+  - Below 55 px/s the car turns at 3 × speed / 55 radians a second, so it goes round its tightest circle, about
+    18 pixels from its middle, whatever the speed. From 55 it turns at 3 radians a second. Going backwards,
+    steering is reversed.
+  - **Never sharper than the tyres hold.** Turning at w radians a second at speed v asks the tyres for v × w
+    sideways. Without the handbrake the turn is kept to grip / v, so a fast car takes a wider line. This touches
+    only the fastest:
+    - the sports car above 163;
+    - the police car above 170;
+    - the limousine above 117;
+    - the sedan only at its very top speed.
+
+    At its top speed of 215 the sports car turns at 2.3 radians a second, on a line of radius 94, and holds its
+    speed round the bend. (Before, it turned at 3 regardless, slid, and dropped to about 177.)
+  - **The handbrake** lets the back go: the car turns 1.3 times as fast, with no grip limit, and slides.
+- **Throttle:** forward speed rises by the acceleration. Top speed is 0.7 of the table's below 40 hp; backwards,
+  0.4 of top speed.
+- **Braking** (pulling back while going forward faster than 5) takes off 2.2 × the acceleration; once stopped,
+  it reverses at 0.6 × the acceleration.
+- **Drag:** 0.5 × the speed a second, always, and 45 px/s² more with no throttle. A sedan coasts from 150 to a stop
+  in 122 pixels.
+- **Handbrake:** takes off 1.2 × the acceleration a second.
+- **Grip:** the sideways speed falls by the grip (the table's, in px/s²) and by 1.2 × itself a second. Grip is
+  multiplied by:
+  - 0.28 on the handbrake;
+  - 0.6 braking;
+  - 0.85 below 40 hp;
+  - 1 − 0.5 w wading (see Water);
+  - 0.55 on grass.
+- **Grass** is hard going as well as slippery: 0.8 × the forward speed a second more drag. A sedan tops out at
+  about 91 on grass, and coasts from 150 to a stop in 69 pixels.
+- **Skid marks** when sliding faster than 26, braking above 75, on the handbrake above 30, spinning the wheels (a
+  car faster off the line than 150 px/s², below 45), or spinning round faster than 2 radians a second.
+
+The same driving comes out the same at 30, 60 or 144 frames a second, to within 3 pixels.
 
 ### Walls
 
@@ -301,6 +342,33 @@ The canal and the fountain pools are water. Water is not a wall: a car drives in
 > **C64 note.** The sinking pictures are the car's picture redrawn three ways in every direction it keeps: for
 > a car in 16 directions, 48 more sprite frames. Changing only the sprite's colour for each stage costs no
 > frames, and nor does putting it behind the water's characters, though the water's own colour then hides it.
+
+### Car against car
+
+Two cars meet when their ends touch: each car is two circles of radius 5.5, 5 pixels ahead of and behind its
+middle. Cars that overlap are pushed apart. Then, if they are closing:
+
+- **Weight.** They part with 0.3 of the speed they closed at (`bounce`), and the heavier car is pushed the less:
+  car A's speed changes by 1.3 × the closing speed × m_B / (m_A + m_B). Two cars of the same weight each take 0.65
+  of it, as before cars had weights. Just after a van at 150 hits a still sports car, the sports car is doing
+  about 96 and the van 62. The other way round, the van is doing about 64 and the sports car 21.
+- **Traffic on its rails** is not moved by a soft touch, and the other car takes 0.65 of the closing speed alone,
+  as off a wall. A hard knock (closing faster than 35) knocks traffic off its rails, and the rule above applies.
+- **Damage**, when closing faster than 40: (closing − 40) × 0.22, the lighter car taking more, × 2 m_other /
+  (m_A + m_B). Two of the same weight take the same.
+- **Spin.** The push lands where they touch: half way between each pair of ends that meet, weighted by how far
+  they overlap. A push off a car's middle turns it as well, by (r × Δv) / (3.5 × (L² + W²) / 12) radians a
+  second, where r runs from its middle to where it was hit (`spinInertia` is the 3.5).
+  - A sedan T-boned at 150 just behind its middle turns about 0.9 radians, its tail going the way it was pushed.
+  - Hit square in the middle, it hardly turns.
+  - The tyres stop a spin at grip / 80 radians a second each second (`spinGrip`): a sedan spinning at 4 stops
+    in 0.7 seconds.
+  - A spin that would swing the car into a wall stops. A flooded car does not spin.
+
+> **C64 note.** Weight is a number for each kind, and the shares for each pair of kinds can be a 6 × 6 table, so
+> a crash needs no division. Spin is one multiplication a crash and one subtraction a frame; with traffic on
+> rails and few cars, the C64 version can leave it until there are crashes to spin. Steering held to the grip
+> is a table of the most turn for each speed.
 
 ## Heat and the police
 
