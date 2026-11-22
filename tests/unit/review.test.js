@@ -3,7 +3,7 @@
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { KIND } from '../../js/config.js';
-import { footClear, genMap, wallAt, waterAt } from '../../js/world.js';
+import { foot, footClear, genMap, wallAt, waterAt } from '../../js/world.js';
 import { G, K, P, resetState } from '../../js/state.js';
 import { mkCar } from '../../js/entities.js';
 import { carPhys, sidePos } from '../../js/cars.js';
@@ -42,11 +42,11 @@ test('a player who is inside a wall anyway can walk back out', () => {
   Object.assign(P, { x: WALL_X + 1, y: 304 });
   K.left = true;
   for (let i = 0; i < 30; i++) updPlayer(DT);
-  assert.ok(P.x < WALL_X - 3, `walked out to x=${P.x}`);
+  assert.ok(P.x < WALL_X - foot(), `walked out to x=${P.x}`);
   K.left = false;
   K.right = true;
   for (let i = 0; i < 60; i++) updPlayer(DT);
-  assert.ok(P.x <= WALL_X - 3, 'and cannot walk back in');
+  assert.ok(P.x <= WALL_X - foot(), 'and cannot walk back in');
 });
 
 test('a wreck pushed into the canal floods like any other car', () => {

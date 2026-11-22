@@ -119,9 +119,9 @@ can carry on upright if I insist.
 | Id | Requirement |
 |---|---|
 | FR-01 | On a touch screen, a finger held in the play area steers the player. Touch and pen steer; a mouse does not. |
-| FR-02 | On foot, the player walks straight towards the finger at walking or swimming speed, and stands still when the finger is within 6 game pixels. |
-| FR-03 | In a car, a finger ahead gives throttle from 30% (16 game pixels away) to full (50 game pixels or more), steering towards it, with throttle at most 40% when the turn is sharper than about 70°. |
-| FR-04 | In a car, a finger within 16 game pixels of the car brakes it to a stop from either direction. |
+| FR-02 | On foot, the player walks straight towards the finger at walking or swimming speed, and stands still when the finger is within 6 screen pixels of them (6 × PERSON city pixels; see the design's "The scale"). |
+| FR-03 | In a car, a finger ahead gives throttle from 30% (16 city pixels away) to full (16 + 34 / ZOOM city pixels or more: 50 at scale 1, 33 at the default 2, as a phone screen holds fewer city pixels the bigger the scale), steering towards it, with throttle at most 40% when the turn is sharper than about 70°. |
+| FR-04 | In a car, a finger within 16 city pixels of the car brakes it to a stop from either direction. |
 | FR-05 | In a car, a finger more than about 130° off the car's heading is behind it: the car brakes in a straight line while still going forward, then reverses with its tail swinging towards the finger. |
 | FR-06 | Lifting the steering finger ends steering at once. |
 | FR-07 | While steering, a cross marks the finger's position on the game screen. |

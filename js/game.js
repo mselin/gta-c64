@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Game flow: world setup and the per-frame update.
-import { GOAL, KIND, SW, VH, WPX } from './config.js';
+import { GOAL, KIND, VIEW_H, VIEW_W, WPX } from './config.js';
 import { R, clamp, hyp } from './util.js';
 import { HOSP, parkSpots } from './world.js';
 import { engineSound } from './audio.js';
@@ -118,8 +118,9 @@ export function update(dt) {
   const p = ppos(),
     lx = P.car ? P.car.vx * 0.3 : 0,
     ly = P.car ? P.car.vy * 0.3 : 0;
-  const tx = clamp(p.x + lx - SW / 2, 0, WPX - SW),
-    ty = clamp(p.y + ly - VH / 2, 0, WPX - VH);
+  // Looking ahead of a car, but never so far that the car itself leaves the view.
+  const tx = clamp(p.x + clamp(lx, -VIEW_W / 2 + 24, VIEW_W / 2 - 24) - VIEW_W / 2, 0, WPX - VIEW_W),
+    ty = clamp(p.y + clamp(ly, -VIEW_H / 2 + 16, VIEW_H / 2 - 16) - VIEW_H / 2, 0, WPX - VIEW_H);
   G.camX += (tx - G.camX) * Math.min(1, 6 * dt);
   G.camY += (ty - G.camY) * Math.min(1, 6 * dt);
   engineSound(!!P.car && G.screen === 'play', P.car ? hyp(P.car.vx, P.car.vy) : 0);
@@ -136,6 +137,6 @@ export function initWorld() {
   G.cars.push(c);
   for (let i = 0; i < 34; i++) G.pickups.push(placePickup({}));
   G.peds.push(mkHonk());
-  G.camX = clamp(P.x - SW / 2, 0, WPX - SW);
-  G.camY = clamp(P.y - VH / 2, 0, WPX - VH);
+  G.camX = clamp(P.x - VIEW_W / 2, 0, WPX - VIEW_W);
+  G.camY = clamp(P.y - VIEW_H / 2, 0, WPX - VIEW_H);
 }

@@ -5,7 +5,7 @@ import { KIND } from '../../js/config.js';
 import { mkCar } from '../../js/entities.js';
 import { carPhys } from '../../js/cars.js';
 import { genMap } from '../../js/world.js';
-import { driveToward, walkToward } from '../../js/player.js';
+import { driveToward, walkToward, touchReach } from '../../js/player.js';
 import { ICONS, iconSvg } from '../../js/icons.js';
 
 const SOUTH = Math.PI / 2;
@@ -20,7 +20,9 @@ test('on foot the player walks straight at the finger', () => {
   const way = walkToward(100, 100, 130, 140);
   assert.ok(Math.abs(Math.hypot(way.dx, way.dy) - 1) < 1e-9, 'a unit vector');
   assert.ok(Math.abs(way.dx - 0.6) < 1e-9 && Math.abs(way.dy - 0.8) < 1e-9);
-  assert.equal(walkToward(100, 100, 103, 102), null, 'a finger on the player means stand still');
+  // A finger on the player, within the few screen pixels of them that touchReach().stand is in the city.
+  const on = touchReach().stand * 0.7;
+  assert.equal(walkToward(100, 100, 100 + on, 100), null, 'a finger on the player means stand still');
 });
 
 test('a finger ahead of the car drives it on, faster the further away it is', () => {

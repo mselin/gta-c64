@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { MW } from '../../js/config.js';
+import { MW, PACE } from '../../js/config.js';
 import { genMap, wallAt, waterAt } from '../../js/world.js';
 import { G, K, P, resetState } from '../../js/state.js';
 import { mkPed } from '../../js/entities.js';
-import { SWIM_SPEED, WALK_SPEED, updPlayer } from '../../js/player.js';
+import { updPlayer } from '../../js/player.js';
 import { updPeds } from '../../js/peds.js';
 
 const DT = 1 / 60;
@@ -41,8 +41,8 @@ test('swimming is much slower than walking', () => {
   const x0 = P.x;
   for (let i = 0; i < 60; i++) updPlayer(DT);
   const swum = x0 - P.x;
-  assert.ok(Math.abs(swum - SWIM_SPEED) < 1, `swam ${swum} in a second`);
-  assert.ok(SWIM_SPEED < WALK_SPEED / 2);
+  assert.ok(Math.abs(swum - PACE.swim) < 1, `swam ${swum} in a second`);
+  assert.ok(PACE.swim < PACE.walk / 2);
 });
 
 test('the player can swim back out onto dry land', () => {

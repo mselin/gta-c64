@@ -16,7 +16,10 @@ import { initRadio, radio, radioState, silence } from './radio.js';
 import { initInfo } from './info.js';
 import { initInput, syncPad } from './input.js';
 import { describe, initPresence, presenceStatus } from './presence.js';
+import { loadZoom, nextZoom, useZoom } from './scale.js';
+import { ZOOM } from './config.js';
 
+loadZoom(); // before the city fills with people, so they start at the chosen scale
 genMap();
 renderMap();
 onMapReset(renderMap);
@@ -60,4 +63,5 @@ window.sleazeburg = {
   endingsLoaded,
   presence: { status: presenceStatus, state: describe },
   touch,
+  zoom: { now: () => ZOOM, use: useZoom, next: nextZoom },
 };

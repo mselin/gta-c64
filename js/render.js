@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Draws every screen: boot, title, the city with its HUD, and the win screen.
-import { BX, BY, GOAL, KIND, PAL, PI, SH, SW, VH } from './config.js';
+import { BX, BY, GOAL, KIND, PAL, PI, SH, SW, VH, ZOOM } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { cx, g, scr } from './screen.js';
 import { ctext, text } from './font.js';
@@ -13,21 +13,25 @@ import { npText, radio, radioAudible } from './radio.js';
 import { drawEnding } from './endings.js';
 import { help } from './help.js';
 
+// The camera in screen pixels, and where a point in the city is on the screen: ZOOM screen pixels to a city pixel.
 let camXi = 0;
 let camYi = 0;
-function drawSpr(fr, a, x, y) {
+const sx = (x) => Math.round(x * ZOOM) - camXi,
+  sy = (y) => Math.round(y * ZOOM) - camYi;
+/** A sprite at a point in the city, `z` times its size: ZOOM for cars, 1 for people, who keep their screen size. */
+function drawSpr(fr, a, x, y, z = ZOOM) {
   const n = fr.length,
     i = mod(Math.round((a / (PI * 2)) * n), n),
-    s = fr[0].width;
-  g.drawImage(fr[i], Math.round(x - camXi - s / 2), Math.round(y - camYi - s / 2));
+    s = fr[0].width * z;
+  g.drawImage(fr[i], sx(x) - Math.round(s / 2), sy(y) - Math.round(s / 2), s, s);
 }
 function marker(x, y, ch, c1, c2) {
   if (!onScreen(x, y, 10)) return;
   const f = Math.floor(G.clock * 4) & 1,
-    sx = Math.round(x - camXi),
-    sy = Math.round(y - camYi);
+    mx = sx(x),
+    my = sy(y);
   g.fillStyle = PAL[f ? c1 : c2];
-  g.fillRect(sx - 6, sy - 6, 12, 12);
+  g.fillRect(mx - 6, my - 6, 12, 12);
   g.fillStyle = PAL[0];
   g.fillRect(sx - 5, sy - 5, 10, 10);
   text(ch, sx - 4, sy - 4, f ? c1 : c2);
@@ -41,32 +45,32 @@ const PKI = {
 };
 /** Someone in the water: just a head and one arm above the surface, with ripples round them. */
 function drawSwimmer(p) {
-  const sx = Math.round(p.x - camXi),
-    sy = Math.round(p.y - camYi),
+  const wx = sx(p.x),
+    wy = sy(p.y),
     f = Math.floor(G.clock * 3 + p.x * 0.1) & 1;
   g.fillStyle = PAL[14];
-  g.fillRect(sx - 5, sy + (f ? 1 : 2), 3, 1);
-  g.fillRect(sx + 3, sy + (f ? 2 : 1), 3, 1);
-  g.fillRect(sx - 2, sy + 3, 5, 1);
+  g.fillRect(wx - 5, wy + (f ? 1 : 2), 3, 1);
+  g.fillRect(wx + 3, wy + (f ? 2 : 1), 3, 1);
+  g.fillRect(wx - 2, wy + 3, 5, 1);
   g.fillStyle = PAL[1];
-  g.fillRect(f ? sx - 3 : sx + 3, sy + 3, 1, 1);
+  g.fillRect(f ? wx - 3 : wx + 3, wy + 3, 1, 1);
   // The player keeps the outlines they have on land round their head: outermost first, corners cut.
   if (p === P)
     for (let r = PLAYER_OUTLINE.length; r > 0; r--) {
       g.fillStyle = PAL[PLAYER_OUTLINE[r - 1]];
-      g.fillRect(sx - 1 - r, sy - 1 - r, 3 + 2 * r, 2 + 2 * r);
-      g.fillRect(sx - r, sy - 2 - r, 1 + 2 * r, 4 + 2 * r);
+      g.fillRect(wx - 1 - r, wy - 1 - r, 3 + 2 * r, 2 + 2 * r);
+      g.fillRect(wx - r, wy - 2 - r, 1 + 2 * r, 4 + 2 * r);
     }
   g.fillStyle = PAL[p.hair];
-  g.fillRect(sx - 1, sy - 2, 3, 2);
+  g.fillRect(wx - 1, wy - 2, 3, 2);
   g.fillStyle = PAL[p.skin];
-  g.fillRect(sx - 1, sy, 3, 2);
-  g.fillRect(f ? sx - 3 : sx + 3, sy - 1, 1, 2);
+  g.fillRect(wx - 1, wy, 3, 2);
+  g.fillRect(f ? wx - 3 : wx + 3, wy - 1, 1, 2);
 }
 function drawWorld() {
-  camXi = Math.round(G.camX);
-  camYi = Math.round(G.camY);
-  g.drawImage(mapC, camXi, camYi, SW, VH, 0, 0, SW, VH);
+  camXi = Math.round(G.camX * ZOOM);
+  camYi = Math.round(G.camY * ZOOM);
+  g.drawImage(mapC, camXi / ZOOM, camYi / ZOOM, SW / ZOOM, VH / ZOOM, 0, 0, SW, VH);
   for (const j of JOBPTS) if (!G.job) marker(j.x, j.y, 'J', 7, 4);
   marker(PAINT.x, PAINT.y, 'P', 3, 1);
   if (G.job && G.job.def.type === 'steal' && G.job.stage === 1) marker(CHOP.x, CHOP.y, 'X', 7, 2);
@@ -75,76 +79,76 @@ function drawWorld() {
     if (k.t > 0 || !onScreen(k.x, k.y, 8)) continue;
     if (k.temp != null && k.temp < 4 && Math.floor(G.clock * 8) & 1) continue;
     const d = PKI[k.type],
-      sx = Math.round(k.x - camXi) - 4,
-      sy = Math.round(k.y - camYi) - 4 + (Math.floor(G.clock * 3 + k.x) & 1);
+      kx = sx(k.x) - 4,
+      ky = sy(k.y) - 4 + (Math.floor(G.clock * 3 + k.x) & 1);
     g.fillStyle = PAL[0];
-    g.fillRect(sx - 1, sy - 1, 10, 10);
+    g.fillRect(kx - 1, ky - 1, 10, 10);
     g.fillStyle = PAL[d[1]];
-    g.fillRect(sx, sy, 8, 8);
-    text(d[0], sx, sy, d[2]);
+    g.fillRect(kx, ky, 8, 8);
+    text(d[0], kx, ky, d[2]);
   }
   for (const p of G.peds) {
     if (!onScreen(p.x, p.y, FRAME / 2)) continue;
     // A goose floats: Big Honk is drawn the same in the water, just without his feet.
     if (waterAt(p.x, p.y) && p.type !== 'honk') drawSwimmer(p);
-    else drawSpr(pedSpr(p, poseOf(p)), Math.atan2(p.dy, p.dx), p.x, p.y);
+    else drawSpr(pedSpr(p, poseOf(p)), Math.atan2(p.dy, p.dx), p.x, p.y, 1);
     if (p.ko > 0) {
       // Two little stars going round just over the head of someone knocked down.
       const a = Math.atan2(p.dy, p.dx),
-        hx = p.x + Math.cos(a) * 5 - camXi,
-        hy = p.y + Math.sin(a) * 5 - camYi - 6;
+        hx = sx(p.x) + Math.cos(a) * 5,
+        hy = sy(p.y) + Math.sin(a) * 5 - 6;
       g.fillStyle = PAL[7];
       for (const o of [0, PI]) {
         const t = G.clock * 6 + o;
-        const sx = Math.round(hx + Math.cos(t) * 5),
-          sy = Math.round(hy + Math.sin(t) * 2);
-        g.fillRect(sx - 1, sy, 3, 1);
-        g.fillRect(sx, sy - 1, 1, 3);
+        const tx = Math.round(hx + Math.cos(t) * 5),
+          ty = Math.round(hy + Math.sin(t) * 2);
+        g.fillRect(tx - 1, ty, 3, 1);
+        g.fillRect(tx, ty - 1, 1, 3);
       }
     }
   }
   if (!P.car && G.screen !== 'down' && !(P.hitT > 0 && Math.floor(G.clock * 20) & 1)) {
     if (waterAt(P.x, P.y)) drawSwimmer(P);
-    else drawSpr(pedSpr(P, poseOf(P)), P.a, P.x, P.y);
+    else drawSpr(pedSpr(P, poseOf(P)), P.a, P.x, P.y, 1);
   }
   for (const c of G.cars) {
     if (!onScreen(c.x, c.y, 20)) continue;
     drawSpr(carSpr(c), c.a, c.x, c.y);
     if (c.kind === KIND.police && !c.dead && c.ai === 'cop' && G.heat > 0) {
       const f = Math.floor(G.clock * 6) & 1,
-        sx = Math.round(c.x - camXi),
-        sy = Math.round(c.y - camYi);
+        bx = sx(c.x),
+        by = sy(c.y);
       g.fillStyle = PAL[f ? 2 : 14];
-      g.fillRect(sx - 2, sy - 1, 2, 2);
+      g.fillRect(bx - 2 * ZOOM, by - ZOOM, 2 * ZOOM, 2 * ZOOM);
       g.fillStyle = PAL[f ? 14 : 2];
-      g.fillRect(sx, sy - 1, 2, 2);
+      g.fillRect(bx, by - ZOOM, 2 * ZOOM, 2 * ZOOM);
     }
     if (G.job && G.job.car === c && G.job.stage === 0 && Math.floor(G.clock * 4) & 1)
-      text('!', Math.round(c.x - camXi) - 4, Math.round(c.y - camYi) - 20, 7);
+      text('!', sx(c.x) - 4, sy(c.y) - 12 * ZOOM - 8, 7);
   }
   for (const b of G.bullets) {
     g.fillStyle = PAL[b.own ? 1 : 7];
-    g.fillRect(Math.round(b.x - camXi), Math.round(b.y - camYi), 2, 2);
+    g.fillRect(sx(b.x), sy(b.y), 2 * ZOOM, 2 * ZOOM);
   }
   for (const p of G.parts) {
     g.fillStyle = PAL[p.col];
     const s = p.s || 1;
-    g.fillRect(Math.round(p.x - camXi), Math.round(p.y - camYi), s, s);
+    g.fillRect(sx(p.x), sy(p.y), s * ZOOM, s * ZOOM);
   }
   for (const p of G.pops) {
     if (p.hud) continue;
     const w = p.t.length * 8;
-    text(p.t, clamp(Math.round(p.x - camXi - w / 2), 0, SW - w), Math.round(p.y - camYi), p.col);
+    text(p.t, clamp(sx(p.x) - Math.round(w / 2), 0, SW - w), sy(p.y), p.col);
   }
   // target arrow
   const tg = G.job && G.job.target;
   if (tg && !onScreen(tg.x, tg.y, -12)) {
     const p = ppos(),
       a = Math.atan2(tg.y - p.y, tg.x - p.x);
-    const sx = clamp(p.x - camXi + Math.cos(a) * 400, 10, SW - 10),
-      sy = clamp(p.y - camYi + Math.sin(a) * 400, 10, VH - 10);
+    const ax = clamp(sx(p.x) + Math.cos(a) * 400, 10, SW - 10),
+      ay = clamp(sy(p.y) + Math.sin(a) * 400, 10, VH - 10);
     const fr = ARW[Math.floor(G.clock * 5) & 1];
-    g.drawImage(fr[mod(Math.round((a / (PI * 2)) * 16), 16)], Math.round(sx) - 5, Math.round(sy) - 5);
+    g.drawImage(fr[mod(Math.round((a / (PI * 2)) * 16), 16)], Math.round(ax) - 5, Math.round(ay) - 5);
   } else if (!G.job) {
     let bj = null,
       bd = 1e9;
@@ -158,9 +162,9 @@ function drawWorld() {
     }
     if (bj && !onScreen(bj.x, bj.y, -12)) {
       const a = Math.atan2(bj.y - p.y, bj.x - p.x),
-        sx = clamp(p.x - camXi + Math.cos(a) * 400, 10, SW - 10),
-        sy = clamp(p.y - camYi + Math.sin(a) * 400, 10, VH - 10);
-      g.drawImage(ARW[0][mod(Math.round((a / (PI * 2)) * 16), 16)], Math.round(sx) - 5, Math.round(sy) - 5);
+        ax = clamp(sx(p.x) + Math.cos(a) * 400, 10, SW - 10),
+        ay = clamp(sy(p.y) + Math.sin(a) * 400, 10, VH - 10);
+      g.drawImage(ARW[0][mod(Math.round((a / (PI * 2)) * 16), 16)], Math.round(ax) - 5, Math.round(ay) - 5);
     }
   }
   for (const p of G.pops)

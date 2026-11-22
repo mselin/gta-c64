@@ -30,17 +30,21 @@ afterEach(async () => {
  */
 const fingers = (type, points) =>
   cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map(([x, y], id) => ({ x, y, id })) });
-/** Where a point in the city is on the page. */
-const onPage = (wx, wy) =>
-  game.page.evaluate(
-    ([wx, wy]) => {
+/** How many city pixels a distance on the screen covers: the city is drawn ZOOM screen pixels to a city pixel. */
+const city = async (screenPixels) => screenPixels / (await import('../../js/config.js')).ZOOM;
+/** Where a point in the city is on the page: ZOOM screen pixels to a city pixel, in a canvas scaled to fit. */
+const onPage = async (wx, wy) => {
+  const { ZOOM } = await import('../../js/config.js');
+  return game.page.evaluate(
+    ([wx, wy, zoom]) => {
       const s = window.sleazeburg,
         r = document.getElementById('c').getBoundingClientRect(),
         k = r.width / 384;
-      return [r.left + (32 + wx - s.G.camX) * k, r.top + (36 + wy - s.G.camY) * k];
+      return [r.left + (32 + (wx - s.G.camX) * zoom) * k, r.top + (36 + (wy - s.G.camY) * zoom) * k];
     },
-    [wx, wy],
+    [wx, wy, ZOOM],
   );
+};
 const centre = async (selector) => {
   const b = await game.page.locator(selector).boundingBox();
   return [b.x + b.width / 2, b.y + b.height / 2];
@@ -138,9 +142,10 @@ test('FR-10, FR-11, FR-14, FR-15: the game fills the screen, no button covers it
 test('FR-01, FR-02, FR-06: holding a finger beside the player walks them to it, and lifting it stops them', async () => {
   await startByTouch();
   const start = await game.read((s) => ({ x: s.P.x, y: s.P.y }));
-  await hold(80, 0, 1200);
+  // A finger 80 screen pixels to the right, held for a while: they walk at least 40 of them towards it.
+  await hold(await city(80), 0, 1200);
   const walked = await game.read((s) => ({ x: s.P.x, y: s.P.y, aim: !!s.touch.at }));
-  assert.ok(walked.x > start.x + 40, `walked from ${start.x} to ${walked.x}`);
+  assert.ok(walked.x > start.x + (await city(40)), `walked from ${start.x} to ${walked.x}`);
   assert.ok(Math.abs(walked.y - start.y) < 3, 'straight towards the finger');
   assert.ok(walked.aim);
   await fingers('touchEnd', []);
@@ -155,13 +160,13 @@ test('FR-03, FR-04, FR-05: in a car, a finger ahead drives, on the car brakes, b
   await startByTouch();
   await intoCar();
   await game.wait(400); // let the camera catch up with the car
-  // A phone screen is under 100 game pixels from the car to the edge, so the finger stays within 60.
-  await hold(0, 60, 1500);
+  // A phone screen is under 100 screen pixels from the car to the edge, so the finger stays within 70.
+  await hold(0, await city(70), 1500);
   const fast = await car();
   assert.ok(fast.fwd > 150, `driving forward at ${fast.fwd}`);
   await hold(0, 0, 2000);
   assert.ok(Math.abs((await car()).fwd) < 5, 'stopped');
-  await hold(0, -60, 1200);
+  await hold(0, -(await city(70)), 1200);
   assert.ok((await car()).fwd < -40, 'reversing');
   await fingers('touchEnd', []);
 });
@@ -186,7 +191,7 @@ test('FR-12: in a car the fire button becomes the horn and the handbrake appears
 test('FR-08: one finger can steer while another fires', async () => {
   await startByTouch();
   const start = await game.read((s) => ({ x: s.P.x, y: s.P.y }));
-  const steer = await onPage(start.x + 80, start.y);
+  const steer = await onPage(start.x + (await city(80)), start.y);
   await fingers('touchStart', [steer]);
   await game.wait(300);
   await fingers('touchStart', [steer, await centre('#pad [data-k=fire]')]);
@@ -195,7 +200,7 @@ test('FR-08: one finger can steer while another fires', async () => {
   await fingers('touchMove', [steer]);
   await game.wait(300);
   const now = await game.read((s) => ({ x: s.P.x, aim: !!s.touch.at }));
-  assert.ok(now.x > start.x + 20, 'still walking while firing');
+  assert.ok(now.x > start.x + (await city(20)), 'still walking while firing');
   assert.ok(now.aim, 'lifting the firing finger does not stop the steering');
   await fingers('touchEnd', []);
 });
