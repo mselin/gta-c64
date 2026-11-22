@@ -18,6 +18,7 @@ import {
   TREE,
   WALK,
   WATER,
+  PERSON,
 } from './config.js';
 import { clamp, mulberry } from './util.js';
 
@@ -40,9 +41,13 @@ export const wallAt = (x, y) => {
   const t = tileAt(x, y);
   return solidT(t) && !isWater(t);
 };
+/** How far either side of a person's middle their footprint reaches, in city pixels, at the scale now. */
+export const foot = () => 3 * PERSON;
 /** Whether a person fits at (x, y): the four corners of their footprint are all clear of walls. */
-export const footClear = (x, y) =>
-  !wallAt(x - 3, y - 3) && !wallAt(x + 3, y - 3) && !wallAt(x - 3, y + 3) && !wallAt(x + 3, y + 3);
+export const footClear = (x, y) => {
+  const f = foot();
+  return !wallAt(x - f, y - f) && !wallAt(x + f, y - f) && !wallAt(x - f, y + f) && !wallAt(x + f, y + f);
+};
 /** The closest spot to (x, y) that can be stood on, searching outwards in rings. Null if there is none nearby. */
 export function nearestLand(x, y) {
   for (let r = 0; r <= 200; r += 4) {

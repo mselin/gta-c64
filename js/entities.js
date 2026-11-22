@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Constructors for cars and pedestrians.
-import { CCOLS, DIRS, HONK } from './config.js';
+import { CCOLS, DIRS, HONK, PACE } from './config.js';
 import { R, pick } from './util.js';
 import { COP } from './figures.js';
 
@@ -93,7 +93,9 @@ export function mkPed(x, y, type) {
     dx: d[0],
     dy: d[1],
     type,
-    spd: type === 'scoot' ? 52 : type === 'cop' ? 47 : type === 'cult' ? 0 : 15 + R() * 8,
+    // A scooter is a vehicle: its speed is the scooter's, not its rider's pace.
+    spd:
+      type === 'scoot' ? 52 : type === 'cop' ? PACE.cop : type === 'cult' ? 0 : PACE.civ + R() * PACE.civMore,
     shirt,
     hair,
     legs: type === 'cop' ? COP.legs : pick(CIV_LEGS),

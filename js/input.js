@@ -2,6 +2,7 @@
 // Keyboard, pointer and touch-button input.
 import { BX, BY } from './config.js';
 import { cv } from './screen.js';
+import { nextZoom } from './scale.js';
 import { initAudio } from './audio.js';
 import { G, K, P, edge, touch } from './state.js';
 import { pickSidFile, radioInit, radioNext, radioStation, setFx, setMusic, sidVol } from './radio.js';
@@ -32,6 +33,7 @@ const KM = {
   KeyI: 'info',
   Escape: 'esc',
   KeyY: 'yes',
+  KeyZ: 'zoom',
 };
 function press(k) {
   initAudio();
@@ -69,6 +71,7 @@ function press(k) {
   if (!K[k]) edge[k] = true;
   K[k] = true;
   if (k === 'music') setMusic(!G.musicOn);
+  if (k === 'zoom') nextZoom();
   if (k === 'fx') setFx(!G.fxOn);
   if (k === 'sid') pickSidFile();
   if (k === 'next') radioNext();

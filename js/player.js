@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The player on foot and at the wheel: movement, weapons, getting in and out of cars, dying and getting arrested.
-import { DIRS, HIT, JACK, KIND, MELEE } from './config.js';
+import { DIRS, HIT, JACK, KIND, MELEE, ZOOM, PACE, PERSON } from './config.js';
 import { angDiff, clamp, hyp, pick } from './util.js';
 import { COPS, HOSP, footClear, waterAt } from './world.js';
 import { noise, sfx } from './audio.js';
@@ -115,25 +115,31 @@ function exitCar() {
   sfx.door();
 }
 const footHits = (x, y) => !footClear(x, y);
-export const WALK_SPEED = 58,
-  SWIM_SPEED = 22;
 
 // ---------- touch steering ----------
 // On a touch screen the player holds a finger on the screen and the player character heads for it.
-const WALK_DEADZONE = 6; // a finger this close to the player means stand still
-const BRAKE_RADIUS = 16; // a finger on the car means stop
-const FULL_THROTTLE_AT = 50; // a finger this far ahead or more means flat out (a phone screen is not tall)
+/**
+ * How far a finger is from the player or the car, in city pixels, at the scale now. The player is drawn their
+ * screen size, so how near them a finger is goes by PERSON; the car is drawn ZOOM times its size, so "on the car"
+ * stays in city pixels; and a phone screen holds 1 / ZOOM as many city pixels, so flat out is nearer.
+ */
+export const touchReach = () => ({
+  stand: 6 * PERSON, // a finger this close to the player means stand still
+  brake: 16, // a finger on the car means stop
+  flatOut: 16 + 34 / ZOOM, // a finger this far ahead or more means flat out (a phone screen is not tall)
+});
 const BEHIND = 2.3; // radians: further round than this, the finger is behind the car
 
 /** The point in the city a held finger points at, or null. */
-export const touchTarget = () => (touch.at ? { x: G.camX + touch.at.x, y: G.camY + touch.at.y } : null);
+export const touchTarget = () =>
+  touch.at ? { x: G.camX + touch.at.x / ZOOM, y: G.camY + touch.at.y / ZOOM } : null;
 
 /** On foot: the direction to walk in to reach (tx, ty), as a unit vector, or null to stand still. */
 export function walkToward(px, py, tx, ty) {
   const dx = tx - px,
     dy = ty - py,
     d = hyp(dx, dy);
-  return d < WALK_DEADZONE ? null : { dx: dx / d, dy: dy / d };
+  return d < touchReach().stand ? null : { dx: dx / d, dy: dy / d };
 }
 
 /**
@@ -142,11 +148,12 @@ export function walkToward(px, py, tx, ty) {
  * Behind: brake, then reverse, swinging the tail round towards it. On the car itself: brake.
  */
 export function driveToward(c, tx, ty) {
-  const dx = tx - c.x,
+  const { brake, flatOut } = touchReach(),
+    dx = tx - c.x,
     dy = ty - c.y,
     d = hyp(dx, dy),
     fwd = c.vx * Math.cos(c.a) + c.vy * Math.sin(c.a);
-  if (d < BRAKE_RADIUS) return { thr: fwd > 5 ? -1 : fwd < -5 ? 1 : 0, steer: 0 };
+  if (d < brake) return { thr: fwd > 5 ? -1 : fwd < -5 ? 1 : 0, steer: 0 };
   const want = Math.atan2(dy, dx),
     diff = angDiff(want, c.a);
   if (Math.abs(diff) > BEHIND) {
@@ -155,7 +162,7 @@ export function driveToward(c, tx, ty) {
     // Reversing turns the car the other way, so steer against the tail's error.
     return { thr: -1, steer: -clamp(angDiff(want + Math.PI, c.a) * 2, -1, 1) };
   }
-  const push = clamp((d - BRAKE_RADIUS) / (FULL_THROTTLE_AT - BRAKE_RADIUS), 0.3, 1);
+  const push = clamp((d - brake) / (flatOut - brake), 0.3, 1);
   return { thr: Math.abs(diff) > 1.2 ? Math.min(push, 0.4) : push, steer: clamp(diff * 2.5, -1, 1) };
 }
 
@@ -207,7 +214,7 @@ export function updPlayer(dt) {
       dx /= l;
       dy /= l;
       P.a = Math.atan2(dy, dx);
-      const s = (swim ? SWIM_SPEED : WALK_SPEED) * dt;
+      const s = (swim ? PACE.swim : PACE.walk) * dt;
       // Someone who has somehow ended up inside a wall may always walk; otherwise they could never leave.
       const stuck = footHits(P.x, P.y);
       if (stuck || !footHits(P.x + dx * s, P.y)) P.x += dx * s;

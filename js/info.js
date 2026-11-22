@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The information page: controls, now playing, playlist and credits.
+import { ZOOM } from './config.js';
+import { nextZoom } from './scale.js';
 import { cv } from './screen.js';
 import { initAudio } from './audio.js';
 import { G, K } from './state.js';
@@ -34,6 +36,7 @@ function infoRender() {
   if (!G.infoOpen) return;
   $('bmus').textContent = 'MUSIC: ' + (G.musicOn ? 'ON' : 'OFF');
   $('bfx').textContent = 'SOUND FX: ' + (G.fxOn ? 'ON' : 'OFF');
+  $('bzoom').textContent = 'SCALE: ' + ZOOM + 'X';
   const st = radio[G.station],
     now = $('now');
   now.textContent = '';
@@ -163,6 +166,10 @@ export function initInfo() {
     setMusic(!G.musicOn);
   });
   $('bfx').addEventListener('click', () => setFx(!G.fxOn));
+  $('bzoom').addEventListener('click', () => {
+    nextZoom();
+    infoRender();
+  });
   $('bst').addEventListener('click', radioStation);
   $('bnx').addEventListener('click', () => radioNext());
   $('bld').addEventListener('click', pickSidFile);

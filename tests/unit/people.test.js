@@ -3,7 +3,7 @@
 // hits that match what is on screen.
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { HIT, KIND } from '../../js/config.js';
+import { HIT, KIND, PERSON } from '../../js/config.js';
 import { genMap } from '../../js/world.js';
 import { G, K, P, resetState } from '../../js/state.js';
 import { CIV_HAIR, CIV_LEGS, CIV_SHIRTS, mkCar, mkPed } from '../../js/entities.js';
@@ -239,12 +239,14 @@ test('a bullet hits someone it passes within HIT.shot of: their shoulders, as dr
     updBullets(DT);
     return own ? P.hp < 100 : G.peds.length === 0;
   };
-  assert.ok(HIT.shot > 5.5 && HIT.shot < 7);
-  assert.equal(shoot(5.5, 0), true, 'the player shoots a pedestrian in the shoulder');
-  assert.equal(shoot(-5.5, 0), true, 'either shoulder');
-  assert.equal(shoot(7, 0), false, 'a near miss');
-  assert.equal(shoot(5.5, 1), true, 'a police bullet hits the player the same way');
-  assert.equal(shoot(7, 1), false);
+  // The shoulder is 5 screen pixels from a person's middle: 5 × PERSON city pixels, and half the bullet.
+  assert.equal(HIT.shot, 5 * PERSON + 1);
+  const shoulder = 5 * PERSON;
+  assert.equal(shoot(shoulder, 0), true, 'the player shoots a pedestrian in the shoulder');
+  assert.equal(shoot(-shoulder, 0), true, 'either shoulder');
+  assert.equal(shoot(HIT.shot + 0.5, 0), false, 'a near miss');
+  assert.equal(shoot(shoulder, 1), true, 'a police bullet hits the player the same way');
+  assert.equal(shoot(HIT.shot + 0.5, 1), false);
 });
 
 test('a moving car runs over someone it passes within HIT.car of its middle', () => {
@@ -256,8 +258,8 @@ test('a moving car runs over someone it passes within HIT.car of its middle', ()
     updPeds(DT);
     return G.peds.length === 0;
   };
-  assert.equal(pass(9.5), true, 'the side of the car catches their shoulder');
-  assert.equal(pass(10.5), false, 'but not someone a pixel clear');
+  assert.equal(pass(HIT.car - 0.5), true, 'the side of the car catches their shoulder');
+  assert.equal(pass(HIT.car + 0.5), false, 'but not someone half a pixel clear');
   // Its front reaches HIT.nose past the point 6 px ahead of its middle.
   const front = (dx) => {
     const c = mkCar(KIND.sedan, STREET.x, STREET.y, 0);
@@ -267,8 +269,8 @@ test('a moving car runs over someone it passes within HIT.car of its middle', ()
     updPeds(DT);
     return G.peds.length === 0;
   };
-  assert.equal(front(14.5), true, 'the bumper is 10 px ahead and a person 5 px deep');
-  assert.equal(front(15.5), false);
+  assert.equal(front(6 + HIT.nose - 0.5), true, 'the bumper is 10 px ahead and a person their shoulder deep');
+  assert.equal(front(6 + HIT.nose + 0.5), false);
 });
 
 test('the player on foot is hit by a car passing within HIT.car', () => {
@@ -282,8 +284,8 @@ test('the player on foot is hit by a car passing within HIT.car', () => {
     updPlayer(DT);
     return P.hp < 100;
   };
-  assert.equal(pass(9.5), true);
-  assert.equal(pass(10.5), false);
+  assert.equal(pass(HIT.car - 0.5), true);
+  assert.equal(pass(HIT.car + 0.5), false);
 });
 
 test('traffic brakes for anyone close enough to its line that it would hit them', () => {
@@ -300,8 +302,8 @@ test('traffic brakes for anyone close enough to its line that it would hit them'
     return c.sp < 60;
   };
   for (const who of ['ped', 'player']) {
-    assert.equal(brakes(8, who), true, `${who} 8 px off its line`);
-    assert.equal(brakes(-8, who), true);
-    assert.equal(brakes(12, who), false, `${who} well clear`);
+    assert.equal(brakes(HIT.lane - 1, who), true, `${who} just inside HIT.lane of its line`);
+    assert.equal(brakes(-(HIT.lane - 1), who), true);
+    assert.equal(brakes(HIT.lane + 3, who), false, `${who} well clear`);
   }
 });

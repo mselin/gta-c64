@@ -11,13 +11,53 @@ The numbers here come from the code, and each section names the file to look in.
 document changes in the same pull request.
 
 **Units.**
-- Distances are in world pixels. The city is 98 × 98 tiles of 16 pixels, 1568 pixels square.
-- Speeds are in pixels a second. On a PAL C64 at 50 frames a second, divide by 50 for pixels a frame, so
+- Distances are in city pixels. The city is 98 × 98 tiles of 16 pixels, 1568 pixels square. The city is drawn
+  2 screen pixels to a city pixel by default (see [The scale](#the-scale)); people keep their size on screen.
+- Speeds are in city pixels a second. On a PAL C64 at 50 frames a second, divide by 50 for pixels a frame, so
   150 px/s is 3 px a frame.
 - The screen is 320 × 200: a 320 × 176 view of the city and a 24-pixel status panel.
 
 **C64 notes** in this document point out where the hardware forces a choice. They do not make it: that is for
 the C64 version's own documents.
+
+## The scale
+
+`ZOOM`, `PERSON` and `setZoom` in `js/config.js`; `js/scale.js`.
+
+People are drawn at the size that reads well on screen, about 12 screen pixels across. Cars and the city are
+drawn larger, so that a person is nearer their real size beside a car.
+
+- **The zoom** (`ZOOM`): the map, the cars, bullets, sparks and skid marks are drawn ZOOM screen pixels to a city
+  pixel, in blocks of ZOOM × ZOOM. People, pickups, markers, text and the status panel keep their size on screen.
+- **A person is PERSON = 1 / ZOOM of their old size in the city.** Everything about a person's body is in city
+  pixels times PERSON, so on screen it looks and plays the same at any zoom:
+  - how big a target they are (the hit distances below);
+  - how far a fist or a knife reaches;
+  - their footprint against walls, and how close the police get to arrest them;
+  - their pace: walking, swimming, fleeing, and passers-by and police on foot;
+  - how near they must come to a pickup, and how near a finger on a touch screen counts as on them.
+
+  A car's numbers stay in city pixels (its size, speed, grip, getting in and out), and so do places (jobs,
+  crossings). A scooter's speed is the scooter's.
+- **The view** is 320 / ZOOM × 176 / ZOOM city pixels. The camera looks ahead of a moving car by 0.3 × its
+  speed, but no further than keeps the car 24 pixels inside the view across and 16 up and down. The police notice
+  the player from 150, 120 and 130 screen pixels, as before: those distances are divided by ZOOM in the city.
+- **The choices:**
+
+  | Zoom | A person beside a sedan | The view | Notes |
+  |---|---|---|---|
+  | 1 | wider than it (12 screen pixels against 11) | 320 × 176 | the old look |
+  | **2** (the default) | a little over half its width | 160 × 88 | about half a second of road ahead flat out |
+  | 3 | about a third, true to life (0.6 m against 1.8 m) | 107 × 59 | a short view for driving |
+
+  The player changes it with **Z**, or the SCALE button on the info page. It is remembered.
+- **Changing it in play** keeps everyone where they are. People already about keep their pace on screen, a
+  scooter its speed, and the view centres on the player.
+
+> **C64 note.** The C64 version has one scale, its own choice. At 2, a car is an X- and Y-expanded sprite (a 24 ×
+> 21 sprite drawn 48 × 42, enough for a 40 × 22 car) and a tile is 4 × 4 characters. But the view scrolls a
+> character a frame at most, so top speeds in city pixels would halve unless the scrolling goes faster. At 1, it
+> stays as it is, with people as big as cars.
 
 ## Palette
 
@@ -42,8 +82,9 @@ People are seen from above, about the size of a swimmer's splash, so that they r
   - People are drawn in chunky 2 × 2 blocks (`CELL`). They read as pixel art next to the cars, which use
     single pixels.
 - **Size:**
-  - 12 pixels across, hands included: 8 of shoulders and a hand each side. Add the outline to that.
-  - Each frame is 24 × 24, with room for an arm held out and two outlines at any angle.
+  - 12 screen pixels across, hands included: 8 of shoulders and a hand each side. Add the outline to that. In
+    the city that is 12 × PERSON pixels: 6 at the default scale.
+  - Each frame is 24 × 24 screen pixels, with room for an arm held out and two outlines at any angle.
   - 16 directions.
 - **How a figure is made:**
   - A few plain shapes, facing right: square shoulders with the corners cut, a round head over them that pokes
@@ -97,20 +138,21 @@ police trousers or a white cap, and no one else is ever drawn with a white outli
 and hair colours. The player's head keeps its outlines.
 
 **Hit distances** (`HIT` in `js/config.js`) match the drawn body, so what you see is what you hit. Each
-distance is measured from the person's middle.
+distance is measured from the person's middle, in city pixels. The person's part goes by PERSON (see
+[The scale](#the-scale)).
 
-| What | Distance |
-|---|---|
-| A bullet hits a person | 6 |
-| A moving car runs someone over, from the car's middle | 10 |
-| …or from the point 6 pixels ahead of its middle | 9 |
-| A car hurts the player | 10 |
-| Traffic brakes for someone this far either side of its line… | 9 |
-| …and up to this far ahead of its middle | 26 |
+| What | Distance | At the default scale |
+|---|---|---|
+| A bullet hits a person | 5 × PERSON + 1 | 3.5 |
+| A moving car runs someone over, from the car's middle | 5 + 5 × PERSON | 7.5 |
+| …or from the point 6 pixels ahead of its middle | 4 + 5 × PERSON | 6.5 |
+| A car hurts the player | 5 + 5 × PERSON | 7.5 |
+| Traffic brakes for someone this far either side of its line… | 5.5 + 3.5 × PERSON | 7.25 |
+| …and up to this far ahead of its middle | 26 | 26 |
 
-**Against walls**, a person's footprint stays small: four points 3 pixels either side of their middle
+**Against walls**, a person's footprint stays small: four points 3 × PERSON pixels either side of their middle
 (`footClear` in `js/world.js`). Doorways and pavements stay easy to walk, and shoulders may overlap a wall by a
-pixel or two. The arrest distance stays at 7.
+pixel or two. The police arrest from 7 × PERSON.
 
 > **C64 note.** A figure at this size is larger than a character cell: 2 × 2 characters at least, or a
 > sprite. In 2 × 2 blocks a standing figure is 6 blocks across, and with the arm out it reaches 5 blocks
@@ -132,7 +174,7 @@ they have one, otherwise with their fists. Nobody fires in the water.
 | | Gun | Knife | Fists |
 |---|---|---|---|
 | When | ammo left | no ammo, knife | no ammo, no knife |
-| Reach | a bullet | the first person within 7 of the point 10 ahead | the first person within 7 of the point 7 ahead |
+| Reach (screen pixels; × PERSON in the city) | a bullet | the first person within 7 of the point 10 ahead | the first person within 7 of the point 7 ahead |
 | Wait before the next | 0.22 s | 0.28 s | 0.35 s |
 | What it does | kills | kills, even someone already down | knocks down; passes over anyone already down |
 | Heat | 1.5 a shot, then 6 a kill (28 a police officer) | 6 a kill (28 a police officer) | 3 (14 a police officer): half a kill |
@@ -167,7 +209,8 @@ The car's health bar is 28 pixels wide, so `AMMO99` fits beside it.
   - **Never where the player appears:** none within 32 pixels of the hospital or the police station
     (`SPAWN_CLEAR`). Those two points sit between two tile middles, 8 pixels from each, so a pickup there used to
     be picked up the moment the player started or came back (in about 1 game in 27).
-  - **Picked up** when the player, or the car they drive, comes within 11 of it.
+  - **Picked up** when the player comes within 11 × PERSON of it (11 screen pixels), or the car they drive
+    within 11 city pixels.
   - **Back** 40 to 70 seconds later, somewhere else.
 
 | Kind | Share | Letter (colours) | Does |
@@ -398,18 +441,19 @@ Heat is in `js/heat.js`, and the police in `js/spawner.js` and `js/cars.js`.
 | Firing a shot | 1.5 |
 | Stealing the limousine on that job | 10 |
 
-**The police notice the player** when they come this close (`NOTICE` in `js/config.js`):
+**The police notice the player** when they come this close (`NOTICE` in `js/config.js`), in city pixels: the
+same screen distance at any scale, about the edge of the view (75, 60 and 65 at the default 2):
 
 | Who | Distance |
 |---|---|
-| A police car already chasing | 150 |
-| An officer on foot | 120 |
-| A police car on patrol in ordinary traffic | 130 |
+| A police car already chasing | 150 / ZOOM |
+| An officer on foot | 120 / ZOOM |
+| A police car on patrol in ordinary traffic | 130 / ZOOM |
 
 **Cooling down:** with heat above 0 and no chasing car or officer near, the heat drops one level every
 9 seconds. Its points fall to that level's threshold.
 
-**The siren:** with heat above 0 and the police near (a chasing car within 150, or an officer on foot within 120
+**The siren:** with heat above 0 and the police near (a chasing car within `NOTICE.car`, or an officer on foot within `NOTICE.foot`
 who is not knocked down):
 - **Sound:** it wails every 0.7 seconds, two square-wave notes of 0.33 seconds, 620 Hz then 830 Hz.
 - **Border:** the screen border flashes red (2) and blue (6), changing every half second.
@@ -536,6 +580,8 @@ These are not part of the game's design and are not expected on the C64:
 - **The radio,** which streams from the High Voltage SID Collection. The C64 version has its own music; see
   its roadmap.
 - **Skid marks and other decals** painted onto the map.
+- **Choosing the scale** (Z, or the SCALE button on the info page): see [The scale](#the-scale). The C64 version has
+  one scale.
 - **The browser check** (`js/compat.js`), on the loading screen. It is a classic script in ES5, so it runs even
   where the game's modules cannot.
   - **Fatal:** the game's place is taken by a `?BROWSER ERROR` box that lists what is missing, and suggests a

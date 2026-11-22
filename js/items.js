@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Bullets and pickups.
-import { AMMO_MAX, DIRS, HIT, HT, KIND, WATER } from './config.js';
+import { AMMO_MAX, DIRS, HIT, HT, KIND, WATER, PICKUP } from './config.js';
 import { R, hyp } from './util.js';
 import { solidAt, tileAt } from './world.js';
 import { sfx } from './audio.js';
@@ -68,7 +68,7 @@ export function updPickups(dt) {
     if (k.temp != null) {
       k.temp -= dt;
     }
-    if (G.screen === 'play' && hyp(k.x - p.x, k.y - p.y) < 11) {
+    if (G.screen === 'play' && hyp(k.x - p.x, k.y - p.y) < (P.car ? PICKUP.car : PICKUP.foot)) {
       sfx.pick();
       if (k.type === 'cash') {
         G.cash += k.v;

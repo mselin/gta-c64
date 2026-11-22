@@ -1,6 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Pedestrians and police on foot, and Big Honk.
-import { DIRS, GRASS, HIT, HONK, KNIFE, KO, LOT, PAL, PLAZA, ROAD, WALK, WATER } from './config.js';
+import {
+  DIRS,
+  GRASS,
+  HIT,
+  HONK,
+  KNIFE,
+  KO,
+  LOT,
+  PAL,
+  PLAZA,
+  ROAD,
+  WALK,
+  WATER,
+  PACE,
+  PERSON,
+} from './config.js';
 import { R, hyp } from './util.js';
 import { decals, nearestLand, solidAt, tileAt, wallAt, waterAt } from './world.js';
 import { sfx } from './audio.js';
@@ -15,17 +30,16 @@ export function resetPeds() {
 }
 /** Leave a mark on the ground where someone died. */
 function stain(p) {
-  // Sized to the person as drawn, about 10 px across.
+  // Sized to the person as drawn, about 10 screen pixels across: 10 × PERSON city pixels, as the stain is
+  // painted into the city's map.
+  const r = 12 * PERSON,
+    w = Math.max(2, Math.round(5 * PERSON)),
+    h = Math.max(2, Math.round(6 * PERSON));
   decals.ctx.fillStyle = PAL[2];
-  for (let k = 0; k < 18; k++)
-    decals.ctx.fillRect(
-      Math.floor(p.x + (R() - 0.5) * 12),
-      Math.floor(p.y + (R() - 0.5) * 12),
-      1 + (R() < 0.3),
-      1,
-    );
+  for (let k = 0; k < Math.round(18 * PERSON); k++)
+    decals.ctx.fillRect(Math.floor(p.x + (R() - 0.5) * r), Math.floor(p.y + (R() - 0.5) * r), 1, 1);
   decals.ctx.fillStyle = PAL[p.shirt];
-  decals.ctx.fillRect(Math.floor(p.x) - 2, Math.floor(p.y) - 3, 5, 6);
+  decals.ctx.fillRect(Math.floor(p.x - w / 2), Math.floor(p.y - h / 2), w, h);
 }
 /**
  * Someone is killed: shot, punched, run over or caught in a blast, by the player or not. `from` is where it
@@ -227,7 +241,7 @@ export function updPeds(dt) {
         d = hyp(dx, dy) || 1;
       p.dx = dx / d;
       p.dy = dy / d;
-      if (d > 6) pedMove(p, p.dx * p.spd, p.dy * p.spd, dt);
+      if (d > 6 * PERSON) pedMove(p, p.dx * p.spd, p.dy * p.spd, dt);
       p.cd -= dt;
       if (G.heat >= 3 && d < 95 && p.cd <= 0) {
         p.cd = 1.1 + R() * 0.6;
@@ -243,7 +257,7 @@ export function updPeds(dt) {
         });
         if (onScreen(p.x, p.y, 0)) sfx.shot();
       }
-      if (!P.car && d < 7) down('busted');
+      if (!P.car && d < 7 * PERSON) down('busted');
       else if (P.car && d < 13 && hyp(P.car.vx, P.car.vy) < 22) {
         P.car.bust += dt;
         if (P.car.bust > 0.7) {
@@ -260,7 +274,7 @@ export function updPeds(dt) {
         d = hyp(dx, dy) || 1;
       p.dx = dx / d;
       p.dy = dy / d;
-      if (!pedMove(p, p.dx * 48, p.dy * 48, dt)) {
+      if (!pedMove(p, p.dx * PACE.flee, p.dy * PACE.flee, dt)) {
         p.fx = p.x + (R() - 0.5) * 20;
         p.fy = p.y + (R() - 0.5) * 20;
       }
@@ -284,7 +298,7 @@ export function updPeds(dt) {
           d = hyp(dx, dy) || 1;
         p.dx = dx / d;
         p.dy = dy / d;
-        pedMove(p, p.dx * 45, p.dy * 45, dt);
+        pedMove(p, p.dx * PACE.wade, p.dy * PACE.wade, dt);
       }
       p.t = 0;
       continue;

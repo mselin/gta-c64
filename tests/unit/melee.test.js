@@ -78,8 +78,9 @@ test('a punch reaches only so far, and passes over someone already down', () => 
   G.peds = [far];
   strike();
   assert.equal(far.ko, 0, 'out of reach');
-  const first = still(6),
-    second = still(10);
+  // One just short of where the fist lands, one beyond it but still in reach.
+  const first = still(MELEE.fist.ahead - 1),
+    second = still(MELEE.fist.ahead + MELEE.fist.r * 0.6);
   G.peds = [first, second];
   first.ko = 2;
   P.cd = 0;

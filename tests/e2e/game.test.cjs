@@ -247,7 +247,7 @@ test('both end screens show their picture from the assets folder', async () => {
 test('Big Honk is in the city, drawn pixel for pixel as figures.js has him, and a shot only makes him flap and honk', async () => {
   await game.start();
   const { frame, poseOf } = await import('../../js/figures.js');
-  const { RGB } = await import('../../js/config.js');
+  const { RGB, ZOOM } = await import('../../js/config.js');
   // Hold him still on his bank, facing north, with the player beside him and nobody else about.
   await game.read((s) => {
     const h = s.G.peds.find((p) => p.type === 'honk');
@@ -257,16 +257,17 @@ test('Big Honk is in the city, drawn pixel for pixel as figures.js has him, and 
     Object.assign(s.P, { x: h.x - 30, y: h.y, a: 0, car: null, ammo: 5 });
   });
   await game.wait(1500); // for the view to settle on the player
-  const shot = await game.page.evaluate(() => {
+  // Where he is on the screen: ZOOM screen pixels to a city pixel, as render.js works it out. He keeps his size.
+  const shot = await game.page.evaluate((zoom) => {
     const s = window.sleazeburg,
       h = s.G.peds.find((p) => p.type === 'honk'),
-      sx = 32 + Math.round(h.x - Math.round(s.G.camX) - 12),
-      sy = 36 + Math.round(h.y - Math.round(s.G.camY) - 12);
+      sx = 32 + Math.round(h.x * zoom) - Math.round(s.G.camX * zoom) - 12,
+      sy = 36 + Math.round(h.y * zoom) - Math.round(s.G.camY * zoom) - 12;
     return {
       h: { ...h },
       data: [...document.getElementById('c').getContext('2d').getImageData(sx, sy, 24, 24).data],
     };
-  });
+  }, ZOOM);
   const want = frame(shot.h, poseOf(shot.h), (12 / 16) * Math.PI * 2); // north is the 12th of 16 directions
   let wrong = 0,
     drawn = 0;
@@ -288,4 +289,25 @@ test('Big Honk is in the city, drawn pixel for pixel as figures.js has him, and 
   }));
   assert.equal(after.honks, 1, 'still there');
   assert.ok(after.pops.includes('HONK!'));
+});
+
+test('Z changes the scale, the info page shows and changes it, and the choice is kept', async () => {
+  await game.start();
+  const zoom = () => game.read((s) => s.zoom.now());
+  assert.equal(await zoom(), 2, 'the default');
+  await game.press('KeyZ');
+  assert.equal(await zoom(), 3);
+  assert.match(await game.read((s) => s.G.msgTxt), /SCALE 3X/);
+  await game.press('KeyI');
+  const button = game.page.locator('#bzoom');
+  assert.equal(await button.innerText(), 'SCALE: 3X');
+  await button.click();
+  assert.equal(await zoom(), 1);
+  assert.equal(await button.innerText(), 'SCALE: 1X');
+  await game.press('KeyI');
+  // A new visit starts at the scale chosen last.
+  await game.page.reload();
+  await game.page.waitForFunction(() => window.sleazeburg);
+  assert.equal(await zoom(), 1);
+  await game.read((s) => s.zoom.use(2, false));
 });

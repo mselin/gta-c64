@@ -135,7 +135,8 @@ test('ruffled, he runs off flapping, away from what hit him, and nothing ruffles
   const y0 = h.y,
     pops = G.pops.length;
   for (let i = 0; i < 30; i++) updPeds(DT);
-  assert.ok(h.y > y0 + 15, `he ran south, away from it (${(h.y - y0).toFixed(1)} px)`);
+  // Half a second at his running pace, near enough.
+  assert.ok(h.y > y0 + HONK.run * 0.5 * 0.7, `he ran south, away from it (${(h.y - y0).toFixed(1)} px)`);
   assert.ok([FLAP_OUT, FLAP_BACK].includes(poseOf(h)), 'flapping');
   const left = h.flap;
   killPed(h, true, P);

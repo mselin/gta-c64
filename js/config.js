@@ -30,6 +30,23 @@ export const SW = 320,
   BX = 32,
   BY = 36,
   PI = Math.PI;
+/**
+ * The scale. The map, the cars and everything else in the city are drawn ZOOM screen pixels to a city pixel,
+ * while people keep their size on screen: so in the city a person is PERSON of what they were, closer to their
+ * real size beside a car. Everything about a person's body (how big a target, how far a fist reaches, the
+ * footprint, the pace) is in city pixels times PERSON, so it looks and plays on screen as before. VIEW_W and
+ * VIEW_H are how much of the city the view shows, in city pixels.
+ */
+export let ZOOM = 2,
+  PERSON = 1 / 2,
+  VIEW_W = 320 / 2,
+  VIEW_H = 176 / 2;
+/**
+ * The scales a player can choose, in the browser and desktop versions (Z, or the info page): 1, the old look,
+ * people as big as cars; 2, the default; 3, true to scale but a short view for driving. The C64 version has one.
+ */
+export const ZOOMS = [1, 2, 3],
+  DEFAULT_ZOOM = 2;
 /** The kinds of car. `m` is the mass, a sedan's being 1: it decides who pushes whom in a crash. */
 export const KIND = {
   sedan: { n: 'sedan', L: 20, W: 11, max: 150, acc: 120, hp: 100, m: 1 },
@@ -56,8 +73,8 @@ export const HONK = {
   x1: 5 * PB * T,
   x: (4 * PB + 2) * T + 8,
   y: (4 * PB + 4) * T + 8,
-  spd: 18,
-  run: 44,
+  spd: 0, // walking and running: 18 and 44 screen pixels a second, set by setZoom
+  run: 0,
   flapT: 1.2,
   jay: 0.3,
 };
@@ -100,26 +117,27 @@ export const SHOPS = [
   'THOUGHTS&PRAYERS',
 ];
 /**
- * How close things must come to someone on foot to hit them, from the middle of the person. People are drawn
- * about 10 px across, 5 px either side of their middle (see figures.js), so these match what is on screen.
- * Their footprint against walls (footClear in world.js) stays smaller, so doorways and pavements stay easy.
+ * How close things must come to someone on foot to hit them, from the middle of the person, in city pixels.
+ * People are drawn about 10 screen pixels across, 5 × PERSON city pixels either side of their middle (see
+ * figures.js), so these match what is on screen. Their footprint against walls (footClear in world.js) stays
+ * smaller, so doorways and pavements stay easy.
  */
-export const HIT = {
-  shot: 6, // a bullet: 5 px of shoulder and half the 2 px bullet
-  car: 10, // a moving car's middle: half its 11 px width and 5 px of shoulder
-  nose: 9, // the point 6 px ahead of a moving car's middle: reaches 5 px past its front bumper
-  lane: 9, // traffic brakes for someone this far either side of the line it drives along
-  ahead: 26, // and up to this far ahead of its middle, so it stops before its bumper gets there
-};
+export const HIT = {}; // shot, car, nose, lane, ahead: set by setZoom
+//  shot: a bullet: the shoulder, and half the 2 px bullet
+//  car: a moving car's middle: (about) half its 11 px width and the shoulder
+//  nose: the point 6 px ahead of a moving car's middle: its front bumper and the shoulder past it
+//  lane: traffic brakes for someone this far either side of the line it drives along
+//  ahead: and up to this far ahead of its middle, so it stops before its bumper gets there
+/** A person's pace, in city pixels a second: the player walking and swimming, and passers-by and police on foot. */
+export const PACE = {}; // walk, swim, civ (and up to civMore more), cop, flee, wade: set by setZoom
+/** How near a pickup the player on foot must come, and the player's car. */
+export const PICKUP = {}; // foot, car: set by setZoom
 /**
  * Hand to hand, when the player is out of ammo: a blow lands at the point `ahead` px in front of the player and
  * hits the first person within `r` of it; `cd` is the wait before the next. A punch knocks someone down; a stab
  * kills, and reaches farther.
  */
-export const MELEE = {
-  fist: { ahead: 7, r: 7, cd: 0.35 },
-  knife: { ahead: 10, r: 7, cd: 0.28 },
-};
+export const MELEE = { fist: { cd: 0.35 }, knife: { cd: 0.28 } }; // ahead and r: set by setZoom
 /** Knocked down: how long someone stays down, in seconds, and the heat for it, half of what a kill brings. */
 export const KO = { t: 4, crime: 3, copCrime: 14 };
 /** The most ammo the player can carry: two digits, as the HUD shows it (AMMO99). */
@@ -139,14 +157,12 @@ export const DISTRICTS = {
 export const GOAL = 25000,
   HT = [0, 8, 25, 60, 110, 180];
 /**
- * How close the police must be to notice the player, in pixels from the player (or the player's car).
+ * How close the police must be to notice the player, in city pixels from the player (or the player's car).
  * Noticing keeps the heat from cooling, puts a patrol car in traffic onto the chase, and spots a stolen cruiser.
+ * About the edge of the view, which is 1 / ZOOM of what it was: the police notice no one they are not on screen
+ * with.
  */
-export const NOTICE = {
-  car: 150, // a police car already chasing
-  foot: 120, // an officer on foot
-  patrol: 130, // a police car on patrol in ordinary traffic
-};
+export const NOTICE = {}; // car (chasing), foot (an officer), patrol: set by setZoom
 /** Driving a police car where the police can see it: the heat goes up to at least this. */
 export const STOLEN_CRUISER_HEAT = 2;
 export const HEATMSG = [
@@ -265,3 +281,38 @@ export const GRIP = { sedan: 450, sports: 490, van: 370, taxi: 450, police: 510,
  * - bounce: what share of the closing speed two cars part with after a crash.
  */
 export const HANDLING = { grassGrip: 0.55, grassDrag: 0.8, spinInertia: 3.5, spinGrip: 1 / 80, bounce: 0.3 };
+
+/**
+ * Set the scale, and everything worked out from it. Positions in the city stay where they are; a person becomes
+ * PERSON of their old size in the city, so they keep their size on screen, and so do their pace and reach.
+ */
+export function setZoom(z) {
+  ZOOM = z;
+  PERSON = 1 / z;
+  VIEW_W = 320 / z;
+  VIEW_H = 176 / z;
+  Object.assign(HIT, {
+    shot: 5 * PERSON + 1,
+    car: 5 + 5 * PERSON,
+    nose: 4 + 5 * PERSON,
+    lane: 5.5 + 3.5 * PERSON,
+    ahead: 26,
+  });
+  Object.assign(PACE, {
+    walk: 58 * PERSON,
+    swim: 22 * PERSON,
+    civ: 15 * PERSON,
+    civMore: 8 * PERSON,
+    cop: 47 * PERSON,
+    flee: 48 * PERSON,
+    wade: 45 * PERSON,
+  });
+  Object.assign(PICKUP, { foot: 11 * PERSON, car: 11 });
+  Object.assign(MELEE.fist, { ahead: 7 * PERSON, r: 7 * PERSON });
+  Object.assign(MELEE.knife, { ahead: 10 * PERSON, r: 7 * PERSON });
+  // About the edge of the view: the police notice no one they are not on screen with.
+  Object.assign(NOTICE, { car: 150 / z, foot: 120 / z, patrol: 130 / z });
+  HONK.spd = 18 * PERSON;
+  HONK.run = 44 * PERSON;
+}
+setZoom(DEFAULT_ZOOM);
