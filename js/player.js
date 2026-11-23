@@ -2,9 +2,9 @@
 // The player on foot and at the wheel: movement, weapons, getting in and out of cars, dying and getting arrested.
 import { DIRS, HIT, JACK, KIND, MELEE, ZOOM, PACE, PERSON } from './config.js';
 import { angDiff, clamp, hyp, pick } from './util.js';
-import { COPS, HOSP, footClear, waterAt } from './world.js';
+import { COPS, HOSP, footClear, waterAt, foot } from './world.js';
 import { noise, sfx } from './audio.js';
-import { G, K, P, bigText, edge, msg, touch, weapon } from './state.js';
+import { G, K, P, bigText, edge, msg, touch, weapon, carBodyAt } from './state.js';
 import { mkPed } from './entities.js';
 import { crime } from './heat.js';
 import { carPhys, sidePos } from './cars.js';
@@ -114,7 +114,15 @@ function exitCar() {
   P.car = null;
   sfx.door();
 }
-const footHits = (x, y) => !footClear(x, y);
+/**
+ * Whether the player on foot may step to (x, y): clear of walls and of cars' bodies. Someone caught in a wall may
+ * still walk, or they could never leave it, and someone a car has stopped on may walk out from under it; each
+ * only from what they are caught in, never through the other.
+ */
+function canStep(x, y) {
+  const f = foot();
+  return (!footClear(P.x, P.y) || footClear(x, y)) && (!!carBodyAt(P.x, P.y, f) || !carBodyAt(x, y, f));
+}
 
 // ---------- touch steering ----------
 // On a touch screen the player holds a finger on the screen and the player character heads for it.
@@ -215,10 +223,9 @@ export function updPlayer(dt) {
       dy /= l;
       P.a = Math.atan2(dy, dx);
       const s = (swim ? PACE.swim : PACE.walk) * dt;
-      // Someone who has somehow ended up inside a wall may always walk; otherwise they could never leave.
-      const stuck = footHits(P.x, P.y);
-      if (stuck || !footHits(P.x + dx * s, P.y)) P.x += dx * s;
-      if (stuck || !footHits(P.x, P.y + dy * s)) P.y += dy * s;
+      // Each way separately, so the player slides along a wall or a car (canStep: out of either, never into one).
+      if (canStep(P.x + dx * s, P.y)) P.x += dx * s;
+      if (canStep(P.x, P.y + dy * s)) P.y += dy * s;
       P.anim += dt * 9;
     } else P.anim = 0; // standing still: the middle pose
     P.cd -= dt;
@@ -261,7 +268,7 @@ export function updPlayer(dt) {
         sfx.squish();
         const nx = P.x + o.vx * 0.06,
           ny = P.y + o.vy * 0.06;
-        if (!footHits(nx, ny)) {
+        if (footClear(nx, ny)) {
           P.x = nx;
           P.y = ny;
         }

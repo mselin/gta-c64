@@ -101,6 +101,23 @@ export function pop(x, y, t, col) {
 }
 export const ppos = () => P.car || P;
 /**
+ * The car whose body is at (x, y), with `r` to spare round it, or null: the car's length and width, turned with
+ * it. Cars are solid for anyone on foot, stopped or moving; one on the bottom of the canal is out of the way.
+ */
+export function carBodyAt(x, y, r) {
+  for (const c of G.cars) {
+    const dx = x - c.x,
+      dy = y - c.y;
+    if (Math.abs(dx) > 20 || Math.abs(dy) > 20) continue;
+    if (c.flooded && c.sink >= 1) continue;
+    const cs = Math.cos(c.a),
+      sn = Math.sin(c.a);
+    if (Math.abs(dx * cs + dy * sn) <= c.kind.L / 2 + r && Math.abs(-dx * sn + dy * cs) <= c.kind.W / 2 + r)
+      return c;
+  }
+  return null;
+}
+/**
  * Whether the screen border flashes red and blue: only while the siren is actually going, in play, with the game
  * running. Not on the busted or flatlined screen, not paused or behind a dialog, and not once the police are gone.
  */
