@@ -25,16 +25,21 @@ function drawSpr(fr, a, x, y, z = ZOOM) {
     s = fr[0].width * z;
   g.drawImage(fr[i], sx(x) - Math.round(s / 2), sy(y) - Math.round(s / 2), s, s);
 }
+/**
+ * A job marker (J, P, X): a flashing square with its letter, 12 city pixels across, drawn at the city's scale like
+ * the pickups, so it is the size it always was beside the streets.
+ */
 function marker(x, y, ch, c1, c2) {
   if (!onScreen(x, y, 10)) return;
   const f = Math.floor(G.clock * 4) & 1,
+    z = ZOOM,
     mx = sx(x),
     my = sy(y);
   g.fillStyle = PAL[f ? c1 : c2];
-  g.fillRect(mx - 6, my - 6, 12, 12);
+  g.fillRect(mx - 6 * z, my - 6 * z, 12 * z, 12 * z);
   g.fillStyle = PAL[0];
-  g.fillRect(sx - 5, sy - 5, 10, 10);
-  text(ch, sx - 4, sy - 4, f ? c1 : c2);
+  g.fillRect(mx - 5 * z, my - 5 * z, 10 * z, 10 * z);
+  text(ch, mx - 4 * z, my - 4 * z, f ? c1 : c2, z);
 }
 const PKI = {
   ammo: ['A', 8, 7],
@@ -78,14 +83,17 @@ function drawWorld() {
   for (const k of G.pickups) {
     if (k.t > 0 || !onScreen(k.x, k.y, 8)) continue;
     if (k.temp != null && k.temp < 4 && Math.floor(G.clock * 8) & 1) continue;
+    // 8 city pixels square with a black edge, its letter in it: drawn at the city's scale, as big beside the
+    // streets as they always were. It bobs a city pixel.
     const d = PKI[k.type],
-      kx = sx(k.x) - 4,
-      ky = sy(k.y) - 4 + (Math.floor(G.clock * 3 + k.x) & 1);
+      z = ZOOM,
+      kx = sx(k.x) - 4 * z,
+      ky = sy(k.y) - 4 * z + (Math.floor(G.clock * 3 + k.x) & 1) * z;
     g.fillStyle = PAL[0];
-    g.fillRect(kx - 1, ky - 1, 10, 10);
+    g.fillRect(kx - z, ky - z, 10 * z, 10 * z);
     g.fillStyle = PAL[d[1]];
-    g.fillRect(kx, ky, 8, 8);
-    text(d[0], kx, ky, d[2]);
+    g.fillRect(kx, ky, 8 * z, 8 * z);
+    text(d[0], kx, ky, d[2], z);
   }
   for (const p of G.peds) {
     if (!onScreen(p.x, p.y, FRAME / 2)) continue;
