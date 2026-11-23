@@ -61,7 +61,8 @@ test('at every scale a person looks, moves and reaches the same on screen', () =
     near(screen(MELEE.fist.ahead), 7, 'a fist lands 7 screen pixels ahead');
     near(screen(MELEE.knife.ahead), 10);
     near(screen(foot()), 3, 'the footprint');
-    near(screen(PICKUP.foot), 11, 'a pickup within 11 screen pixels');
+    // A pickup is drawn at the city's scale, 8 city pixels square: reached from its edge by 7 screen pixels.
+    near(PICKUP.foot, 4 + 7 / ZOOM, 'a pickup reached from its edge');
     near(screen(touchReach().stand), 6, 'a finger on the player');
     near(screen(NOTICE.car), 150, 'the police notice from as far across the screen as ever');
     // A car is drawn ZOOM times its size, so what is about the car stays in city pixels.

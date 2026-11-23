@@ -307,7 +307,9 @@ export function setZoom(z) {
     flee: 48 * PERSON,
     wade: 45 * PERSON,
   });
-  Object.assign(PICKUP, { foot: 11 * PERSON, car: 11 });
+  // A pickup is 8 city pixels square, drawn at the city's scale: reached from its edge, 4 from its middle, by
+  // a person's 7 screen pixels.
+  Object.assign(PICKUP, { foot: 4 + 7 * PERSON, car: 11 });
   Object.assign(MELEE.fist, { ahead: 7 * PERSON, r: 7 * PERSON });
   Object.assign(MELEE.knife, { ahead: 10 * PERSON, r: 7 * PERSON });
   // About the edge of the view: the police notice no one they are not on screen with.

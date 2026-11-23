@@ -28,14 +28,17 @@ People are drawn at the size that reads well on screen, about 12 screen pixels a
 drawn larger, so that a person is nearer their real size beside a car.
 
 - **The zoom** (`ZOOM`): the map, the cars, bullets, sparks and skid marks are drawn ZOOM screen pixels to a city
-  pixel, in blocks of ZOOM × ZOOM. People, pickups, markers, text and the status panel keep their size on screen.
+  pixel, in blocks of ZOOM × ZOOM, and so are pickups and the job markers (J, P, X), letters and all, so they stay
+  as big beside the streets as they were before the zoom. People, the other text and the status panel keep their
+  size on screen.
 - **A person is PERSON = 1 / ZOOM of their old size in the city.** Everything about a person's body is in city
   pixels times PERSON, so on screen it looks and plays the same at any zoom:
   - how big a target they are (the hit distances below);
   - how far a fist or a knife reaches;
   - their footprint against walls, and how close the police get to arrest them;
   - their pace: walking, swimming, fleeing, and passers-by and police on foot;
-  - how near they must come to a pickup, and how near a finger on a touch screen counts as on them.
+  - how near they must come to a pickup (from its edge, which is in city pixels), and how near a finger on a
+    touch screen counts as on them.
 
   A car's numbers stay in city pixels (its size, speed, grip, getting in and out), and so do places (jobs,
   crossings). A scooter's speed is the scooter's.
@@ -222,8 +225,13 @@ The car's health bar is 28 pixels wide, so `AMMO99` fits beside it.
   - **Never where the player appears:** none within 32 pixels of the hospital or the police station
     (`SPAWN_CLEAR`). Those two points sit between two tile middles, 8 pixels from each, so a pickup there used to
     be picked up the moment the player started or came back (in about 1 game in 27).
-  - **Picked up** when the player comes within 11 × PERSON of it (11 screen pixels), or the car they drive
-    within 11 city pixels.
+  - **Drawn** at the city's scale: a square 8 city pixels across in its colour with a black edge 1 city pixel
+    wide, and its letter filling it (a letter of the font, ZOOM screen pixels to its pixel). It bobs up and down a
+    city pixel. Cash or a knife that someone drops lasts 20 seconds, and blinks in its last 4.
+  - **Picked up** when the player comes within 4 + 7 × PERSON of its middle: its half width, 4 city pixels, plus
+    7 screen pixels of the player. The car they drive picks it up within 11 city pixels.
+  - **The bug it fixes** (mselin/gta-c64#40): after mselin/gta-c64#37, pickups and markers were drawn their old
+    size on screen, which at the zoom made them half as big beside the streets, and the markers lost their letter.
   - **Back** 40 to 70 seconds later, somewhere else.
 
 | Kind | Share | Letter (colours) | Does |

@@ -311,3 +311,46 @@ test('Z changes the scale, the info page shows and changes it, and the choice is
   assert.equal(await zoom(), 1);
   await game.read((s) => s.zoom.use(2, false));
 });
+
+test("pickups and job markers are drawn at the city's scale, each with its letter", async () => {
+  await game.start();
+  // Hold the game still (the information page, without showing it), with an ammo pickup beside the player and the
+  // camera on the first job marker, then count the colours of the canvas where each is drawn.
+  const seen = await game.read(async (s) => {
+    const { G, P } = s,
+      { ZOOM: z, PAL } = await import('/js/config.js'),
+      { JOBPTS } = await import('/js/world.js'),
+      j = JOBPTS[0];
+    G.infoOpen = true;
+    G.job = null;
+    G.camX = j.x - 60;
+    G.camY = j.y - 40;
+    G.pickups = [{ x: j.x + 30, y: j.y, type: 'ammo', t: 0 }];
+    await new Promise((done) => window.requestAnimationFrame(() => window.requestAnimationFrame(done)));
+    const q = document.getElementById('c').getContext('2d'),
+      hex = (d, i) => '#' + [0, 1, 2].map((k) => d[i + k].toString(16).padStart(2, '0')).join(''),
+      // How many pixels of each colour in a box `h` city pixels either side of (x, y), on the screen.
+      count = (x, y, h) => {
+        const px = Math.round(x * z) - Math.round(G.camX * z),
+          py = Math.round(y * z) - Math.round(G.camY * z),
+          d = q.getImageData(32 + px - h * z, 36 + py - h * z, 2 * h * z, 2 * h * z).data,
+          n = {};
+        for (let i = 0; i < d.length; i += 4) n[hex(d, i)] = (n[hex(d, i)] || 0) + 1;
+        return n;
+      },
+      ammo = count(j.x + 30, j.y, 4),
+      mark = count(j.x, j.y, 5);
+    return {
+      z,
+      orange: ammo[PAL[8].toLowerCase()] || 0,
+      black: mark[PAL[0].toLowerCase()] || 0,
+      lit: Object.entries(mark).reduce((t, [c, k]) => (c === PAL[0].toLowerCase() ? t : t + k), 0),
+    };
+  });
+  const z2 = seen.z * seen.z;
+  // The ammo square is 8 city pixels across, orange with its A in it (and it bobs a city pixel).
+  assert.ok(seen.orange > 30 * z2, `the ammo square fills its 8 city pixels (${seen.orange} orange pixels)`);
+  // The J marker's middle is 10 city pixels of black with the J in it.
+  assert.ok(seen.black > 60 * z2, `the marker's black middle (${seen.black} pixels)`);
+  assert.ok(seen.lit > 4 * z2, `with its J drawn in it (${seen.lit} pixels)`);
+});
