@@ -17,9 +17,9 @@ import {
   PERSON,
 } from './config.js';
 import { R, hyp } from './util.js';
-import { decals, nearestLand, solidAt, tileAt, wallAt, waterAt } from './world.js';
+import { decals, nearestLand, solidAt, tileAt, wallAt, waterAt, foot } from './world.js';
 import { sfx } from './audio.js';
-import { G, P, msg, onScreen, pop, ppos } from './state.js';
+import { G, P, msg, onScreen, pop, ppos, carBodyAt } from './state.js';
 import { crime } from './heat.js';
 import { down } from './player.js';
 import { ARM_OUT_T, SHOOT } from './figures.js';
@@ -102,24 +102,122 @@ export function scare(x, y, r, t) {
     }
 }
 export const SWIM_FACTOR = 0.4;
+/**
+ * Someone part way round a car: on along the side they chose while the way they want to go, (vx, vy), still runs
+ * into it. False once that way is clear, or the side is blocked, or it has taken too long: they go on as usual.
+ */
+function stepRound(p, vx, vy, dt) {
+  const f = foot(),
+    sp = hyp(vx, vy),
+    look = 4 * PERSON + f;
+  p.round.t -= dt;
+  if (!sp || p.round.t <= 0 || !carBodyAt(p.x + (vx / sp) * look, p.y + (vy / sp) * look, f)) {
+    p.round = null;
+    return false;
+  }
+  const sx = p.x + p.round.dx * sp * dt,
+    sy = p.y + p.round.dy * sp * dt;
+  if (wallAt(sx, sy) || carBodyAt(sx, sy, f)) {
+    p.round = null;
+    return false;
+  }
+  p.x = sx;
+  p.y = sy;
+  return true;
+}
 function pedMove(p, vx, vy, dt) {
   // Water is not a wall for people, but it is slow going.
   if (waterAt(p.x, p.y)) {
     vx *= SWIM_FACTOR;
     vy *= SWIM_FACTOR;
   }
+  if (p.round && stepRound(p, vx, vy, dt)) return true;
   const nx = p.x + vx * dt,
-    ny = p.y + vy * dt;
-  let ok = false;
-  if (!wallAt(nx, p.y)) {
-    p.x = nx;
-    ok = true;
+    ny = p.y + vy * dt,
+    // Someone a car has stopped on may walk out; nobody walks into one.
+    f = foot(),
+    caught = carBodyAt(p.x, p.y, f),
+    clear = (x, y) => !wallAt(x, y) && (caught || !carBodyAt(x, y, f)),
+    x0 = p.x,
+    y0 = p.y;
+  if (clear(nx, p.y)) p.x = nx;
+  if (clear(p.x, ny)) p.y = ny;
+  const want = hyp(vx, vy) * dt,
+    got = hyp(p.x - x0, p.y - y0);
+  if (want > 0 && got < want * 0.2 && !caught) {
+    // Barely moved, and a car is what is in the way: step round it, sideways, away from its middle, and keep on
+    // that side until the way ahead is clear of it (stepRound).
+    const car = carBodyAt(nx, ny, f) || carBodyAt(nx, p.y, f) || carBodyAt(p.x, ny, f);
+    if (car) {
+      p.x = x0;
+      p.y = y0;
+      const ux = -vy / hyp(vx, vy),
+        uy = vx / hyp(vx, vy),
+        away = ux * (p.x - car.x) + uy * (p.y - car.y) >= 0 ? 1 : -1;
+      const side = [away, -away].find((k) => clear(p.x + ux * k * want, p.y + uy * k * want));
+      if (side) {
+        p.round = { dx: ux * side, dy: uy * side, t: ROUND_CAR.most };
+        p.x += ux * side * want;
+        p.y += uy * side * want;
+        return true;
+      }
+    }
   }
-  if (!wallAt(p.x, ny)) {
-    p.y = ny;
-    ok = true;
+  return got > 0;
+}
+/** How long someone stands at a car in their way before stepping round it, and at most how long the step takes. */
+export const ROUND_CAR = { wait: 0.4, most: 3 };
+/**
+ * A passer-by or a scooter walking their way (dx, dy): stopped by walls, and by cars. At a car in the way they
+ * stop just short of it, wait a moment, then step sideways, away from its middle, until their way is clear, and
+ * carry on. With no way round, they turn back.
+ */
+function walkOn(p, dt) {
+  const f = foot(),
+    look = 4 * PERSON + f,
+    step = p.spd * dt,
+    caught = carBodyAt(p.x, p.y, f);
+  if (p.round) {
+    // Stepping round a car: until the way ahead is clear of it, or it takes too long.
+    p.round.t -= dt;
+    const sx = p.x + p.round.dx * step,
+      sy = p.y + p.round.dy * step;
+    if (!carBodyAt(p.x + p.dx * look, p.y + p.dy * look, f) || p.round.t <= 0) p.round = null;
+    else if (!solidAt(sx, sy) && (caught || !carBodyAt(sx, sy, f))) {
+      p.x = sx;
+      p.y = sy;
+      return;
+    } else {
+      p.round = null;
+      pedPick(p); // hemmed in: try another way
+      return;
+    }
   }
-  return ok;
+  const car = caught ? null : carBodyAt(p.x + p.dx * look, p.y + p.dy * look, f);
+  if (car) {
+    p.wait = (p.wait || 0) + dt;
+    if (p.wait < ROUND_CAR.wait) return; // stop near the car first
+    p.wait = 0;
+    // The side away from the car's middle, if it is clear; else the other side; else turn back.
+    const sides = [
+      [-p.dy, p.dx],
+      [p.dy, -p.dx],
+    ].sort(
+      (a, b) => b[0] * (p.x - car.x) + b[1] * (p.y - car.y) - (a[0] * (p.x - car.x) + a[1] * (p.y - car.y)),
+    );
+    const way = sides.find(
+      ([dx, dy]) =>
+        !solidAt(p.x + dx * look, p.y + dy * look) && !carBodyAt(p.x + dx * look, p.y + dy * look, f),
+    );
+    if (way) p.round = { dx: way[0], dy: way[1], t: ROUND_CAR.most };
+    else pedPick(p);
+    return;
+  }
+  p.wait = 0;
+  if (!solidAt(p.x + p.dx * 4, p.y + p.dy * 4)) {
+    p.x += p.dx * step;
+    p.y += p.dy * step;
+  }
 }
 function pedPref(t, p) {
   return t === WALK || t === PLAZA || t === GRASS || (p.jay && (t === ROAD || t === LOT));
@@ -305,11 +403,8 @@ export function updPeds(dt) {
     }
     p.land = null;
     p.t -= dt;
-    if (p.t <= 0 || !pedPref(tileAt(p.x + p.dx * 9, p.y + p.dy * 9), p)) pedPick(p);
-    if (!solidAt(p.x + p.dx * 4, p.y + p.dy * 4)) {
-      p.x += p.dx * p.spd * dt;
-      p.y += p.dy * p.spd * dt;
-    }
+    if (!p.round && (p.t <= 0 || !pedPref(tileAt(p.x + p.dx * 9, p.y + p.dy * 9), p))) pedPick(p);
+    walkOn(p, dt);
   }
   // run over
   for (const c of G.cars) {

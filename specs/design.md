@@ -160,6 +160,19 @@ distance is measured from the person's middle, in city pixels. The person's part
 (`footClear` in `js/world.js`). Doorways and pavements stay easy to walk, and shoulders may overlap a wall by a
 pixel or two. The police arrest from 7 × PERSON.
 
+**Cars are solid for anyone on foot**, stopped or moving (`carBodyAt` in `js/state.js`). A car's body is its length
+and width, turned with it, and a person may come no nearer than their footprint. A car on the bottom of the canal
+is out of the way. (A moving car still runs people over, as under Hit distances.)
+
+- **A passer-by or a scooter rider** with a car in the way stops just short of it and waits 0.4 seconds
+  (`ROUND_CAR`). Then they step sideways, away from the car's middle, so round its nearer end, until their way is
+  clear. Then they carry on the way they were going. With no way round, or after 3 seconds, they turn another way.
+- **The police on foot, and anyone fleeing**, go round the same way: blocked by a car, they step to the side away
+  from its middle and keep to it until the way to where they are going is clear.
+- **The player on foot** is stopped at a car's side and slides along it, and can get in from there.
+- **Someone a car has stopped on top of** can walk out from under it, but never into another car or through a
+  wall. Someone caught in a wall likewise walks out of the wall, but not into a car.
+
 > **C64 note.** A figure at this size is larger than a character cell: 2 × 2 characters at least, or a
 > sprite. In 2 × 2 blocks a standing figure is 6 blocks across, and with the arm out it reaches 5 blocks
 > ahead of its middle. A multicolour sprite (12 double-wide pixels by 21 lines) is about 12 × 10 such blocks,
