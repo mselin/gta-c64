@@ -109,6 +109,8 @@ export function mkPed(x, y, type) {
     arm: 0,
     armT: 0,
     ko: 0, // seconds left lying knocked down
+    wait: 0, // seconds stood at a car in the way
+    round: null, // stepping round a car: { dx, dy, t }
     cd: 1,
   };
 }
