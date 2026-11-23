@@ -11,7 +11,6 @@ The numbers here come from the code, and each section names the file to look in.
 document changes in the same pull request.
 
 **Units.**
-
 - Distances are in city pixels. The city is 98 × 98 tiles of 16 pixels, 1568 pixels square. The city is drawn
   2 screen pixels to a city pixel by default (see [The scale](#the-scale)); people keep their size on screen.
 - Speeds are in city pixels a second. On a PAL C64 at 50 frames a second, divide by 50 for pixels a frame, so
@@ -43,20 +42,18 @@ drawn larger, so that a person is nearer their real size beside a car.
 
   A car's numbers stay in city pixels (its size, speed, grip, getting in and out), and so do places (jobs,
   crossings). A scooter's speed is the scooter's.
-
 - **The view** is 320 / ZOOM × 176 / ZOOM city pixels. The camera looks ahead of a moving car by 0.3 × its
   speed, but no further than keeps the car 24 pixels inside the view across and 16 up and down. The police notice
   the player from 150, 120 and 130 screen pixels, as before: those distances are divided by ZOOM in the city.
 - **The choices:**
 
-  | Zoom                | A person beside a sedan                           | The view  | Notes                                      |
-  | ------------------- | ------------------------------------------------- | --------- | ------------------------------------------ |
-  | 1                   | wider than it (12 screen pixels against 11)       | 320 × 176 | the old look                               |
-  | **2** (the default) | a little over half its width                      | 160 × 88  | about half a second of road ahead flat out |
-  | 3                   | about a third, true to life (0.6 m against 1.8 m) | 107 × 59  | a short view for driving                   |
+  | Zoom | A person beside a sedan | The view | Notes |
+  |---|---|---|---|
+  | 1 | wider than it (12 screen pixels against 11) | 320 × 176 | the old look |
+  | **2** (the default) | a little over half its width | 160 × 88 | about half a second of road ahead flat out |
+  | 3 | about a third, true to life (0.6 m against 1.8 m) | 107 × 59 | a short view for driving |
 
   The player changes it with **Z**, or the SCALE button on the info page. It is remembered.
-
 - **Changing it in play** keeps everyone where they are. People already about keep their pace on screen, a
   scooter its speed, and the view centres on the player.
 
@@ -70,12 +67,12 @@ drawn larger, so that a person is nearer their real size beside a car.
 The sixteen C64 colours, by their usual numbers (`PAL` in `js/config.js`). Everything is drawn in these,
 without in-between shades.
 
-| #   | Colour          | #   | Colour           | #   | Colour              | #   | Colour                |
-| --- | --------------- | --- | ---------------- | --- | ------------------- | --- | --------------------- |
-| 0   | black `#000000` | 4   | purple `#6f3d86` | 8   | orange `#6f4f25`    | 12  | grey `#6c6c6c`        |
-| 1   | white `#ffffff` | 5   | green `#588d43`  | 9   | brown `#433900`     | 13  | light green `#9ad284` |
-| 2   | red `#68372b`   | 6   | blue `#352879`   | 10  | light red `#9a6759` | 14  | light blue `#6c5eb5`  |
-| 3   | cyan `#70a4b2`  | 7   | yellow `#b8c76f` | 11  | dark grey `#444444` | 15  | light grey `#959595`  |
+| # | Colour | # | Colour | # | Colour | # | Colour |
+|---|---|---|---|---|---|---|---|
+| 0 | black `#000000` | 4 | purple `#6f3d86` | 8 | orange `#6f4f25` | 12 | grey `#6c6c6c` |
+| 1 | white `#ffffff` | 5 | green `#588d43` | 9 | brown `#433900` | 13 | light green `#9ad284` |
+| 2 | red `#68372b` | 6 | blue `#352879` | 10 | light red `#9a6759` | 14 | light blue `#6c5eb5` |
+| 3 | cyan `#70a4b2` | 7 | yellow `#b8c76f` | 11 | dark grey `#444444` | 15 | light grey `#959595` |
 
 ## People on foot
 
@@ -129,13 +126,13 @@ People are seen from above, about the size of a swimmer's splash, so that they r
   - The player alone has a second, white outline outside the black one.
 - **Shading:** the back of the shoulders is a darker colour of the shirt (`SHADE`).
 
-| Who            | Shirt                                                                             | Trousers                                       | Head                                                                  | Extra                               |
-| -------------- | --------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------- |
-| The player     | yellow (7)                                                                        | black (0)                                      | black hair (0)                                                        | white outer outline                 |
-| Police officer | light blue (14)                                                                   | blue (6)                                       | white cap (1) with a black peak                                       | yellow (7) badge on the cap         |
-| Passer-by      | one of purple 4, orange 8, cyan 3, red 2, light red 10, brown 9, green 5, white 1 | one of dark grey 11, brown 9, black 0, grey 12 | hair black 0, brown 9, orange 8 or yellow 7, never the shirt's colour |                                     |
-| Scooter rider  | light green (13)                                                                  |                                                |                                                                       | stands on a deck behind a handlebar |
-| Cultist        | purple robe (4)                                                                   |                                                | light blue hood (14)                                                  | long robe, hood up                  |
+| Who | Shirt | Trousers | Head | Extra |
+|---|---|---|---|---|
+| The player | yellow (7) | black (0) | black hair (0) | white outer outline |
+| Police officer | light blue (14) | blue (6) | white cap (1) with a black peak | yellow (7) badge on the cap |
+| Passer-by | one of purple 4, orange 8, cyan 3, red 2, light red 10, brown 9, green 5, white 1 | one of dark grey 11, brown 9, black 0, grey 12 | hair black 0, brown 9, orange 8 or yellow 7, never the shirt's colour | |
+| Scooter rider | light green (13) | | | stands on a deck behind a handlebar |
+| Cultist | purple robe (4) | | light blue hood (14) | long robe, hood up |
 
 **No one else may look like the player or the police.** Passers-by never wear yellow, either police blue,
 police trousers or a white cap, and no one else is ever drawn with a white outline.
@@ -147,14 +144,14 @@ and hair colours. The player's head keeps its outlines.
 distance is measured from the person's middle, in city pixels. The person's part goes by PERSON (see
 [The scale](#the-scale)).
 
-| What                                                         | Distance           | At the default scale |
-| ------------------------------------------------------------ | ------------------ | -------------------- |
-| A bullet hits a person                                       | 5 × PERSON + 1     | 3.5                  |
-| A moving car runs someone over, from the car's middle        | 5 + 5 × PERSON     | 7.5                  |
-| …or from the point 6 pixels ahead of its middle              | 4 + 5 × PERSON     | 6.5                  |
-| A car hurts the player                                       | 5 + 5 × PERSON     | 7.5                  |
-| Traffic brakes for someone this far either side of its line… | 5.5 + 3.5 × PERSON | 7.25                 |
-| …and up to this far ahead of its middle                      | 26                 | 26                   |
+| What | Distance | At the default scale |
+|---|---|---|
+| A bullet hits a person | 5 × PERSON + 1 | 3.5 |
+| A moving car runs someone over, from the car's middle | 5 + 5 × PERSON | 7.5 |
+| …or from the point 6 pixels ahead of its middle | 4 + 5 × PERSON | 6.5 |
+| A car hurts the player | 5 + 5 × PERSON | 7.5 |
+| Traffic brakes for someone this far either side of its line… | 5.5 + 3.5 × PERSON | 7.25 |
+| …and up to this far ahead of its middle | 26 | 26 |
 
 **Against walls**, a person's footprint stays small: four points 3 × PERSON pixels either side of their middle
 (`footClear` in `js/world.js`). Doorways and pavements stay easy to walk, and shoulders may overlap a wall by a
@@ -190,16 +187,15 @@ is out of the way. (A moving car still runs people over, as under Hit distances.
 Fire on foot uses the gun while there is ammo. Out of ammo, the player fights hand to hand: with the knife if
 they have one, otherwise with their fists. Nobody fires in the water.
 
-|                                             | Gun                                             | Knife                                           | Fists                                          |
-| ------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
-| When                                        | ammo left                                       | no ammo, knife                                  | no ammo, no knife                              |
-| Reach (screen pixels; × PERSON in the city) | a bullet                                        | the first person within 7 of the point 10 ahead | the first person within 7 of the point 7 ahead |
-| Wait before the next                        | 0.22 s                                          | 0.28 s                                          | 0.35 s                                         |
-| What it does                                | kills                                           | kills, even someone already down                | knocks down; passes over anyone already down   |
-| Heat                                        | 1.5 a shot, then 6 a kill (28 a police officer) | 6 a kill (28 a police officer)                  | 3 (14 a police officer): half a kill           |
+| | Gun | Knife | Fists |
+|---|---|---|---|
+| When | ammo left | no ammo, knife | no ammo, no knife |
+| Reach (screen pixels; × PERSON in the city) | a bullet | the first person within 7 of the point 10 ahead | the first person within 7 of the point 7 ahead |
+| Wait before the next | 0.22 s | 0.28 s | 0.35 s |
+| What it does | kills | kills, even someone already down | knocks down; passes over anyone already down |
+| Heat | 1.5 a shot, then 6 a kill (28 a police officer) | 6 a kill (28 a police officer) | 3 (14 a police officer): half a kill |
 
 **Knocked down:**
-
 - They lie flat for 4 seconds (`KO.t`), and can still be run over, shot or stabbed.
 - People within 60 of them run for 2 seconds.
 - Then they get up. A passer-by runs from where the player is; a police officer carries on chasing; a cultist
@@ -208,7 +204,6 @@ they have one, otherwise with their fists. Nobody fires in the water.
   lying there.
 
 **The knife:**
-
 - A pickup marked **K** (black on light grey). 6% of the pickups around the city are knives, and someone the
   player kills drops one 8% of the time, unless the player already has one.
 - Picking it up says so. A spare one is pawned for $10.
@@ -217,7 +212,6 @@ they have one, otherwise with their fists. Nobody fires in the water.
 **Ammo** stops at 99. An ammo pickup gives up to 12, as many as fit.
 
 **The HUD** shows what fire does, at the right of its top line, in place of the old `A012`:
-
 - `AMMO12` in yellow (7) while there is ammo, always two digits;
 - `KNIFE` in light grey (15), or `FIST` in light red (10), once it runs out.
 
@@ -240,13 +234,13 @@ The car's health bar is 28 pixels wide, so `AMMO99` fits beside it.
     size on screen, which at the zoom made them half as big beside the streets, and the markers lost their letter.
   - **Back** 40 to 70 seconds later, somewhere else.
 
-| Kind    | Share | Letter (colours)           | Does                                            |
-| ------- | ----- | -------------------------- | ----------------------------------------------- |
-| Ammo    | 34 %  | `A` (yellow on orange)     | up to 12 more, to at most 99                    |
-| Cash    | 28 %  | `$` (light green on green) | $50 to $300, in steps of $50                    |
-| Donut   | 18 %  | `O` (white on light red)   | one level of heat less, or nothing with no heat |
-| Bandage | 14 %  | `+` (red on white)         | 40 health back, to at most 100, and costs $20   |
-| Knife   | 6 %   | `K` (black on light grey)  | see [Fighting on foot](#fighting-on-foot)       |
+| Kind | Share | Letter (colours) | Does |
+|---|---|---|---|
+| Ammo | 34 % | `A` (yellow on orange) | up to 12 more, to at most 99 |
+| Cash | 28 % | `$` (light green on green) | $50 to $300, in steps of $50 |
+| Donut | 18 % | `O` (white on light red) | one level of heat less, or nothing with no heat |
+| Bandage | 14 % | `+` (red on white) | 40 health back, to at most 100, and costs $20 |
+| Knife | 6 % | `K` (black on light grey) | see [Fighting on foot](#fighting-on-foot) |
 
 - **Dropped by people the player kills** (except scooter riders, which pay $0): cash 40 % of the time
   ($10 to $90 in steps of $10), or a knife 8 % if the player has none. A dropped pickup lasts 20 seconds and
@@ -266,7 +260,6 @@ Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can 
 
   He has a black outline, as everyone but the player does. He is about 12 pixels across, his feet
   included, and 18 long.
-
 - **Poses:**
   - Walking, his orange feet paddle out at his sides, on the same five-pose walk as people.
   - Afloat, his feet do not show. He is drawn as himself in the water, not as a swimmer.
@@ -301,14 +294,14 @@ Sleazeburg's crime boss is a goose. He has the run of The Moat, and nothing can 
 The rules are in `js/cars.js`, the kinds in `KIND` and their grip in `GRIP` in `js/config.js`, and the rest of
 the handling in `HANDLING` there.
 
-| Kind              | Length × width | Top speed | Acceleration | Strength (hp) | Mass | Grip |
-| ----------------- | -------------- | --------- | ------------ | ------------- | ---- | ---- |
-| Sedan             | 20 × 11        | 150       | 120          | 100           | 1    | 450  |
-| Sports car        | 20 × 10        | 215       | 180          | 80            | 0.85 | 490  |
-| Van               | 22 × 12        | 120       | 85           | 150           | 1.6  | 370  |
-| Taxi (yellow)     | 20 × 11        | 150       | 120          | 100           | 1    | 450  |
-| Police (white)    | 20 × 11        | 188       | 165          | 140           | 1.1  | 510  |
-| Limousine (white) | 28 × 11        | 140       | 100          | 170           | 1.5  | 350  |
+| Kind | Length × width | Top speed | Acceleration | Strength (hp) | Mass | Grip |
+|---|---|---|---|---|---|---|
+| Sedan | 20 × 11 | 150 | 120 | 100 | 1 | 450 |
+| Sports car | 20 × 10 | 215 | 180 | 80 | 0.85 | 490 |
+| Van | 22 × 12 | 120 | 85 | 150 | 1.6 | 370 |
+| Taxi (yellow) | 20 × 11 | 150 | 120 | 100 | 1 | 450 |
+| Police (white) | 20 × 11 | 188 | 165 | 140 | 1.1 | 510 |
+| Limousine (white) | 28 × 11 | 140 | 100 | 170 | 1.5 | 350 |
 
 ### Handling
 
@@ -328,7 +321,6 @@ Speeds are split into forward (along the car) and sideways. Each frame, in this 
 
     At its top speed of 215 the sports car turns at 2.3 radians a second, on a line of radius 94, and holds its
     speed round the bend. (Before, it turned at 3 regardless, slid, and dropped to about 177.)
-
   - **The handbrake** lets the back go: the car turns 1.3 times as fast, with no grip limit, and slides.
 - **Throttle:** forward speed rises by the acceleration. Top speed is 0.7 of the table's below 40 hp; backwards,
   0.4 of top speed.
@@ -392,7 +384,6 @@ The canal and the fountain pools are water. Water is not a wall: a car drives in
   - spray flies up from it while it goes faster than 20.
 
   Wholly in the water a sedan could do at most 45, and it gets nowhere near that.
-
 - **Flooding:** a car wholly in the water after it moves floods, once and for good.
   - The engine dies: no more throttle or steering. It drifts to a stop, its speed falling by 4 times itself a
     second.
@@ -410,7 +401,6 @@ The canal and the fountain pools are water. Water is not a wall: a car drives in
      across it. It stays there.
 
   Smoke stops once it is 30 % down.
-
 - **On the bottom** it is out of the way: other cars pass over it, and bullets cannot reach it.
 
 > **C64 note.** The sinking pictures are the car's picture redrawn three ways in every direction it keeps: for
@@ -450,35 +440,35 @@ Heat is in `js/heat.js`, and the police in `js/spawner.js` and `js/cars.js`.
 
 **Heat** is a number of points, shown as a level from 0 to 5. The points cap at 230.
 
-| Level | From | Announced                                    |
-| ----- | ---- | -------------------------------------------- |
-| 1     | 8    | A STERN LETTER IS BEING DRAFTED              |
-| 2     | 25   | POLICE DISPATCHED. EVENTUALLY.               |
-| 3     | 60   | SHOOT FIRST, PAPERWORK NEVER                 |
-| 4     | 110  | OVERTIME HAS BEEN APPROVED                   |
-| 5     | 180  | THE HOMEOWNERS ASSOCIATION HAS BEEN NOTIFIED |
+| Level | From | Announced |
+|---|---|---|
+| 1 | 8 | A STERN LETTER IS BEING DRAFTED |
+| 2 | 25 | POLICE DISPATCHED. EVENTUALLY. |
+| 3 | 60 | SHOOT FIRST, PAPERWORK NEVER |
+| 4 | 110 | OVERTIME HAS BEEN APPROVED |
+| 5 | 180 | THE HOMEOWNERS ASSOCIATION HAS BEEN NOTIFIED |
 
-| Crime                                      | Points      |
-| ------------------------------------------ | ----------- |
-| Killing a police officer                   | 28          |
-| Killing anyone else                        | 6           |
-| Taking a police car from its driver        | 16 (heat 1) |
-| Taking any other car from its driver       | 4           |
-| Ramming a police car with an officer in it | 9           |
-| Ramming another car with a driver          | 2           |
-| Ramming an empty car                       | 0.5         |
-| Hitting a police car with a shot           | 5           |
-| Hitting another car with a shot            | 1           |
-| Firing a shot                              | 1.5         |
-| Stealing the limousine on that job         | 10          |
+| Crime | Points |
+|---|---|
+| Killing a police officer | 28 |
+| Killing anyone else | 6 |
+| Taking a police car from its driver | 16 (heat 1) |
+| Taking any other car from its driver | 4 |
+| Ramming a police car with an officer in it | 9 |
+| Ramming another car with a driver | 2 |
+| Ramming an empty car | 0.5 |
+| Hitting a police car with a shot | 5 |
+| Hitting another car with a shot | 1 |
+| Firing a shot | 1.5 |
+| Stealing the limousine on that job | 10 |
 
 **The police notice the player** when they come this close (`NOTICE` in `js/config.js`), in city pixels: the
 same screen distance at any scale, about the edge of the view (75, 60 and 65 at the default 2):
 
-| Who                                        | Distance   |
-| ------------------------------------------ | ---------- |
-| A police car already chasing               | 150 / ZOOM |
-| An officer on foot                         | 120 / ZOOM |
+| Who | Distance |
+|---|---|
+| A police car already chasing | 150 / ZOOM |
+| An officer on foot | 120 / ZOOM |
 | A police car on patrol in ordinary traffic | 130 / ZOOM |
 
 **Cooling down:** with heat above 0 and no chasing car or officer near, the heat drops one level every
@@ -486,7 +476,6 @@ same screen distance at any scale, about the edge of the view (75, 60 and 65 at 
 
 **The siren:** with heat above 0 and the police near (a chasing car within `NOTICE.car`, or an officer on foot within `NOTICE.foot`
 who is not knocked down):
-
 - **Sound:** it wails every 0.7 seconds, two square-wave notes of 0.33 seconds, 620 Hz then 830 Hz.
 - **Border:** the screen border flashes red (2) and blue (6), changing every half second.
 - **Only while they are near:** both stop the moment the police are out of range. The wail starts afresh when
@@ -501,7 +490,6 @@ who is not knocked down):
 > photosensitive seizures.
 
 **The response:**
-
 - **Chasing cars:** while heat is above 0, the police keep up to `min(5, heat)` cars chasing, adding one every
   2.2 seconds.
 - **Patrol cars join in:** a patrol car within 130 joins the chase.
@@ -511,7 +499,6 @@ who is not knocked down):
   arrested after 2 seconds of it.
 
 **A stolen police car.** The police know their own cruisers, and know the player is not one of them:
-
 - **The rule:** driving a police car with heat below 2, the moment a chasing car, an officer on foot or a patrol
   car notices it (the distances above), the heat goes up to 2. The game says "THE COPS KNOW THAT CRUISER. THEY
   DO NOT KNOW YOU."
@@ -532,16 +519,15 @@ who is not knocked down):
 
 Big text across the middle of the screen, with small text under it:
 
-| Banner                        | Colour           | Under it                                                 | Seconds |
-| ----------------------------- | ---------------- | -------------------------------------------------------- | ------- |
-| BUSTED                        | light blue (14)  | the reason, or YOU HAVE THE RIGHT TO REMAIN BROKE        | 3.2     |
-| FLATLINED                     | red (2)          | the reason, or THOUGHTS AND PRAYERS HAVE BEEN DISPATCHED | 3.2     |
-| A job's title, when it starts | yellow (7)       | REWARD $ and the pay                                     | 2.5     |
-| JOB DONE                      | light green (13) | +$ and the pay, (UNDECLARED)                             | 2.5     |
-| JOB BOTCHED                   | red (2)          | why, or TIME IS MONEY AND YOU HAVE NEITHER               | 2.5     |
+| Banner | Colour | Under it | Seconds |
+|---|---|---|---|
+| BUSTED | light blue (14) | the reason, or YOU HAVE THE RIGHT TO REMAIN BROKE | 3.2 |
+| FLATLINED | red (2) | the reason, or THOUGHTS AND PRAYERS HAVE BEEN DISPATCHED | 3.2 |
+| A job's title, when it starts | yellow (7) | REWARD $ and the pay | 2.5 |
+| JOB DONE | light green (13) | +$ and the pay, (UNDECLARED) | 2.5 |
+| JOB BOTCHED | red (2) | why, or TIME IS MONEY AND YOU HAVE NEITHER | 2.5 |
 
 **Everything fits the screen.** The screen is 40 characters across (320 pixels in 8-pixel letters):
-
 - **The title** is in double-size letters if it has at most 19 characters, with a margin; otherwise in
   ordinary letters. Every title the game has today fits in double size.
 - **The text under it** is broken at spaces into lines of at most 38 characters, a character's margin each side.
@@ -563,13 +549,13 @@ black, under a dark grey (11) line. Positions are in pixels from the left; a cha
 
 **Line 1: money, heat, health, the car and what fire does.**
 
-| What                 | At            | Shown                                                    | Colour                                                                                                  |
-| -------------------- | ------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Money                | 0             | `$` and six digits, `$000000`                            | light green (13)                                                                                        |
-| Heat                 | 64            | `HEAT`, then five `*` from 100, 8 apart                  | the word light grey (15); a star for each level flashes red (2) and yellow (7), the rest dark grey (11) |
-| Health               | 148           | `HP`, then a bar from 168, 42 wide                       | green (5), red (2) at 30 or below                                                                       |
-| The car, only in one | 214           | `CAR`, then a bar from 240, 28 wide                      | cyan (3), red (2) under 40                                                                              |
-| What fire does       | right-aligned | `AMMO` and two digits (`AMMO12`), else `KNIFE` or `FIST` | yellow (7), light grey (15) or light red (10)                                                           |
+| What | At | Shown | Colour |
+|---|---|---|---|
+| Money | 0 | `$` and six digits, `$000000` | light green (13) |
+| Heat | 64 | `HEAT`, then five `*` from 100, 8 apart | the word light grey (15); a star for each level flashes red (2) and yellow (7), the rest dark grey (11) |
+| Health | 148 | `HP`, then a bar from 168, 42 wide | green (5), red (2) at 30 or below |
+| The car, only in one | 214 | `CAR`, then a bar from 240, 28 wide | cyan (3), red (2) under 40 |
+| What fire does | right-aligned | `AMMO` and two digits (`AMMO12`), else `KNIFE` or `FIST` | yellow (7), light grey (15) or light red (10) |
 
 `AMMO99` takes the last 48 pixels, from 272. Ammo stops at 99, so it is always two digits. See
 [Fighting on foot](#fighting-on-foot).
@@ -580,7 +566,6 @@ cult. At 280 the time left as `m:ss`, white, flashing red under 15 seconds. With
 `NO JOB. FOLLOW THE ARROW TO A "J".` in grey (12).
 
 **Line 3: messages.**
-
 - **The latest message,** in white. One longer than 40 characters scrolls left after a second, at 70 pixels a
   second, and stops at its end.
 - **Otherwise, in a car with the radio on,** `RADIO`, the station and what is playing, in light blue (14),
@@ -595,7 +580,6 @@ cult. At 280 the time left as `m:ss`, white, flashing red under 15 seconds. With
 ## Title screen and icon
 
 **Title** (`drawTitle` in `js/render.js`):
-
 - **The name:** "SLEAZEBURG" in the game's 5 × 7 letters at three times their size. Each pixel row is coloured
   from the raster-bar sequence, red 2, orange 8, yellow 7, light green 13, cyan 3, light blue 14, purple 4,
   light red 10, white 1, then back the same way, and the colours scroll down through it.
@@ -603,7 +587,6 @@ cult. At 280 the time left as `m:ss`, white, flashing red under 15 seconds. With
 - **"64":** yellow (7), sitting on the baseline at the end of the name.
 
 **Icon** (`tools/make-icons.mjs`, drawn from the same letters and colours):
-
 - **32 × 32:** the "S" at three times its size in the raster colours, a yellow "64" beside it, and a light
   blue and a purple bar above and below.
 - **16 × 16:** the "S" alone at twice its size, since the "64" turns to mush that small.
@@ -636,6 +619,5 @@ These are not part of the game's design and are not expected on the C64:
     - on a touch-only device that was not started from the home screen, no full screen.
 
     Once dismissed, the same note is not shown again. It also goes away once the game is under way.
-
   - **Did not start:** if the game has not started 3 seconds after the page has loaded, the box says so, with the
     first error, and offers a reload.
