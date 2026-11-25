@@ -224,6 +224,20 @@ function drawWorld() {
       g.drawImage(ARW[0][mod(Math.round((a / (PI * 2)) * 16), 16)], Math.round(ax) - 5, Math.round(ay) - 5);
     }
   }
+  // With heat, at the wheel: a cyan arrow with an S to the paint shop, where the heat goes.
+  if (G.heat > 0 && P.car && !onScreen(PAINT.x, PAINT.y, -12)) {
+    const p = ppos(),
+      a = Math.atan2(PAINT.y - p.y, PAINT.x - p.x),
+      ax = Math.round(clamp(sx(p.x) + Math.cos(a) * 400, 10, SW - 10)),
+      ay = Math.round(clamp(sy(p.y) + Math.sin(a) * 400, 10, VH - 10));
+    g.drawImage(ARW[2][mod(Math.round((a / (PI * 2)) * 16), 16)], ax - 5, ay - 5);
+    // The S beside it, on the side towards the middle of the view, on black so it reads over the city.
+    const lx = clamp(ax - Math.round(Math.cos(a) * 12) - 4, 1, SW - 9),
+      ly = clamp(ay - Math.round(Math.sin(a) * 12) - 4, 1, VH - 9);
+    g.fillStyle = PAL[0];
+    g.fillRect(lx - 1, ly - 1, 10, 10);
+    text('S', lx, ly, 3);
+  }
   for (const p of G.pops)
     if (p.hud) {
       const w = p.t.length * 8;
