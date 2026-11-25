@@ -131,6 +131,26 @@ function drawWorld() {
       g.fillStyle = PAL[f ? 14 : 2];
       g.fillRect(bx, by - ZOOM, 2 * ZOOM, 2 * ZOOM);
     }
+    // A car alarm flashes the hazard lights at its four corners, yellow, with its high note.
+    if (c.alarmHi) {
+      const cs = Math.cos(c.a),
+        sn = Math.sin(c.a),
+        h = c.kind.L / 2 - 2,
+        w = c.kind.W / 2 - 2;
+      g.fillStyle = PAL[7];
+      for (const [u, v] of [
+        [h, w],
+        [h, -w],
+        [-h, w],
+        [-h, -w],
+      ])
+        g.fillRect(
+          sx(c.x + cs * u - sn * v) - Math.round(1.5 * ZOOM),
+          sy(c.y + sn * u + cs * v) - Math.round(1.5 * ZOOM),
+          3 * ZOOM,
+          3 * ZOOM,
+        );
+    }
     if (G.job && G.job.car === c && G.job.stage === 0 && Math.floor(G.clock * 4) & 1)
       text('!', sx(c.x) - 4, sy(c.y) - 12 * ZOOM - 8, 7);
   }

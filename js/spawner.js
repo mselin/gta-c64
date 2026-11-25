@@ -5,6 +5,7 @@ import { R, clamp, hyp, mod } from './util.js';
 import { COPS, HOSP, map, tileAt } from './world.js';
 import { G, P, onScreen, ppos } from './state.js';
 import { mkCar, mkPed } from './entities.js';
+import { fitAssists } from './adas.js';
 
 let spT = 0;
 let spP = 0;
@@ -48,7 +49,7 @@ function spawnRoad(cop) {
               : r < 0.93
                 ? KIND.sports
                 : KIND.police;
-    const c = mkCar(kind, x, y, (dir * PI) / 2);
+    const c = fitAssists(mkCar(kind, x, y, (dir * PI) / 2));
     c.dir = dir;
     c.driver = true;
     c.cruise = 48 + R() * 30;

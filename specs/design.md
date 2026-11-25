@@ -434,6 +434,47 @@ middle. Cars that overlap are pushed apart. Then, if they are closing:
 > rails and few cars, the C64 version can leave it until there are crashes to spin. Steering held to the grip
 > is a table of the most turn for each speed.
 
+### Cursed driver assistance
+
+`js/adas.js`; the numbers are `ADAS` in `js/config.js`.
+
+Some cars come with driver assistance, all of it cursed. It works only while the player drives: the city's own
+drivers switched it off long ago. Nothing shows which a car has until it acts.
+
+- **Which cars** (`fitAssists`): each car, as it is parked at the start or appears in traffic, has each of these by
+  its share, each rolled on its own: lane assist 20 %, emergency braking 25 %, anti-theft 20 %. Sports cars twice
+  as often. Never the job's limo or the car beside the hospital at the start, and never anti-theft in a police
+  car.
+- **Cursed lane assist.** After 6 to 14 seconds (at random) of driving faster than 50, it takes the wheel for 0.8
+  seconds: hard one way, then every 0.2 seconds hard one way or the other, changing its mind 2 times in 3. The
+  player's steering does nothing meanwhile; the throttle and brakes still work. Then it gives the wheel back and
+  waits again. The status line says `CURSED LANE ASSIST TOOK OVER`, with a chime.
+- **Emergency braking.** Going forward faster than 30, it looks as far ahead as the car needs to stop, braking 1.5
+  times as hard as its own brakes, with 0.06 seconds to notice and 4 pixels to spare: v² / (2 × 3.3 × acceleration)
+  \+ 0.06 v + 4. A sedan at 150 looks 41 pixels ahead, a sports car at 215 56.
+  - **What it looks for:** people in the car's path, within HIT.car + 1 of the line it drives along, counted from
+    where it would run them over; other cars' bodies, at its front corners and the middle of its bumper; and walls.
+  - **What it sees:** people walking or riding, and cars moving faster than 10, every time. Things standing still
+    (walls, parked cars and wrecks, someone knocked down or waiting at a car, a cultist in their ring) only 35 % of
+    the time. That is decided once for each thing as the car comes up to it, and kept until nothing has been
+    ahead for a second.
+  - **Seen:** it brakes hard, whatever the throttle, until the way has been clear for 0.3 seconds or the car has
+    stopped. Steering still works. The status line says `EMERGENCY BRAKING ENGAGED`, with three quick beeps.
+  - Below 30 it does not look out, so the player can creep up to anything; and a car going slower than 30 runs
+    nobody over.
+- **Anti-theft.** After 10 to 25 seconds (at random) with the player at the wheel, it stops the car for good: no
+  engine, and no engine sound, and the brakes on until it has stopped. The status line says
+  `ANTI-THEFT ENGAGED: ENGINE IMMOBILISED`. Getting back in says `THE IMMOBILISER SAYS NO`, and it still will not
+  go.
+  - **The alarm** sounds for 20 seconds: a high note (1250 Hz) and a low one (850 Hz) in turn, each 0.25 seconds,
+    in square waves, quieter the further away the player is and unheard from 300 pixels. With each high note its
+    hazard lights flash: 3 × 3 city pixels in yellow (7), at its four corners. It stops if the car burns out or
+    floods. Nobody comes to see.
+
+> **C64 note.** The alarm takes a SID voice for its 20 seconds. Emergency braking is one look along the car's way
+> each frame: a stopping distance from a table for each kind and speed, the few people and cars about, and a few
+> steps of the wall test.
+
 ## Heat and the police
 
 Heat is in `js/heat.js`, and the police in `js/spawner.js` and `js/cars.js`.

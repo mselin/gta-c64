@@ -281,6 +281,39 @@ export const GRIP = { sedan: 450, sports: 490, van: 370, taxi: 450, police: 510,
  * - bounce: what share of the closing speed two cars part with after a crash.
  */
 export const HANDLING = { grassGrip: 0.55, grassDrag: 0.8, spinInertia: 3.5, spinGrip: 1 / 80, bounce: 0.3 };
+/**
+ * Cursed driver assistance (js/adas.js, and specs/design.md under Cars). What share of cars has each, sports cars
+ * `sports` times as many; and how each behaves while the player drives. Speeds in city pixels a second, times in
+ * seconds.
+ * - lane: lane assist takes the wheel after `swerveEvery` seconds driven faster than `swerveFrom`, holds it for
+ *   `swerveFor`, turning it hard one way or the other for `swerveJerk` at a time, and changing its mind `flip` of
+ *   the time;
+ * - brake: emergency braking looks out ahead faster than `brakeFrom`, and brakes `brakeHard` times as hard as the
+ *   car's own brakes. It sees people and cars on the move every time, and things standing still `brakeStill` of
+ *   the time; it stops `gap` short, allowing `react` seconds for it to notice;
+ * - theft: anti-theft stops the car after `stealAfter` seconds of the player driving it; its alarm sounds for
+ *   `alarmFor`, a note every `alarmBeat`, heard up to `alarmHeard` away.
+ */
+export const ADAS = {
+  lane: 0.2,
+  brake: 0.25,
+  theft: 0.2,
+  sports: 2,
+  swerveFrom: 50,
+  swerveEvery: [6, 14],
+  swerveFor: 0.8,
+  swerveJerk: 0.2,
+  flip: 2 / 3,
+  brakeFrom: 30,
+  brakeHard: 1.5,
+  brakeStill: 0.35,
+  gap: 4,
+  react: 0.06,
+  stealAfter: [10, 25],
+  alarmFor: 20,
+  alarmBeat: 0.25,
+  alarmHeard: 300,
+};
 
 /**
  * Set the scale, and everything worked out from it. Positions in the city stay where they are; a person becomes

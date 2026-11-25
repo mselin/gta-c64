@@ -35,6 +35,13 @@ export function mkCar(kind, x, y, a, col) {
     idle: 0, // seconds an abandoned car has sat still
     sink: 0, // 0 afloat to 1 on the bottom, once flooded
     w: 0, // how fast it is spinning, in radians a second: from a knock off its middle
+    // Cursed driver assistance (js/adas.js): null for a car without it.
+    lane: null, // lane assist
+    aeb: null, // emergency braking
+    theft: null, // anti-theft
+    alarm: 0, // seconds its alarm has still to sound
+    alarmT: 0, // to its next note
+    alarmHi: false, // the high note, and its lights on
   };
 }
 /**

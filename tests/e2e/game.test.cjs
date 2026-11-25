@@ -354,3 +354,47 @@ test("pickups and job markers are drawn at the city's scale, each with its lette
   assert.ok(seen.black > 60 * z2, `the marker's black middle (${seen.black} pixels)`);
   assert.ok(seen.lit > 4 * z2, `with its J drawn in it (${seen.lit} pixels)`);
 });
+
+test('a stolen car with anti-theft stops, sounds its alarm and flashes its lights', async () => {
+  await game.start();
+  // Into the car beside the hospital, now with anti-theft that goes off at once.
+  await game.read(async (s) => {
+    const { fit } = await import('/js/adas.js'),
+      { P } = s,
+      c = s.G.cars.reduce((a, o) =>
+        Math.hypot(o.x - P.x, o.y - P.y) < Math.hypot(a.x - P.x, a.y - P.y) ? o : a,
+      );
+    fit(c, 'theft').theft.left = 0.3;
+    window.testCar = c;
+    Object.assign(s.P, { x: c.x, y: c.y, car: c });
+  });
+  await game.until(() => window.testCar.theft.tripped && window.testCar.alarm > 0);
+  assert.equal(await game.read((s) => s.G.msgTxt), 'ANTI-THEFT ENGAGED: ENGINE IMMOBILISED');
+  // Held still with the camera on it: its four corner lights drawn yellow with the high note, and not between notes.
+  const lit = await game.read(async (s) => {
+    const { G } = s,
+      c = window.testCar,
+      { ZOOM: z, PAL, VIEW_W, VIEW_H } = await import('/js/config.js'),
+      q = document.getElementById('c').getContext('2d'),
+      count = async (hi) => {
+        c.alarmHi = hi;
+        await new Promise((d) => window.requestAnimationFrame(() => window.requestAnimationFrame(d)));
+        const px = Math.round(c.x * z) - Math.round(G.camX * z),
+          py = Math.round(c.y * z) - Math.round(G.camY * z),
+          h = 16 * z,
+          d = q.getImageData(32 + px - h, 36 + py - h, 2 * h, 2 * h).data,
+          [r, g, b] = [1, 3, 5].map((i) => parseInt(PAL[7].slice(i, i + 2), 16));
+        let n = 0;
+        for (let i = 0; i < d.length; i += 4) if (d[i] === r && d[i + 1] === g && d[i + 2] === b) n++;
+        return n;
+      };
+    G.infoOpen = true;
+    G.camX = c.x - VIEW_W / 2;
+    G.camY = c.y - VIEW_H / 2;
+    return { on: await count(true), off: await count(false), z };
+  });
+  assert.ok(
+    lit.on - lit.off >= 3 * 4 * lit.z * lit.z,
+    `four yellow lights (${lit.on} yellow pixels lit, ${lit.off} between notes)`,
+  );
+});

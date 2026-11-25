@@ -12,6 +12,7 @@ import { killPed, knockDown, scare } from './peds.js';
 import { failJob } from './missions.js';
 import { radio } from './radio.js';
 import { ARM_OUT_T, PUNCH, SHOOT, STAB } from './figures.js';
+import { assist, immobilised } from './adas.js';
 
 let downKind = '';
 let skidT = 0;
@@ -102,6 +103,7 @@ function enterCar() {
   c.used = true; // the player's own: it stays where they leave it
   P.car = c;
   sfx.door();
+  if (immobilised(c)) msg('THE IMMOBILISER SAYS NO');
   if (G.musicOn) G.pops.push({ x: 0, y: 0, t: 'RADIO: ' + radio[G.station].name, col: 7, l: 2.5, hud: true });
 }
 function exitCar() {
@@ -181,9 +183,11 @@ export function updPlayer(dt) {
   const c = P.car;
   if (c) {
     const aim = touchTarget(),
-      ctl = aim
+      want = aim
         ? driveToward(c, aim.x, aim.y)
-        : { thr: (K.up ? 1 : 0) - (K.down ? 1 : 0), steer: (K.right ? 1 : 0) - (K.left ? 1 : 0) };
+        : { thr: (K.up ? 1 : 0) - (K.down ? 1 : 0), steer: (K.right ? 1 : 0) - (K.left ? 1 : 0) },
+      // The car's cursed assistance, if it has any, gets its say.
+      ctl = assist(c, want.thr, want.steer, dt);
     carPhys(c, ctl.thr, ctl.steer, dt, !!K.hb);
     if (c.sk) {
       skidT -= dt;
