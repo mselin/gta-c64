@@ -7,6 +7,7 @@ import { sfx, tone } from './audio.js';
 import { G, P, msg, ppos } from './state.js';
 import { down } from './player.js';
 import { reported, seenBy } from './cams.js';
+import { heliOver } from './heli.js';
 
 let district = '';
 let newsT = 12;
@@ -80,7 +81,8 @@ export function updHeat(dt) {
     }
   }
   if (G.heat > 0) {
-    if (near) G.heatCool = 0;
+    // The helicopter overhead keeps the heat up as the police near do; it does not set the siren off.
+    if (near || heliOver()) G.heatCool = 0;
     else {
       G.heatCool += dt;
       if (G.heatCool > 9) {

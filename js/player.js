@@ -73,6 +73,7 @@ export function respawn() {
   G.heatPts = 0;
   G.cars = G.cars.filter((c) => c.ai !== 'cop');
   G.peds = G.peds.filter((p) => p.type !== 'cop');
+  G.heli = null;
   G.bullets = [];
   G.screen = 'play';
   if (downKind === 'dead') {

@@ -501,3 +501,15 @@ test('with heat, at the wheel, a cyan arrow with an S points to the paint shop',
   });
   assert.ok((await cyan()) - calm < 10, 'none on foot');
 });
+
+test('at heat 5 the police helicopter comes and hovers over the player, drawn without errors', async () => {
+  await game.start();
+  await game.read((s) => {
+    s.G.heat = 5;
+    s.G.heatPts = 200;
+  });
+  await game.until(
+    (s) => s.G.heli && s.G.heli.seen && Math.hypot(s.G.heli.x - s.P.x, s.G.heli.y - s.P.y) < 20,
+  );
+  assert.match(await game.read((s) => s.G.msgTxt), /POLICE HELICOPTER/);
+});

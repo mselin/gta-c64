@@ -54,6 +54,13 @@ export const ZOOMS = [1, 2, 3],
  * then it stays on screen for 5 seconds before READY. and RUN at `ready`, and the title screen at `end`.
  */
 export const BOOT = { loading: 3.3, picture: 3.6, loaded: 6.2, ready: 11.2, end: 12 };
+/**
+ * The police helicopter (js/heli.js), in city pixels and seconds: it comes at `heat`, from `from` away, and follows
+ * at up to `spd` (faster than any car), accelerating at `acc`. It flies `alt` above the ground it is over, its
+ * searchlight lights a circle `light` across round the player, and it drifts up to `orbit` round them. Once the
+ * heat is below `heat` it flies off, gone at `gone` away.
+ */
+export const HELI = { heat: 5, spd: 260, acc: 320, alt: 14, light: 16, orbit: 5, from: 220, gone: 300 };
 /** The title screen shows its two pages in turn: the text for `text` seconds, then the sunset picture. */
 export const TITLE_PAGES = { text: 10, picture: 8 };
 export const KIND = {

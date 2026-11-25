@@ -13,6 +13,7 @@ const freshGame = () => ({
   parts: [], // particles
   pickups: [],
   cams: [], // GAGGLE cameras (js/cams.js)
+  heli: null, // the police helicopter (js/heli.js), or null
   camSaid: -99, // when one last said something about a crime it saw (G.clock)
   pops: [], // floating texts
   cash: 0,
