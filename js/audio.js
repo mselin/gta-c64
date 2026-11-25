@@ -134,6 +134,11 @@ export const sfx = {
   beeps() {
     [0, 0.09, 0.18].forEach((d) => tone(1760, 1760, 0.06, 'square', 0.15, d));
   },
+  // A GAGGLE camera's alarm: a quick, shrill warble, at `v` (1 beside it) of its loudness.
+  camAlarm(hi, v) {
+    const f = hi ? 1700 : 1300;
+    tone(f, f, 0.12, 'square', 0.14 * v);
+  },
   // A car alarm: its high or low note, at `v` (1 beside it) of its loudness.
   carAlarm(hi, v) {
     const f = hi ? 1250 : 850;

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { MW, PACE } from '../../js/config.js';
+import { KIND, MW, PACE } from '../../js/config.js';
 import { genMap, wallAt, waterAt } from '../../js/world.js';
-import { G, K, P, resetState } from '../../js/state.js';
-import { mkPed } from '../../js/entities.js';
+import { G, K, P, edge, resetState } from '../../js/state.js';
+import { mkCar, mkPed } from '../../js/entities.js';
 import { updPlayer } from '../../js/player.js';
 import { updPeds } from '../../js/peds.js';
 
@@ -83,4 +83,18 @@ test('a police officer chasing a swimmer is slowed by the water too', () => {
   for (let i = 0; i < 60; i++) updPeds(DT);
   const moved = cop.x - 830;
   assert.ok(moved > 5 && moved < cop.spd * 0.5, `moved ${moved} in a second`);
+});
+
+test('getting out in the very frame the car floods leaves the player swimming, without an error', () => {
+  // In the canal, wholly in the water: it floods the moment it moves. The player presses to get out at once.
+  const c = mkCar(KIND.sedan, 880, 100, 0);
+  c.vx = 20;
+  G.cars = [c];
+  Object.assign(P, { x: c.x, y: c.y, car: c });
+  edge.use = true;
+  updPlayer(1 / 60);
+  edge.use = false;
+  assert.equal(c.flooded, true, 'it flooded');
+  assert.equal(P.car, null, 'the player is out of it');
+  assert.equal(P.swim, true, 'and swimming');
 });

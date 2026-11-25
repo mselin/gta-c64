@@ -189,6 +189,9 @@ export function updPlayer(dt) {
       // The car's cursed assistance, if it has any, gets its say.
       ctl = assist(c, want.thr, want.steer, dt);
     carPhys(c, ctl.thr, ctl.steer, dt, !!K.hb);
+    // A car that floods leaves the player swimming where it went down (flood in js/cars.js): it is not theirs any
+    // more, so there is nothing left of it to steer, sound the horn of or get out of this frame.
+    if (P.car !== c) return;
     if (c.sk) {
       skidT -= dt;
       if (skidT <= 0) {

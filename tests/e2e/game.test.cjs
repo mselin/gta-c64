@@ -110,14 +110,10 @@ test('driving into the canal floods the car and puts the player ashore', async (
   await game.until(() => window.testCar.flooded);
   await game.page.keyboard.up('ArrowUp');
   await game.until((s) => !s.P.car);
-  await game.wait(1500);
-  const car = await game.page.evaluate(() => ({
-    dead: window.testCar.dead,
-    burn: window.testCar.burn,
-    speed: Math.hypot(window.testCar.vx, window.testCar.vy),
-  }));
+  // It comes to a stop: waited for by the game's own pace, which a slow browser runs behind the clock.
+  await game.until(() => Math.hypot(window.testCar.vx, window.testCar.vy) < 2, 10000);
+  const car = await game.page.evaluate(() => ({ dead: window.testCar.dead, burn: window.testCar.burn }));
   assert.deepEqual([car.dead, !!car.burn], [false, false], 'the car does not explode');
-  assert.ok(car.speed < 2, 'the car has stopped');
   await game.until(() => window.testCar.sink >= 1, 10000);
 
   // The driver is in the canal (x 816 to 944) and can swim back to the quay.

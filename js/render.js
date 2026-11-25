@@ -95,6 +95,35 @@ function drawWorld() {
     g.fillRect(kx, ky, 8 * z, 8 * z);
     text(d[0], kx, ky, d[2], z);
   }
+  // GAGGLE cameras: a dark grey pole with a black camera on top, its light-red light on now and then as it records,
+  // flashing when it reports or its alarm sounds. One that has been put out of action lies on the ground.
+  for (const cam of G.cams) {
+    if (!onScreen(cam.x, cam.y, 12)) continue;
+    const z = ZOOM,
+      x = sx(cam.x),
+      y = sy(cam.y);
+    if (cam.dead) {
+      g.fillStyle = PAL[11];
+      g.fillRect(x - 4 * z, y, 8 * z, z);
+      g.fillStyle = PAL[0];
+      g.fillRect(x + 4 * z, y - z, 3 * z, 3 * z);
+      continue;
+    }
+    g.fillStyle = PAL[11];
+    g.fillRect(x, y - 7 * z, z, 8 * z);
+    g.fillStyle = PAL[0];
+    g.fillRect(x - 2 * z, y - 10 * z, 5 * z, 3 * z);
+    const lit =
+      cam.alarm > 0
+        ? cam.hi
+        : cam.flash > 0
+          ? Math.floor(G.clock * 8) & 1
+          : Math.floor(G.clock * 1.5) % 3 === 0;
+    if (lit) {
+      g.fillStyle = PAL[10];
+      g.fillRect(x + z, y - 9 * z, 2 * z, 2 * z);
+    }
+  }
   for (const p of G.peds) {
     if (!onScreen(p.x, p.y, FRAME / 2)) continue;
     // A goose floats: Big Honk is drawn the same in the water, just without his feet.

@@ -449,8 +449,8 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
 
 - **Which cars** (`fitAssists`): each car, as it is parked at the start or appears in traffic, has each of these by
   its share, each rolled on its own: lane assist 20 %, emergency braking 25 %, anti-theft 20 %. Sports cars twice
-  as often. Never the job's limo or the car beside the hospital at the start, and never a police car: the police
-  drive cars without any of it, and so does the player who steals one.
+  as often. Never the job's limo or the car beside the hospital at the start. A police car never has lane assist
+  or emergency braking, but every one has anti-theft, on the same timer as any other car.
 - **Cursed lane assist.** After 6 to 14 seconds (at random) of driving faster than 50, it takes the wheel for 0.8
   seconds: hard one way, then every 0.2 seconds hard one way or the other, changing its mind 2 times in 3. The
   player's steering does nothing meanwhile; the throttle and brakes still work. Then it gives the wheel back and
@@ -484,8 +484,9 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
     floods. Nobody comes to see.
   - **Its status line** (`ALARM_SAYS`): 7 seconds in, once the anti-theft message has had its time, if the player
     can hear the alarm, one of these, at random: `BWEEP BWEEP. NOBODY LOOKS UP.`,
-    `THE CAR ALARM WAILS. NOBODY CARES.`, `CAR ALARM: SLEAZEBURG'S CITY ANTHEM`, `THE ALARM REPORTS YOU TO NO ONE`
-    or `CAR ALARMS: IGNORED SINCE 1987`.
+    `THE CAR ALARM WAILS. NOBODY CARES.`, `CAR ALARM: SLEAZEBURG'S CITY ANTHEM`, `THE ALARM REPORTS YOU TO NO ONE`,
+    `CAR ALARMS: IGNORED SINCE 1987` or `CAR ALARM: WHAT DID YOU EXPECT?`. A stolen police car's alarm always says
+    `CAR ALARM: WHAT DID YOU EXPECT?` (`ALARM_COP`).
 
 > **C64 note.** The alarm takes a SID voice for its 20 seconds. Emergency braking is one look along the car's way
 > each frame: how far, from a table for each kind and speed (never under 2 car lengths ahead), the few people and
@@ -569,6 +570,42 @@ who is not knocked down):
 
 > **C64 note.** The C64 version keeps few cars at once (six, by the sprite multiplexer). That leaves few patrol
 > cars, so the cruiser is noticed less often there unless chasing cars spawn sooner.
+
+**GAGGLE cameras** (`js/cams.js`; the numbers are `CAM` in `js/config.js`): the city's surveillance network, on
+poles at a scattering of crossings.
+
+- **Where:** at each crossing where 3 × avenue + 2 × street (counting from 0) is a multiple of 5, 17 in all, on
+  the pavement at the first corner, going round from the south-east, that is pavement or plaza: 22 pixels each
+  way from the middle of the crossing.
+- **What one sees:** anything within 90 pixels with no building, tree or fountain in the way. One that is going
+  off or has been put out of action sees nothing.
+- **A crime it sees** (the player where it is when they commit it): any crime counts half again. Its light flashes
+  for a second, and the next police car comes at once rather than in its turn. At most every 6 seconds the status
+  line says one of `CAM_SEEN`, at random:
+  `GAGGLE CAM: SHARED WITH 3,000 AGENCIES`, `GAGGLE CAM SAW THAT. SO DID THE COPS.`,
+  `GAGGLE CAM: SMILE. THIS IS EVIDENCE.`, `GAGGLE CAM: YOUR GOOD SIDE, REPORTED`,
+  `GAGGLE CAM: CRIME LOGGED. AND SOLD.`, `GAGGLE CAM: TRENDING AT PRECINCT 64`.
+- **Reckless driving it sees** is a crime of 2: faster than 125 on the road, or faster than 60 on a pavement or
+  plaza. Each camera reports it at most every 4 seconds.
+- **Watching:** while a camera sees the player with heat above 0, the heat does not cool, police near or not.
+- **Putting one out of action:** the player's car going faster than 15 into it (its pole within the car's body
+  and 1.5 pixels), or one of the player's bullets within 6 pixels of a point 5 pixels up its pole.
+  - **The alarm first:** for 3 seconds it warbles, a square wave at 1700 Hz and 1300 Hz in turn, every 0.15
+    seconds, quieter the further away the player is and unheard from 300 pixels, its light flashing with the
+    high note. Sparks fly. The tampering is a crime of 4, and the next police car comes at once. The status line
+    says one of `CAM_TAMPER`: `GAGGLE CAM: TAMPERING DETECTED. HELP!`, `GAGGLE CAM: THIS INCIDENT IS LOGGED!`,
+    `GAGGLE CAM: YOU CANNOT DELETE THE CLOUD`.
+  - **Then it goes dark,** and the status line says one of `CAM_DOWN`: `GAGGLE CAM OFFLINE. PRIVACY, BRIEFLY.`,
+    `GAGGLE CAM DOWN. A PIGEON APPLAUDS.`, `GAGGLE CAM: 404 CRIME NOT FOUND`, `GAGGLE CAM DOWN. THE GEESE APPROVE.`
+  - **Back up:** the city puts it back up 120 seconds later, once it is off the screen.
+- **The look,** at the city's scale: a dark grey (11) pole 1 × 8 pixels with a black camera 5 × 3 on top, and a
+  light 2 × 2 at its front, light red (10): on for a third of every 2 seconds as it records, flashing 4 times a
+  second after a report, and with the alarm's high note while it goes off. Out of action, the pole lies on the
+  ground, 8 × 1, with the camera 3 × 3 at its end.
+
+> **C64 note.** The cameras are fixed: a table of 17 places, and one character, or two, for each, in the
+> city's own characters. What a camera sees can be a list of the characters it watches, worked out ahead,
+> rather than a line of sight each frame.
 
 ## Banners
 
@@ -660,11 +697,12 @@ It stays until READY. and RUN at 6.6, and the title screen comes up at 7.4. Fire
 > **C64 note.** The picture keeps to double-wide pixels and the 16 colours, but not to multicolour bitmap mode's
 > four colours in each 4 × 8 cell. Converted for the C64, it would lose some detail where colours crowd.
 
-**Icon** (`tools/make-icons.mjs`, drawn from the same letters and colours):
-- **32 × 32:** the "S" at three times its size in the raster colours, a yellow "64" beside it, and a light
-  blue and a purple bar above and below.
-- **16 × 16:** the "S" alone at twice its size, since the "64" turns to mush that small.
-- **Phones and the desktop app** use the 32 × 32 design scaled up by whole numbers.
+**Icon** (`tools/make-icons.mjs`, from `assets/icon-source.png`): Big Honk, the goose, in sunglasses and a gold
+chain, against a sunset in stripes of yellow, orange and pink, in a deep purple circle with a light purple rim.
+The owner's artwork, in its own colours rather than the C64's: an icon sits outside the game's screen.
+- **The browser tab (16 × 16, 32 × 32):** the circle, transparent round it.
+- **A phone's home screen (180 × 180):** the circle 168 across on the circle's deep purple (#250762), with no
+  transparency, which a phone would show as black, and a margin for it to round the corners off.
 
 ## Only in the browser and desktop versions
 

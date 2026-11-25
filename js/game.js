@@ -15,6 +15,7 @@ import { resetMissions, updJob } from './missions.js';
 import { placePickup, spawner } from './spawner.js';
 import { updBullets, updPickups } from './items.js';
 import { radioTick, sidVol } from './radio.js';
+import { placeCams, updCams } from './cams.js';
 
 let started = false;
 let endT = 0;
@@ -85,6 +86,7 @@ export function update(dt) {
   updPeds(dt);
   updBullets(dt);
   updPickups(dt);
+  updCams(dt);
   updHeat(dt);
   if (G.screen === 'play') updJob(dt);
   // The election fund can fill from a job or from loose cash; either way that is the game won.
@@ -138,6 +140,7 @@ export function initWorld() {
   c.parked = true;
   G.cars.push(c);
   for (let i = 0; i < 34; i++) G.pickups.push(placePickup({}));
+  placeCams();
   G.peds.push(mkHonk());
   G.camX = clamp(P.x - VIEW_W / 2, 0, WPX - VIEW_W);
   G.camY = clamp(P.y - VIEW_H / 2, 0, WPX - VIEW_H);

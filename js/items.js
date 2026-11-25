@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Bullets and pickups.
-import { AMMO_MAX, DIRS, HIT, HT, KIND, WATER, PICKUP } from './config.js';
+import { AMMO_MAX, CAM, DIRS, HIT, HT, KIND, WATER, PICKUP } from './config.js';
 import { R, hyp } from './util.js';
 import { solidAt, tileAt } from './world.js';
 import { sfx } from './audio.js';
@@ -9,6 +9,7 @@ import { crime } from './heat.js';
 import { killPed } from './peds.js';
 import { hurt } from './player.js';
 import { placePickup } from './spawner.js';
+import { tamper } from './cams.js';
 
 export function updBullets(dt) {
   for (const b of G.bullets) {
@@ -24,6 +25,14 @@ export function updBullets(dt) {
       }
     }
     if (b.own === 0) {
+      // A GAGGLE camera: its pole and the camera on top of it, around 5 pixels up from its foot.
+      for (const cam of G.cams)
+        if (!cam.dead && !(cam.alarm > 0) && hyp(cam.x - b.x, cam.y - 5 - b.y) < CAM.hit + 2) {
+          tamper(cam);
+          b.l = 0;
+          break;
+        }
+      if (b.l <= 0) continue;
       for (const p of G.peds.slice())
         if (hyp(p.x - b.x, p.y - b.y) < HIT.shot) {
           killPed(p, true, b);
