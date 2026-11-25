@@ -643,6 +643,23 @@ cult. At 280 the time left as `m:ss`, white, flashing red under 15 seconds. With
 - **The bars:** six one-pixel bars above and six below run through the same colours.
 - **"64":** yellow (7), sitting on the baseline at the end of the name.
 
+**The two pages.** The title screen shows its text page for 10 seconds, then the sunset picture for 8, in turn,
+starting on the text each time it comes up (`TITLE_PAGES`). Fire starts the game from either.
+- **The sunset picture** (`assets/title-sunset.png`, 320 × 180, the 16 colours in double-wide pixels, as the end
+  pictures): a sunset over the city's skyline and the canal, palms, a police helicopter, a man in sunglasses with
+  a cigarette, a woman in sunglasses, a car, and Big Honk in sunglasses and a gold chain. Across the middle,
+  "SLEAZEBURG" in the game's letters, bold, in white with cyan and light blue stripes, and under it a big "64",
+  yellow over light red, between speed stripes in the sunset's colours, on a black plate.
+- **Under it:** "PRESS FIRE TO COMMIT CRIMES", blinking, and the greetings scrolling.
+
+**The boot** (`drawBoot`, `BOOT`): the C64's start-up screen, then `LOAD"CRIME",8,1`, SEARCHING and LOADING.
+From 3.6 seconds the screen is black and the sunset picture loads, a character row (8 pixels) at a time from
+the top, all there at 6.2 seconds, while the border flashes in bands of random colours from LOADING until then.
+It stays until READY. and RUN at 6.6, and the title screen comes up at 7.4. Fire skips it.
+
+> **C64 note.** The picture keeps to double-wide pixels and the 16 colours, but not to multicolour bitmap mode's
+> four colours in each 4 × 8 cell. Converted for the C64, it would lose some detail where colours crowd.
+
 **Icon** (`tools/make-icons.mjs`, drawn from the same letters and colours):
 - **32 × 32:** the "S" at three times its size in the raster colours, a yellow "64" beside it, and a light
   blue and a purple bar above and below.

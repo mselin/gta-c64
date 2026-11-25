@@ -398,3 +398,50 @@ test('a stolen car with anti-theft stops, sounds its alarm and flashes its light
     `four yellow lights (${lit.on} yellow pixels lit, ${lit.off} between notes)`,
   );
 });
+
+test('the boot loads the sunset picture, and the title screen shows it in turn with its text page', async () => {
+  // How many of 200 points of the canvas match the picture drawn `top` pixels down the screen.
+  const matches = (top) =>
+    game.page.evaluate(async (top) => {
+      const { sunsetLoaded } = await import('/js/render.js');
+      await new Promise((done) => {
+        const wait = () => (sunsetLoaded() ? done() : setTimeout(wait, 50));
+        wait();
+      });
+      await new Promise((d) => window.requestAnimationFrame(() => window.requestAnimationFrame(d)));
+      const img = new window.Image();
+      img.src = '/assets/title-sunset.png';
+      await img.decode();
+      const ref = document.createElement('canvas');
+      ref.width = 320;
+      ref.height = 180;
+      const r = ref.getContext('2d');
+      r.drawImage(img, 0, 0);
+      const want = r.getImageData(0, 0, 320, 180).data,
+        got = document
+          .getElementById('c')
+          .getContext('2d')
+          .getImageData(32, 36 + top, 320, 180).data;
+      let n = 0;
+      for (let i = 0; i < 200; i++) {
+        const x = (i * 37) % 320,
+          y = (i * 53) % 180,
+          o = (y * 320 + x) * 4;
+        if (want[o] === got[o] && want[o + 1] === got[o + 1] && want[o + 2] === got[o + 2]) n++;
+      }
+      return n;
+    }, top);
+
+  // The boot, the picture all loaded: it sits in the middle of the screen.
+  assert.equal(await game.screen(), 'boot');
+  const { BOOT } = await import('../../js/config.js');
+  await game.read((s, t) => (s.G.bootT = t), BOOT.loaded + 0.05);
+  assert.ok((await matches(10)) > 190, 'the loading picture');
+
+  // The title: the text page first, then the picture.
+  await game.read((s) => (s.G.bootT = 99));
+  await game.until((s) => s.G.screen === 'title');
+  assert.ok((await matches(0)) < 120, 'the text page first');
+  await game.read((s) => (s.G.titleAt = s.G.clock - 11));
+  assert.ok((await matches(0)) > 190, 'then the picture page');
+});

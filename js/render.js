@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Draws every screen: boot, title, the city with its HUD, and the win screen.
-import { BX, BY, GOAL, KIND, PAL, PI, SH, SW, VH, ZOOM } from './config.js';
+import { BOOT, BX, BY, GOAL, KIND, PAL, PI, SH, SW, TITLE_PAGES, VH, ZOOM } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { cx, g, scr } from './screen.js';
 import { ctext, text } from './font.js';
@@ -305,7 +305,35 @@ const lg = logoC.getContext('2d');
 lg.imageSmoothingEnabled = false;
 const SCROLL =
   '        GREETINGS TO ALL PARKING WARDENS, LANDLORDS AND E-SCOOTER ENTHUSIASTS ... THIS GAME WAS NOT CRACKED BY ANYBODY ... ANY RESEMBLANCE TO REAL CITIES IS A COINCIDENCE AND ALSO YOUR FAULT ... ALL CRIMES DEPICTED ARE 8-BIT AND THEREFORE VICTIMLESS ... PRESS FIRE TO BEGIN YOUR CIVIC ENGAGEMENT ...        ';
+/**
+ * The sunset picture (assets/title-sunset.png): 320 x 180, double-wide pixels in the C64 colours, from the owner's
+ * artwork. The title screen shows it in turn with its text page, and the boot shows it loading, as a C64 game
+ * showed a picture while it loaded.
+ */
+const SUNSET = new Image();
+SUNSET.src = new URL('../assets/title-sunset.png', import.meta.url).href;
+const SUNSET_H = 180;
+/** Whether the sunset picture has loaded. For the tests. */
+export const sunsetLoaded = () => SUNSET.complete && SUNSET.naturalWidth > 0;
+/** Which page the title screen shows `t` seconds after it came up: 'text' first, then 'picture', in turn. */
+export const titlePage = (t) =>
+  t % (TITLE_PAGES.text + TITLE_PAGES.picture) < TITLE_PAGES.text ? 'text' : 'picture';
+/** The greetings scrolling along a line of the title screen. */
+function scroller(y) {
+  const off = Math.floor(G.clock * 60) % (SCROLL.length * 8);
+  text(SCROLL, -off, y, 13);
+  if (off > SCROLL.length * 8 - SW) text(SCROLL, SCROLL.length * 8 - off, y, 13);
+}
+/** The title's picture page: the sunset, and under it the call to start, blinking, and the greetings. */
+function drawTitlePicture() {
+  g.fillStyle = PAL[0];
+  g.fillRect(0, 0, SW, SH);
+  g.drawImage(SUNSET, 0, 0);
+  if (Math.floor(G.clock * 2) & 1) ctext(help().start, SUNSET_H + 4, 1);
+  scroller(SUNSET_H + 12);
+}
 function drawTitle() {
+  if (titlePage(G.clock - G.titleAt) === 'picture' && sunsetLoaded()) return drawTitlePicture();
   g.fillStyle = PAL[0];
   g.fillRect(0, 0, SW, SH);
   lg.globalCompositeOperation = 'source-over';
@@ -338,33 +366,49 @@ function drawTitle() {
     }
   }
   if (Math.floor(G.clock * 2) & 1) ctext(help().start, 176, 1);
-  const off = Math.floor(G.clock * 60) % (SCROLL.length * 8);
-  text(SCROLL, -off, 188, 13);
-  if (off > SCROLL.length * 8 - SW) text(SCROLL, SCROLL.length * 8 - off, 188, 13);
+  scroller(188);
+}
+/**
+ * The boot's loading picture: black, and the sunset arriving a character row (8 pixels) at a time from the top,
+ * as a C64 loading screen did, all there by BOOT.loaded.
+ */
+function drawLoading(t) {
+  g.fillStyle = PAL[0];
+  g.fillRect(0, 0, SW, SH);
+  if (!sunsetLoaded()) return;
+  const rows = Math.ceil(SUNSET_H / 8),
+    shown = Math.min(rows, Math.floor(((t - BOOT.picture) / (BOOT.loaded - BOOT.picture)) * rows)) * 8,
+    top = (SH - SUNSET_H) / 2;
+  if (shown > 0) g.drawImage(SUNSET, 0, 0, SW, shown, 0, top, SW, shown);
 }
 function drawBoot() {
-  g.fillStyle = PAL[6];
-  g.fillRect(0, 0, SW, SH);
   const t = G.bootT,
     c = 14;
+  if (t > BOOT.picture && t < BOOT.ready) return drawLoading(t);
+  g.fillStyle = PAL[6];
+  g.fillRect(0, 0, SW, SH);
   text('    **** SLEAZEBURG 64 BASIC V2 ****', 0, 8, c);
   text(' 64K RAM SYSTEM  38911 MORAL BYTES FREE', 0, 24, c);
   if (t > 0.7) text('READY.', 0, 40, c);
   const cmd = 'LOAD"CRIME",8,1';
   if (t > 1.1) text(cmd.slice(0, Math.floor((t - 1.1) * 14)), 0, 48, c);
   if (t > 2.5) text('SEARCHING FOR CRIME', 0, 64, c);
-  if (t > 3.3) text('LOADING', 0, 72, c);
-  if (t > 5.4) text('READY.', 0, 80, c);
-  if (t > 5.4) text('RUN', 0, 88, c);
+  if (t > BOOT.loading) text('LOADING', 0, 72, c);
+  if (t > BOOT.ready) text('READY.', 0, 80, c);
+  if (t > BOOT.ready) text('RUN', 0, 88, c);
   if (Math.floor(t * 3) & 1) {
     g.fillStyle = PAL[c];
-    const y = t < 0.7 ? 40 : t < 2.5 ? 48 : t < 5.4 ? 80 : 96;
+    const y = t < 0.7 ? 40 : t < 2.5 ? 48 : t < BOOT.ready ? 80 : 96;
     const x = t > 1.1 && t < 2.5 ? Math.min(cmd.length, Math.floor((t - 1.1) * 14)) * 8 : 0;
-    if (t < 2.5 || t > 5.4) g.fillRect(x, y, 8, 8);
+    if (t < 2.5 || t > BOOT.ready) g.fillRect(x, y, 8, 8);
   }
 }
+let lastScreen = '';
 export function draw() {
   let border = 0;
+  // The title screen starts on its text page each time it comes up.
+  if (G.screen === 'title' && lastScreen !== 'title') G.titleAt = G.clock;
+  lastScreen = G.screen;
   if (G.screen === 'boot') {
     drawBoot();
     border = 14;
@@ -378,7 +422,8 @@ export function draw() {
   }
   cx.fillStyle = PAL[border];
   cx.fillRect(0, 0, 384, 272);
-  if (G.screen === 'boot' && G.bootT > 3.3 && G.bootT < 5.4) {
+  // Loading: the border flashes in bands of random colours, as a C64's did while it read the disk.
+  if (G.screen === 'boot' && G.bootT > BOOT.loading && G.bootT < BOOT.loaded) {
     for (let y = 0; y < 272;) {
       const h = 2 + Math.floor(R() * 10);
       cx.fillStyle = PAL[Math.floor(R() * 16)];
