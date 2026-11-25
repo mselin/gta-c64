@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { KIND, MW, PACE } from '../../js/config.js';
-import { genMap, wallAt, waterAt } from '../../js/world.js';
+import { FOUNT, KIND, MW, PACE } from '../../js/config.js';
+import { FOUNTAIN, genMap, map, solidAt, wallAt, waterAt } from '../../js/world.js';
 import { G, K, P, edge, resetState } from '../../js/state.js';
 import { mkCar, mkPed } from '../../js/entities.js';
 import { updPlayer } from '../../js/player.js';
@@ -97,4 +97,78 @@ test('getting out in the very frame the car floods leaves the player swimming, w
   assert.equal(c.flooded, true, 'it flooded');
   assert.equal(P.car, null, 'the player is out of it');
   assert.equal(P.swim, true, 'and swimming');
+});
+
+/** The middle of a fountain pool (2 by 2 tiles in a plaza), from the map. */
+function fountain() {
+  for (let ty = 0; ty < MW - 1; ty++)
+    for (let tx = 0; tx < MW - 1; tx++)
+      if ([0, 1, MW, MW + 1].every((o) => map[ty * MW + tx + o] === FOUNT))
+        return { x: tx * 16 + 16, y: ty * 16 + 16 };
+  throw new Error('no fountain');
+}
+const POOLS = { canal: () => MID_CANAL, fountain };
+
+for (const [where, at] of Object.entries(POOLS)) {
+  test(`in the ${where} the player swims, and can neither shoot nor fight`, () => {
+    const spot = at();
+    assert.ok(waterAt(spot.x, spot.y), 'it is water');
+    Object.assign(P, spot, { car: null });
+    K.fire = true;
+    updPlayer(DT);
+    assert.equal(P.swim, true, 'swimming');
+    assert.equal(P.ammo, 12, 'no shot');
+    assert.equal(G.bullets.length, 0);
+    // Out of ammo: no punch either.
+    P.ammo = 0;
+    const q = mkPed(spot.x + 6, spot.y, 'civ');
+    G.peds = [q];
+    for (let i = 0; i < 30; i++) updPlayer(DT);
+    assert.ok(!(q.ko > 0), 'no punch');
+  });
+
+  test(`a police officer swimming in the ${where} holds fire; out of the water, they shoot`, () => {
+    const spot = at();
+    G.heat = 3;
+    const cop = Object.assign(mkPed(spot.x, spot.y, 'cop'), { spd: 0, cd: 0 });
+    G.peds = [cop];
+    // The player on dry land, near enough to be shot at.
+    const dry = [60, 80]
+      .flatMap((r) => [
+        [r, 0],
+        [-r, 0],
+        [0, r],
+        [0, -r],
+      ])
+      .map(([dx, dy]) => ({ x: spot.x + dx, y: spot.y + dy }))
+      .find((p) => !waterAt(p.x, p.y) && !wallAt(p.x, p.y));
+    Object.assign(P, dry, { car: null });
+    for (let i = 0; i < 120; i++) updPeds(DT);
+    assert.equal(G.bullets.length, 0, 'no shots from the water');
+    // The same officer on the bank shoots.
+    Object.assign(cop, { x: dry.x + 30, y: dry.y, cd: 0 });
+    if (waterAt(cop.x, cop.y) || wallAt(cop.x, cop.y)) Object.assign(cop, { x: dry.x, y: dry.y + 30 });
+    for (let i = 0; i < 120 && !G.bullets.length; i++) updPeds(DT);
+    assert.ok(G.bullets.length > 0, 'shots once out of it');
+  });
+}
+
+test("a fountain's water is its round pool, just inside the black rim; the square's corners are dry", () => {
+  const c = fountain();
+  for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+    const at = (r) => [c.x + Math.cos(a) * r, c.y + Math.sin(a) * r];
+    assert.ok(waterAt(...at(FOUNTAIN.water - 0.5)), 'water just inside the rim');
+    assert.ok(!waterAt(...at(FOUNTAIN.water + 0.5)), 'dry on the rim');
+    assert.ok(
+      solidAt(...at(FOUNTAIN.rim - 0.5)) && !solidAt(...at(FOUNTAIN.rim + 0.5)),
+      'bullets stop at the rim',
+    );
+  }
+  // In a corner of the 2 by 2 square, outside the rim: the player walks, and can shoot.
+  Object.assign(P, { x: c.x + 14, y: c.y + 14, car: null });
+  assert.ok(Math.hypot(14, 14) > FOUNTAIN.rim);
+  K.fire = true;
+  updPlayer(DT);
+  assert.equal(P.swim, false, 'not swimming in the corner');
+  assert.equal(P.ammo, 11, 'and can shoot there');
 });

@@ -138,7 +138,9 @@ People are seen from above, about the size of a swimmer's splash, so that they r
 police trousers or a white cap, and no one else is ever drawn with a white outline.
 
 **In the water:** a swimmer is a head, one arm and ripples, about 11 pixels across, in the person's own skin
-and hair colours. The player's head keeps its outlines.
+and hair colours. The player's head keeps its outlines. The canal and the fountain pools are both water, and
+nobody shoots while swimming in either: not the player, who cannot punch or stab there either, and not the
+police.
 
 **Hit distances** (`HIT` in `js/config.js`) match the drawn body, so what you see is what you hit. Each
 distance is measured from the person's middle, in city pixels. The person's part goes by PERSON (see
@@ -386,6 +388,10 @@ in `js/sprites.js`.
 
 The canal and the fountain pools are water. Water is not a wall: a car drives into it, and pays for it.
 
+A fountain is a round pool on its 2 × 2 plaza tiles, centred where the four meet (`FOUNTAIN` in `js/world.js`):
+water out to 13 pixels from its middle, just inside its black rim, which reaches to 15. The corners of the square
+outside the rim are plaza, to walk, drive and shoot across. Passers-by and bullets stop at the rim.
+
 - **How wet:** three points along the car, its middle and `length/2 − 3` ahead of and behind it, are each over
   water or not, so a car is 0, ⅓, ⅔ or wholly in the water. Call that w.
 - **Wading:**
@@ -563,6 +569,8 @@ who is not knocked down):
 - **Patrol cars join in:** a patrol car within 130 joins the chase.
 - **Officers on foot:** when a chasing car and the player are both slower than 30 px/s within 36 pixels of
   each other, an officer gets out, up to four on foot at once.
+- **Officers shoot** from heat 3, at the player within 95 pixels, every 1.1 to 1.7 seconds, but not while they
+  are swimming, in the canal or a fountain pool.
 - **Boxed in:** if the player's car is slower than 12 px/s with a chasing car within 24 pixels, the player is
   arrested after 2 seconds of it.
 
@@ -587,7 +595,7 @@ poles at a scattering of crossings.
 - **Where:** at each crossing where 3 × avenue + 2 × street (counting from 0) is a multiple of 5, 17 in all, on
   the pavement at the first corner, going round from the south-east, that is pavement or plaza: 22 pixels each
   way from the middle of the crossing.
-- **What one sees:** anything within 90 pixels with no building, tree or fountain in the way. One that is going
+- **What one sees:** anything within 90 pixels with no building or tree in the way (it sees over water). One that is going
   off or has been put out of action sees nothing.
 - **A crime it sees** (the player where it is when they commit it): any crime counts half again. Its light flashes
   for a second, and the next police car comes at once rather than in its turn. At most every 6 seconds the status

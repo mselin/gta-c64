@@ -341,7 +341,8 @@ export function updPeds(dt) {
       p.dy = dy / d;
       if (d > 6 * PERSON) pedMove(p, p.dx * p.spd, p.dy * p.spd, dt);
       p.cd -= dt;
-      if (G.heat >= 3 && d < 95 && p.cd <= 0) {
+      // An officer swimming, in the canal or a fountain pool, has no hand free to shoot with, as the player has not.
+      if (G.heat >= 3 && d < 95 && p.cd <= 0 && !waterAt(p.x, p.y)) {
         p.cd = 1.1 + R() * 0.6;
         p.arm = SHOOT;
         p.armT = ARM_OUT_T;

@@ -3,7 +3,7 @@
 import { BLD, FOUNT, GRASS, LOT, MW, NB, PAL, PB, PLAZA, ROAD, TREE, WALK, WATER, WPX } from './config.js';
 import { hash } from './util.js';
 import { text } from './font.js';
-import { bcol, bid, decals, map, signs, tile } from './world.js';
+import { FOUNTAIN, bcol, bid, decals, map, signs, tile } from './world.js';
 
 export const mapC = document.createElement('canvas');
 mapC.width = mapC.height = WPX;
@@ -129,11 +129,11 @@ export function renderMap() {
           py = y * 16;
         m.fillStyle = PAL[0];
         m.beginPath();
-        m.arc(px, py, 15, 0, 7);
+        m.arc(px, py, FOUNTAIN.rim, 0, 7);
         m.fill();
         m.fillStyle = PAL[3];
         m.beginPath();
-        m.arc(px, py, 13, 0, 7);
+        m.arc(px, py, FOUNTAIN.water, 0, 7);
         m.fill();
         m.fillStyle = PAL[1];
         m.fillRect(px - 2, py - 2, 4, 4);

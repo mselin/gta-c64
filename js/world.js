@@ -28,10 +28,32 @@ export const map = new Uint8Array(MW * MW),
 export const tile = (tx, ty) => (tx < 0 || ty < 0 || tx >= MW || ty >= MW ? WATER : map[ty * MW + tx]);
 export const tileAt = (x, y) => tile(Math.floor(x / 16), Math.floor(y / 16));
 const solidT = (t) => t === BLD || t === WATER || t === TREE || t === FOUNT;
-export const solidAt = (x, y) => solidT(tileAt(x, y));
+/**
+ * A fountain is a round pool on its 2 x 2 tiles, centred where the four meet (drawn so in js/worldview.js): water
+ * out to `water` from its middle, just inside its black rim, which reaches to `rim`. The square's corners beyond the
+ * rim are plaza.
+ */
+export const FOUNTAIN = { water: 13, rim: 15 };
+/** How far (x, y), on a fountain's tile, is from the middle of its pool. */
+function fromFountain(x, y) {
+  const tx = Math.floor(x / 16),
+    ty = Math.floor(y / 16),
+    cx = (tile(tx + 1, ty) === FOUNT ? tx + 1 : tx) * 16,
+    cy = (tile(tx, ty + 1) === FOUNT ? ty + 1 : ty) * 16;
+  return Math.hypot(x - cx, y - cy);
+}
+/** Whether (x, y) is solid for people and bullets: a building, a tree, the water, or a fountain within its rim. */
+export const solidAt = (x, y) => {
+  const t = tileAt(x, y);
+  return t === FOUNT ? fromFountain(x, y) < FOUNTAIN.rim : solidT(t);
+};
 /** Water a car can end up in: the canal and the fountain pools. */
 export const isWater = (t) => t === WATER || t === FOUNT;
-export const waterAt = (x, y) => isWater(tileAt(x, y));
+/** Whether (x, y) is water: the canal, or a fountain's pool inside its rim. */
+export const waterAt = (x, y) => {
+  const t = tileAt(x, y);
+  return t === FOUNT ? fromFountain(x, y) < FOUNTAIN.water : t === WATER;
+};
 /**
  * What stops cars and people: buildings, trees and the edge of the map.
  * Water does not: cars flood in it and people swim, slowly.
