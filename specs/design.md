@@ -728,7 +728,8 @@ as well, however long it is held: fire shoots once it has been let go of and pre
 **The boot** (`drawBoot`, `BOOT`): the C64's start-up screen, then `LOAD"CRIME",8,1`, SEARCHING and LOADING.
 From 3.6 seconds the screen is black and the sunset picture loads, a character row (8 pixels) at a time from
 the top, all there at 6.2 seconds, while the border flashes in bands of random colours from LOADING until then.
-It stays until READY. and RUN at 6.6, and the title screen comes up at 7.4. Fire skips it.
+The whole picture stays on screen for 5 seconds, until READY. and RUN at 11.2, and the title screen comes up at
+12. Fire skips it.
 
 > **C64 note.** The picture keeps to double-wide pixels and the 16 colours, but not to multicolour bitmap mode's
 > four colours in each 4 × 8 cell. Converted for the C64, it would lose some detail where colours crowd.

@@ -51,9 +51,9 @@ export const ZOOMS = [1, 2, 3],
 /**
  * The boot, in seconds from the start: LOADING appears at `loading`; from `picture` the screen goes black and the
  * sunset picture loads in a character row at a time, the border flashing, until it has all arrived at `loaded`;
- * then READY. and RUN, and the title screen at `end`.
+ * then it stays on screen for 5 seconds before READY. and RUN at `ready`, and the title screen at `end`.
  */
-export const BOOT = { loading: 3.3, picture: 3.6, loaded: 6.2, ready: 6.6, end: 7.4 };
+export const BOOT = { loading: 3.3, picture: 3.6, loaded: 6.2, ready: 11.2, end: 12 };
 /** The title screen shows its two pages in turn: the text for `text` seconds, then the sunset picture. */
 export const TITLE_PAGES = { text: 10, picture: 8 };
 export const KIND = {

@@ -440,6 +440,11 @@ test('the boot loads the sunset picture, and the title screen shows it in turn w
   const { BOOT } = await import('../../js/config.js');
   await game.read((s, t) => (s.G.bootT = t), BOOT.loaded + 0.05);
   assert.ok((await matches(10)) > 190, 'the loading picture');
+  // It stays 5 seconds once it has all loaded, before READY. and the title screen.
+  assert.equal(Math.round((BOOT.ready - BOOT.loaded) * 10), 50, 'a 5-second pause on the loaded picture');
+  await game.read((s, t) => (s.G.bootT = t), BOOT.loaded + 4.9);
+  assert.equal(await game.screen(), 'boot', 'still the boot');
+  assert.ok((await matches(10)) > 190, 'the picture still there');
 
   // The title: the text page first, then the picture.
   await game.read((s) => (s.G.bootT = 99));
