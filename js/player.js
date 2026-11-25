@@ -6,7 +6,7 @@ import { COPS, HOSP, footClear, waterAt, foot } from './world.js';
 import { noise, sfx } from './audio.js';
 import { G, K, P, bigText, edge, msg, onScreen, pop, touch, weapon, carBodyAt } from './state.js';
 import { mkPed } from './entities.js';
-import { crime } from './heat.js';
+import { crime, policeNear } from './heat.js';
 import { carPhys, sidePos } from './cars.js';
 import { killPed, knockDown, scare } from './peds.js';
 import { failJob } from './missions.js';
@@ -15,23 +15,35 @@ import { ARM_OUT_T, PUNCH, SHOOT, STAB } from './figures.js';
 import { assist, immobilised } from './adas.js';
 
 let downKind = '';
+let seized = false; // the police took the player's weapons when they last went down
 let skidT = 0;
-export function hurt(n, why) {
+/** The player loses `n` health; `cop`: an officer's shot did it. */
+export function hurt(n, why, cop = false) {
   if (G.screen !== 'play') return;
   P.hp -= n;
   P.hitT = 0.4;
   if (P.hp <= 0) {
     P.hp = 0;
-    down('dead', why);
+    down('dead', why, cop);
   }
 }
 /** How the player last went down: 'dead' or 'busted'. */
 export const lastDown = () => downKind;
-export function down(kind, why) {
+/**
+ * The player is wasted ('dead') or busted. The police take the knife and all the ammo when they bust the player,
+ * and when the player is wasted with the police about (policeNear) or by an officer's shot (`cop`). Wasted with
+ * no police about, the player keeps both.
+ */
+export function down(kind, why, cop = false) {
+  // Before the car is let go: the police are looked for round where the player is, in it or on foot.
+  seized = kind === 'busted' || cop || policeNear();
+  if (seized) {
+    P.knife = false;
+    P.ammo = 0;
+  }
   G.screen = 'down';
   downKind = kind;
   G.downT = 3.2;
-  P.knife = false; // confiscated, or lost in the ambulance
   if (P.car) {
     P.car.driver = false;
     P.car = null;
@@ -66,12 +78,16 @@ export function respawn() {
   if (downKind === 'dead') {
     const bill = Math.min(G.cash, 500);
     G.cash -= bill;
-    msg('ST. INVOICE HOSPITAL: AMBULANCE RIDE -$' + bill + ' (OUT OF NETWORK)');
+    msg(
+      'ST. INVOICE HOSPITAL: AMBULANCE RIDE -$' +
+        bill +
+        ' (OUT OF NETWORK)' +
+        (seized ? '. THE POLICE KEPT YOUR WEAPONS AS "EVIDENCE"' : ''),
+    );
   } else {
     const f = Math.floor(G.cash * 0.2);
     G.cash -= f;
-    P.ammo = 0;
-    msg('CIVIL ASSET FORFEITURE: -$' + f + '. YOUR AMMO IS NOW "EVIDENCE"');
+    msg('CIVIL ASSET FORFEITURE: -$' + f + '. YOUR WEAPONS ARE NOW "EVIDENCE"');
   }
 }
 function enterCar() {
