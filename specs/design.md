@@ -474,7 +474,10 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
     (walls, parked cars and wrecks, someone knocked down or waiting at a car, a cultist in their ring) only 35 % of
     the time. That is decided once for each thing as the car comes up to it, and kept until nothing has been in
     the way for a second.
-  - **Seen:** it brakes hard, whatever the throttle, to a full stop, even if the way clears. Steering still works.
+  - **Seen:** it brakes, whatever the throttle, to come to rest 3 pixels short of it (`stopGap`): no harder than
+    it must, so the faster the car the harder it brakes, and at most 1.5 times as hard as the car's own brakes.
+    It measures how far is left again each frame, to the car's body, a wall or where a person stands. If what it
+    braked for moves off, it still stops where it was going to: a full stop either way. Steering still works.
     The status line says `EMERGENCY BRAKING ENGAGED`, with three quick beeps.
   - **Stopped:** holding the gas the way it was going does nothing. The player has to let go of it and press it
     again. Still holding it, the status line says `LIFT OFF THE GAS, THEN PRESS AGAIN`. The other way works at

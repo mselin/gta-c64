@@ -8,12 +8,22 @@ import { R, hyp, pick } from './util.js';
 import { sfx } from './audio.js';
 import { G, msg, ppos } from './state.js';
 import { carHits } from './cars.js';
+import { foot } from './world.js';
 
 const between = ([a, b]) => a + R() * (b - a);
 const lane = () => ({ next: between(ADAS.swerveEvery), left: 0, jerk: 0, dir: 0 });
 // on: the way it is braking the car to a stop (1 forward, -1 reversing), or 0; latch: the way the gas stays off
 // after it has stopped the car, until the player lets go of it and presses again.
-const aeb = () => ({ on: 0, latch: 0, released: false, told: false, seen: null, sees: false, forget: 0 });
+const aeb = () => ({
+  on: 0,
+  left: 0,
+  latch: 0,
+  released: false,
+  told: false,
+  seen: null,
+  sees: false,
+  forget: 0,
+});
 const theft = () => ({ left: between(ADAS.stealAfter), tripped: false });
 
 /**
@@ -64,9 +74,10 @@ function carAt(c, x, y) {
 export const lookout = (c, fwd) =>
   fwd >= 0 ? Math.max(ADAS.lookAhead * c.kind.L, stopping(c, fwd)) : ADAS.lookBehind * c.kind.L;
 /**
- * What the car going at `fwd` (backwards if less than 0) would hit, within its lookout: { what, moving }, where
- * `what` is the person, the car or 'wall'; or null. Ahead, people count from where a car runs them over (HIT in
- * js/config.js); behind, from its back bumper.
+ * The nearest thing the car going at `fwd` (backwards if less than 0) would hit, within its lookout:
+ * { what, moving, dist }, where `what` is the person, the car or 'wall', and `dist` how far the car can still go
+ * before it touches it (a person where they stand, their footprint); or null. People are looked for ahead from
+ * where a car runs them over (HIT in js/config.js), behind from the back bumper.
  */
 export function hazard(c, fwd) {
   const k = c.kind,
@@ -75,26 +86,46 @@ export function hazard(c, fwd) {
     fy = Math.sin(c.a) * way,
     reach = lookout(c, fwd),
     from = way > 0 ? 6 + HIT.nose : k.L / 2;
+  let best = null;
   for (const p of G.peds) {
     const dx = p.x - c.x,
       dy = p.y - c.y,
       along = dx * fx + dy * fy;
-    if (along > 0 && along - from < reach && Math.abs(-dx * fy + dy * fx) < HIT.car + 1)
-      return { what: p, moving: moving(p) };
-  }
-  // A car already against a wall (sliding along it) is not about to hit it.
-  const walls = !carHits(c, c.x, c.y);
-  for (let s = 2; s <= reach + 2; s += 3) {
-    const x = c.x + fx * s,
-      y = c.y + fy * s;
-    if (walls && carHits(c, x, y)) return { what: 'wall', moving: false };
-    // The corners and the middle of the bumper it is going towards.
-    for (let t = -1; t <= 1; t++) {
-      const o = carAt(c, x + fx * (k.L / 2) - fy * (k.W / 2) * t, y + fy * (k.L / 2) + fx * (k.W / 2) * t);
-      if (o) return { what: o, moving: hyp(o.vx, o.vy) > 10 };
+    if (along > 0 && along - from < reach && Math.abs(-dx * fy + dy * fx) < HIT.car + 1) {
+      const dist = Math.max(0, along - k.L / 2 - foot());
+      if (!best || dist < best.dist) best = { what: p, moving: moving(p), dist };
     }
   }
-  return null;
+  // A wall or another car the car's body would meet, moved `s` along its way. A car already against a wall
+  // (sliding along it) is not about to hit it.
+  const walls = !carHits(c, c.x, c.y),
+    hit = (s) => {
+      const x = c.x + fx * s,
+        y = c.y + fy * s;
+      if (walls && carHits(c, x, y)) return 'wall';
+      // The corners and the middle of the bumper it is going towards.
+      for (let t = -1; t <= 1; t++) {
+        const o = carAt(c, x + fx * (k.L / 2) - fy * (k.W / 2) * t, y + fy * (k.L / 2) + fx * (k.W / 2) * t);
+        if (o) return o;
+      }
+      return null;
+    };
+  for (let s = 2; s <= reach + 2 && !(best && s > best.dist + 3); s += 3) {
+    if (!hit(s)) continue;
+    // Narrowed down to a quarter of a pixel: how far it can go before it touches.
+    let lo = Math.max(0, s - 3),
+      hi = s;
+    while (hi - lo > 0.25) {
+      const m = (lo + hi) / 2;
+      if (hit(m)) hi = m;
+      else lo = m;
+    }
+    const what = hit(hi);
+    if (!best || lo < best.dist)
+      best = { what, moving: what !== 'wall' && hyp(what.vx, what.vy) > 10, dist: lo };
+    break;
+  }
+  return best;
 }
 
 /** Lane assist: now and then at speed it takes the wheel, turning it hard this way and that, then gives it back. */
@@ -124,11 +155,30 @@ function laneAssist(l, fwd, steer, dt) {
  * go of it and presses it again; the other way works at once. Whether it sees something standing still is
  * decided once for each thing it comes up to.
  */
+/**
+ * The throttle that brakes the car going `v` towards something `left` away (backwards if `way` is -1) to rest
+ * ADAS.stopGap short of it: no harder than it must, the drag counted in, and at most ADAS.brakeHard times its own
+ * brakes. Below a crawl the last of it rolls out with the throttle off.
+ */
+function brakeFor(c, way, v, left) {
+  if (v <= 5) return 0;
+  const need = (v * v) / (2 * Math.max(0.25, left - ADAS.stopGap)) - 0.5 * v,
+    // Pulling back against the way it goes brakes with 2.2 times its acceleration going forward, and with its
+    // acceleration reversing (js/cars.js).
+    perThr = c.kind.acc * (way > 0 ? 2.2 : 1);
+  return -way * Math.min(ADAS.brakeHard, Math.max(0.001, need / perThr));
+}
+
 function emergencyBrake(c, b, fwd, thr, dt) {
   if (b.on) {
-    // Braking to a stop: hard while it is going faster than a crawl, then the last of it rolls out.
-    if (fwd * b.on > 5) return -b.on * ADAS.brakeHard;
-    if (fwd * b.on > 0.5) return 0;
+    // Braking to rest just short of it: measured again each frame while it is still there; if it has gone, to
+    // where it was going to stop all the same.
+    const v = fwd * b.on;
+    if (v > 0.5) {
+      const h = hazard(c, fwd);
+      b.left = h ? h.dist : b.left - v * dt;
+      return brakeFor(c, b.on, v, b.left);
+    }
     b.latch = b.on;
     b.on = 0;
     b.released = false;
@@ -145,9 +195,10 @@ function emergencyBrake(c, b, fwd, thr, dt) {
   if (h && b.sees) {
     b.on = fwd < 0 ? -1 : 1;
     b.latch = 0;
+    b.left = h.dist;
     msg('EMERGENCY BRAKING ENGAGED');
     sfx.beeps();
-    return -b.on * ADAS.brakeHard;
+    return brakeFor(c, b.on, Math.abs(fwd), b.left);
   }
   if (b.latch) {
     // The gas the way it stopped: off until let go of, then pressed again.
