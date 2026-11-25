@@ -303,6 +303,13 @@ the handling in `HANDLING` there.
 | Police (white) | 20 × 11 | 188 | 165 | 140 | 1.1 | 510 |
 | Limousine (white) | 28 × 11 | 140 | 100 | 170 | 1.5 | 350 |
 
+**Taking a car from its driver** (`enterCar` in `js/player.js`): the driver is thrown out at the door (the
+nearest clear spot beside it, as when the player gets out) and lands on the ground, facing away from the car. They
+lie there as anyone knocked down does (see Fighting on foot): 4 seconds (`KO.t`), with "OOF" over them and
+people within 60 running for 2 seconds, and then get up. A passer-by then runs from the player. The driver of a
+police car is a police officer, who gets up and carries on as the police do. The crime is the taking of the car
+(see Heat and the police), not a knock-down as well.
+
 ### Handling
 
 Speeds are split into forward (along the car) and sideways. Each frame, in this order:
