@@ -4,7 +4,7 @@
 // stolen car for good and sets off its alarm. Only ever while the player drives.
 import { test, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADAS, BLD, HIT, KIND, MW, WALK } from '../../js/config.js';
+import { ADAS, ALARM_SAYS, BLD, HIT, KIND, MW, WALK } from '../../js/config.js';
 import { HOSP, genMap, map } from '../../js/world.js';
 import { G, K, P, edge, resetState } from '../../js/state.js';
 import { mkCar, mkPed } from '../../js/entities.js';
@@ -324,6 +324,27 @@ test('anti-theft stops the car a while after it is stolen, for good, and sets of
   run(ADAS.alarmFor);
   assert.equal(c.alarm <= 0 && !c.alarmHi, true, 'the alarm has stopped');
 });
+
+for (const near of [true, false]) {
+  test(`a car alarm ${near ? 'the player can hear has its say on the status line' : 'out of earshot says nothing'}`, () => {
+    const c = drive(MID - 200, 60, 'theft');
+    c.theft.left = 0.05;
+    run(0.2);
+    assert.equal(G.msgTxt, 'ANTI-THEFT ENGAGED: ENGINE IMMOBILISED');
+    if (!near) Object.assign(P, { car: null, x: c.x, y: c.y - ADAS.alarmHeard - 20 });
+    run(ADAS.alarmSay - 0.5);
+    const before = G.msgTxt;
+    run(0.8);
+    if (near) {
+      assert.equal(
+        before,
+        'ANTI-THEFT ENGAGED: ENGINE IMMOBILISED',
+        'not before the anti-theft message has had its time',
+      );
+      assert.ok(ALARM_SAYS.includes(G.msgTxt), `one of the alarm's lines ("${G.msgTxt}")`);
+    } else assert.ok(!ALARM_SAYS.includes(G.msgTxt), 'nothing about an alarm the player cannot hear');
+  });
+}
 
 test('none of it does anything for the city’s own drivers', () => {
   const c = fit(mkCar(KIND.sedan, MID, MID, 0), 'lane', 'aeb', 'theft');

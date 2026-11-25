@@ -196,6 +196,14 @@ export const JACK = [
   'DRIVER: "MY PODCAST WILL HEAR ABOUT THIS."',
   'DRIVER: "JOKE\'S ON YOU, IT NEEDS A SERVICE."',
 ];
+/** What the status line says about a car alarm the player can hear, a while into it (js/adas.js). */
+export const ALARM_SAYS = [
+  'BWEEP BWEEP. NOBODY LOOKS UP.',
+  'THE CAR ALARM WAILS. NOBODY CARES.',
+  "CAR ALARM: SLEAZEBURG'S CITY ANTHEM",
+  'THE ALARM REPORTS YOU TO NO ONE',
+  'CAR ALARMS: IGNORED SINCE 1987',
+];
 export const JOBS = [
   {
     t: 'PIZZA? SURE.',
@@ -294,7 +302,8 @@ export const HANDLING = { grassGrip: 0.55, grassDrag: 0.8, spinInertia: 3.5, spi
  *   `lookBehind` car lengths. It sees people and cars on the move every time, and things standing still
  *   `brakeStill` of the time. It brakes to a full stop;
  * - theft: anti-theft stops the car after `stealAfter` seconds of the player driving it; its alarm sounds for
- *   `alarmFor`, a note every `alarmBeat`, heard up to `alarmHeard` away.
+ *   `alarmFor`, a note every `alarmBeat`, heard up to `alarmHeard` away. `alarmSay` seconds in, once the
+ *   anti-theft message has had its time, the status line says one of ALARM_SAYS, if the player can hear it.
  */
 export const ADAS = {
   lane: 0.2,
@@ -318,6 +327,7 @@ export const ADAS = {
   alarmFor: 20,
   alarmBeat: 0.25,
   alarmHeard: 300,
+  alarmSay: 7,
 };
 
 /**

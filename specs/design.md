@@ -476,6 +476,10 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
     in square waves, quieter the further away the player is and unheard from 300 pixels. With each high note its
     hazard lights flash: 3 × 3 city pixels in yellow (7), at its four corners. It stops if the car burns out or
     floods. Nobody comes to see.
+  - **Its status line** (`ALARM_SAYS`): 7 seconds in, once the anti-theft message has had its time, if the player
+    can hear the alarm, one of these, at random: `BWEEP BWEEP. NOBODY LOOKS UP.`,
+    `THE CAR ALARM WAILS. NOBODY CARES.`, `CAR ALARM: SLEAZEBURG'S CITY ANTHEM`, `THE ALARM REPORTS YOU TO NO ONE`
+    or `CAR ALARMS: IGNORED SINCE 1987`.
 
 > **C64 note.** The alarm takes a SID voice for its 20 seconds. Emergency braking is one look along the car's way
 > each frame: how far, from a table for each kind and speed (never under 2 car lengths ahead), the few people and
