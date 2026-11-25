@@ -388,6 +388,10 @@ in `js/sprites.js`.
 
 The canal and the fountain pools are water. Water is not a wall: a car drives into it, and pays for it.
 
+A fountain is a round pool on its 2 × 2 plaza tiles, centred where the four meet (`FOUNTAIN` in `js/world.js`):
+water out to 13 pixels from its middle, just inside its black rim, which reaches to 15. The corners of the square
+outside the rim are plaza, to walk, drive and shoot across. Passers-by and bullets stop at the rim.
+
 - **How wet:** three points along the car, its middle and `length/2 − 3` ahead of and behind it, are each over
   water or not, so a car is 0, ⅓, ⅔ or wholly in the water. Call that w.
 - **Wading:**
@@ -588,7 +592,7 @@ poles at a scattering of crossings.
 - **Where:** at each crossing where 3 × avenue + 2 × street (counting from 0) is a multiple of 5, 17 in all, on
   the pavement at the first corner, going round from the south-east, that is pavement or plaza: 22 pixels each
   way from the middle of the crossing.
-- **What one sees:** anything within 90 pixels with no building, tree or fountain in the way. One that is going
+- **What one sees:** anything within 90 pixels with no building or tree in the way (it sees over water). One that is going
   off or has been put out of action sees nothing.
 - **A crime it sees** (the player where it is when they commit it): any crime counts half again. Its light flashes
   for a second, and the next police car comes at once rather than in its turn. At most every 6 seconds the status
