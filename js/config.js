@@ -196,13 +196,18 @@ export const JACK = [
   'DRIVER: "MY PODCAST WILL HEAR ABOUT THIS."',
   'DRIVER: "JOKE\'S ON YOU, IT NEEDS A SERVICE."',
 ];
-/** What the status line says about a car alarm the player can hear, a while into it (js/adas.js). */
+/**
+ * What the status line says about a car alarm the player can hear, a while into it (js/adas.js): one of
+ * ALARM_SAYS at random, or ALARM_COP, always, for a stolen police car.
+ */
+export const ALARM_COP = 'CAR ALARM: WHAT DID YOU EXPECT?';
 export const ALARM_SAYS = [
   'BWEEP BWEEP. NOBODY LOOKS UP.',
   'THE CAR ALARM WAILS. NOBODY CARES.',
   "CAR ALARM: SLEAZEBURG'S CITY ANTHEM",
   'THE ALARM REPORTS YOU TO NO ONE',
   'CAR ALARMS: IGNORED SINCE 1987',
+  ALARM_COP,
 ];
 export const JOBS = [
   {

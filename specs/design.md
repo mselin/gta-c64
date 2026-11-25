@@ -443,8 +443,8 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
 
 - **Which cars** (`fitAssists`): each car, as it is parked at the start or appears in traffic, has each of these by
   its share, each rolled on its own: lane assist 20 %, emergency braking 25 %, anti-theft 20 %. Sports cars twice
-  as often. Never the job's limo or the car beside the hospital at the start, and never a police car: the police
-  drive cars without any of it, and so does the player who steals one.
+  as often. Never the job's limo or the car beside the hospital at the start. A police car never has lane assist
+  or emergency braking, but every one has anti-theft, on the same timer as any other car.
 - **Cursed lane assist.** After 6 to 14 seconds (at random) of driving faster than 50, it takes the wheel for 0.8
   seconds: hard one way, then every 0.2 seconds hard one way or the other, changing its mind 2 times in 3. The
   player's steering does nothing meanwhile; the throttle and brakes still work. Then it gives the wheel back and
@@ -478,8 +478,9 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
     floods. Nobody comes to see.
   - **Its status line** (`ALARM_SAYS`): 7 seconds in, once the anti-theft message has had its time, if the player
     can hear the alarm, one of these, at random: `BWEEP BWEEP. NOBODY LOOKS UP.`,
-    `THE CAR ALARM WAILS. NOBODY CARES.`, `CAR ALARM: SLEAZEBURG'S CITY ANTHEM`, `THE ALARM REPORTS YOU TO NO ONE`
-    or `CAR ALARMS: IGNORED SINCE 1987`.
+    `THE CAR ALARM WAILS. NOBODY CARES.`, `CAR ALARM: SLEAZEBURG'S CITY ANTHEM`, `THE ALARM REPORTS YOU TO NO ONE`,
+    `CAR ALARMS: IGNORED SINCE 1987` or `CAR ALARM: WHAT DID YOU EXPECT?`. A stolen police car's alarm always says
+    `CAR ALARM: WHAT DID YOU EXPECT?` (`ALARM_COP`).
 
 > **C64 note.** The alarm takes a SID voice for its 20 seconds. Emergency braking is one look along the car's way
 > each frame: how far, from a table for each kind and speed (never under 2 car lengths ahead), the few people and

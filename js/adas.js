@@ -3,7 +3,7 @@
 // that stops for people and cars on the move (and for things standing still, sometimes), or an anti-theft device
 // that, a while after the car is stolen, stops it for good and sets off its alarm. They work only while the player
 // drives: the city's own drivers switched them off long ago. The numbers are ADAS in js/config.js.
-import { ADAS, ALARM_SAYS, HIT, KIND } from './config.js';
+import { ADAS, ALARM_COP, ALARM_SAYS, HIT, KIND } from './config.js';
 import { R, hyp, pick } from './util.js';
 import { sfx } from './audio.js';
 import { G, msg, ppos } from './state.js';
@@ -17,11 +17,15 @@ const aeb = () => ({ on: 0, latch: 0, released: false, told: false, seen: null, 
 const theft = () => ({ left: between(ADAS.stealAfter), tripped: false });
 
 /**
- * Fit a new car with what it has, each by its share, sports cars more often. Never the job's limo, and never a
- * police car: the police drive cars without any of it.
+ * Fit a new car with what it has, each by its share, sports cars more often. Never the job's limo. A police car
+ * has neither lane assist nor emergency braking, but every one has anti-theft.
  */
 export function fitAssists(c) {
-  if (c.kind === KIND.limo || c.kind === KIND.police) return c;
+  if (c.kind === KIND.limo) return c;
+  if (c.kind === KIND.police) {
+    c.theft = theft();
+    return c;
+  }
   const k = c.kind === KIND.sports ? ADAS.sports : 1;
   if (R() < ADAS.lane * k) c.lane = lane();
   if (R() < ADAS.brake * k) c.aeb = aeb();
@@ -201,7 +205,8 @@ export function alarmStep(c, dt) {
     say = ADAS.alarmFor - ADAS.alarmSay,
     was = c.alarm;
   c.alarm -= dt;
-  if (was > say && c.alarm <= say && d < ADAS.alarmHeard) msg(pick(ALARM_SAYS));
+  if (was > say && c.alarm <= say && d < ADAS.alarmHeard)
+    msg(c.kind === KIND.police ? ALARM_COP : pick(ALARM_SAYS));
   if (c.alarm <= 0) {
     c.alarmHi = false;
     return;
