@@ -52,6 +52,13 @@ test('the handbrake makes a fast car slide and leave skid marks', async () => {
     s.G.cars = s.G.cars.filter((c) => c.parked);
     s.G.cars.push(car);
     s.P.car = car;
+    // Keep the street clear while the test runs: traffic that turns up in the car's way would stop it short of
+    // the speed it needs, now and then, and the test would fail for nothing.
+    const clear = () => {
+      s.G.cars = s.G.cars.filter((c) => c === s.P.car || c.parked);
+      window.requestAnimationFrame(clear);
+    };
+    clear();
   });
   await game.page.keyboard.down('ArrowUp');
   await game.until((s) => Math.hypot(s.P.car.vx, s.P.car.vy) > 180);
