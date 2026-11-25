@@ -376,7 +376,7 @@ export const HANDLING = {
  *   `reverseFrom`. Ahead it looks `lookAhead` car lengths, or further if the car needs more to stop, braking
  *   `brakeHard` times as hard as its own brakes, `gap` short, with `react` seconds to notice; behind,
  *   `lookBehind` car lengths. It sees people and cars on the move every time, and things standing still
- *   `brakeStill` of the time. It brakes to a full stop;
+ *   `brakeStill` of the time. It brakes just as hard as it must to come to rest `stopGap` short of what it saw;
  * - theft: anti-theft stops the car after `stealAfter` seconds of the player driving it; its alarm sounds for
  *   `alarmFor`, a note every `alarmBeat`, heard up to `alarmHeard` away. `alarmSay` seconds in, once the
  *   anti-theft message has had its time, the status line says one of ALARM_SAYS, if the player can hear it.
@@ -398,6 +398,7 @@ export const ADAS = {
   brakeHard: 1.5,
   brakeStill: 0.35,
   gap: 4,
+  stopGap: 3,
   react: 0.06,
   stealAfter: [10, 25],
   alarmFor: 20,

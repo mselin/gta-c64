@@ -5,7 +5,7 @@
 import { test, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { ADAS, ALARM_COP, ALARM_SAYS, BLD, HANDLING, HIT, KIND, MW, WALK } from '../../js/config.js';
-import { HOSP, genMap, map } from '../../js/world.js';
+import { HOSP, foot, genMap, map } from '../../js/world.js';
 import { G, K, P, edge, resetState } from '../../js/state.js';
 import { mkCar, mkPed } from '../../js/entities.js';
 import { assist, fit, fitAssists, hazard, immobilised, lookout, stopping } from '../../js/adas.js';
@@ -292,6 +292,74 @@ test('emergency braking looks out reversing from ' + ADAS.reverseFrom + ' px/s',
   const c = drive(MID, -(ADAS.reverseFrom + 5), 'aeb');
   G.peds = [Object.assign(mkPed(MID - 18, MID, 'civ'), { dx: 1, dy: 0, t: 1e9 })];
   assert.ok(assist(c, -1, 0, DT).thr > 0, 'it brakes a slow reverse');
+});
+
+// Where the car comes to rest: just short of what it braked for, whatever the speed.
+const AT = MID + 32; // a tile's edge
+const shortOf = {
+  car: (c) => {
+    const o = mkCar(KIND.sedan, AT + 10, MID, 0);
+    G.cars.push(o);
+    return () => o.x - o.kind.L / 2 - (c.x + c.kind.L / 2);
+  },
+  wall: (c) => {
+    wall(AT);
+    return () => AT - (c.x + c.kind.L / 2);
+  },
+  person: (c) => {
+    const p = Object.assign(mkPed(AT + foot(), MID, 'civ'), { spd: 0 });
+    G.peds = [p];
+    return () => p.x - foot() - (c.x + c.kind.L / 2);
+  },
+};
+for (const [kind, v] of [
+  [KIND.sedan, 40],
+  [KIND.sedan, 140],
+  [KIND.sports, 210],
+])
+  for (const [thing, put] of Object.entries(shortOf))
+    test(`emergency braking brings a ${kind.n} at ${v} to rest 2 to 4 pixels short of a ${thing}`, () => {
+      ADAS.brakeStill = 1; // it sees things standing still too
+      const c = fit(mkCar(kind, AT - 160, MID, 0), 'aeb');
+      c.vx = v;
+      G.cars = [c];
+      Object.assign(P, { x: c.x, y: c.y, car: c });
+      const gap = put(c),
+        hp = c.hp;
+      K.up = true;
+      for (let i = 0; i < 600 && !c.aeb.latch; i++) {
+        updPlayer(DT);
+        updCars(DT);
+      }
+      assert.ok(c.aeb.latch, 'it stopped the car');
+      assert.ok(gap() >= 2 && gap() <= 4, `${gap().toFixed(2)} pixels short`);
+      assert.equal(c.hp, hp, 'without touching it');
+    });
+
+test('emergency braking brakes no harder than it must: gently, slow and far off', () => {
+  ADAS.brakeStill = 1;
+  wall(AT);
+  const c = drive(AT - 10 - 40, 40, 'aeb'); // 40 short of the wall, at 40
+  const thr = assist(c, 1, 0, DT).thr;
+  assert.ok(thr < 0 && thr > -0.2, `a light touch of the brakes (${thr.toFixed(3)})`);
+  const d = drive(AT - 10 - 40, 140, 'aeb');
+  const mid = assist(d, 1, 0, DT).thr;
+  assert.ok(mid < thr - 0.3 && mid > -ADAS.brakeHard, `harder at 140 (${mid.toFixed(3)})`);
+  const e = drive(AT - 10 - 20, 140, 'aeb');
+  assert.equal(assist(e, 1, 0, DT).thr, -ADAS.brakeHard, 'and as hard as it can at 140, 20 short');
+});
+
+test('reversing, it comes to rest 2 to 4 pixels short of a wall behind', () => {
+  ADAS.brakeStill = 1;
+  for (let ty = 0; ty < MW; ty++) for (let tx = 0; tx < Math.floor(AT / 16); tx++) map[ty * MW + tx] = BLD;
+  const c = drive(AT + 60, -40, 'aeb');
+  K.down = true;
+  for (let i = 0; i < 600 && !c.aeb.latch; i++) {
+    updPlayer(DT);
+    updCars(DT);
+  }
+  const gap = c.x - c.kind.L / 2 - AT;
+  assert.ok(gap >= 2 && gap <= 4, `${gap.toFixed(2)} pixels short`);
 });
 
 test('anti-theft stops the car a while after it is stolen, for good, and sets off its alarm', () => {
