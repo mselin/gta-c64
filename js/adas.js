@@ -11,19 +11,21 @@ import { carHits } from './cars.js';
 
 const between = ([a, b]) => a + R() * (b - a);
 const lane = () => ({ next: between(ADAS.swerveEvery), left: 0, jerk: 0, dir: 0 });
-const aeb = () => ({ on: false, hold: 0, seen: null, sees: false, forget: 0 });
+// on: the way it is braking the car to a stop (1 forward, -1 reversing), or 0; latch: the way the gas stays off
+// after it has stopped the car, until the player lets go of it and presses again.
+const aeb = () => ({ on: 0, latch: 0, released: false, told: false, seen: null, sees: false, forget: 0 });
 const theft = () => ({ left: between(ADAS.stealAfter), tripped: false });
 
 /**
- * Fit a new car with what it has, each by its share, sports cars more often. Never the job's limo, and never
- * anti-theft in a police car.
+ * Fit a new car with what it has, each by its share, sports cars more often. Never the job's limo, and never a
+ * police car: the police drive cars without any of it.
  */
 export function fitAssists(c) {
-  if (c.kind === KIND.limo) return c;
+  if (c.kind === KIND.limo || c.kind === KIND.police) return c;
   const k = c.kind === KIND.sports ? ADAS.sports : 1;
   if (R() < ADAS.lane * k) c.lane = lane();
   if (R() < ADAS.brake * k) c.aeb = aeb();
-  if (c.kind !== KIND.police && R() < ADAS.theft * k) c.theft = theft();
+  if (R() < ADAS.theft * k) c.theft = theft();
   return c;
 }
 /** Give a car each of `which` ('lane', 'aeb', 'theft'), fresh: for tests, and for trying them out. */
@@ -52,19 +54,28 @@ function carAt(c, x, y) {
   return null;
 }
 /**
- * What the car going forward at `fwd` would hit before it could stop: { what, moving }, where `what` is the
- * person, the car or 'wall'; or null. People count from where a car runs them over (HIT in js/config.js).
+ * How far emergency braking looks the way the car is going at `fwd`: ahead, at least `lookAhead` car lengths, or
+ * as far as the car needs to stop if that is more; behind, reversing, `lookBehind` car lengths.
+ */
+export const lookout = (c, fwd) =>
+  fwd >= 0 ? Math.max(ADAS.lookAhead * c.kind.L, stopping(c, fwd)) : ADAS.lookBehind * c.kind.L;
+/**
+ * What the car going at `fwd` (backwards if less than 0) would hit, within its lookout: { what, moving }, where
+ * `what` is the person, the car or 'wall'; or null. Ahead, people count from where a car runs them over (HIT in
+ * js/config.js); behind, from its back bumper.
  */
 export function hazard(c, fwd) {
   const k = c.kind,
-    fx = Math.cos(c.a),
-    fy = Math.sin(c.a),
-    reach = stopping(c, fwd);
+    way = fwd < 0 ? -1 : 1,
+    fx = Math.cos(c.a) * way,
+    fy = Math.sin(c.a) * way,
+    reach = lookout(c, fwd),
+    from = way > 0 ? 6 + HIT.nose : k.L / 2;
   for (const p of G.peds) {
     const dx = p.x - c.x,
       dy = p.y - c.y,
       along = dx * fx + dy * fy;
-    if (along > 0 && along - 6 - HIT.nose < reach && Math.abs(-dx * fy + dy * fx) < HIT.car + 1)
+    if (along > 0 && along - from < reach && Math.abs(-dx * fy + dy * fx) < HIT.car + 1)
       return { what: p, moving: moving(p) };
   }
   // A car already against a wall (sliding along it) is not about to hit it.
@@ -73,7 +84,7 @@ export function hazard(c, fwd) {
     const x = c.x + fx * s,
       y = c.y + fy * s;
     if (walls && carHits(c, x, y)) return { what: 'wall', moving: false };
-    // The front corners and the middle of the bumper.
+    // The corners and the middle of the bumper it is going towards.
     for (let t = -1; t <= 1; t++) {
       const o = carAt(c, x + fx * (k.L / 2) - fy * (k.W / 2) * t, y + fy * (k.L / 2) + fx * (k.W / 2) * t);
       if (o) return { what: o, moving: hyp(o.vx, o.vy) > 10 };
@@ -104,11 +115,22 @@ function laneAssist(l, fwd, steer, dt) {
 }
 
 /**
- * Emergency braking: with something ahead nearer than the car can stop, brake hard until it is clear or the car
- * has stopped. Whether it sees something standing still is decided once for each thing it comes up to.
+ * Emergency braking: with something in the car's way within its lookout, ahead or reversing, brake hard to a full
+ * stop, whatever the throttle and even if the way clears. Then the gas stays off that way until the player lets
+ * go of it and presses it again; the other way works at once. Whether it sees something standing still is
+ * decided once for each thing it comes up to.
  */
 function emergencyBrake(c, b, fwd, thr, dt) {
-  const h = fwd > (b.on ? 5 : ADAS.brakeFrom) ? hazard(c, fwd) : null;
+  if (b.on) {
+    // Braking to a stop: hard while it is going faster than a crawl, then the last of it rolls out.
+    if (fwd * b.on > 5) return -b.on * ADAS.brakeHard;
+    if (fwd * b.on > 0.5) return 0;
+    b.latch = b.on;
+    b.on = 0;
+    b.released = false;
+    b.told = false;
+  }
+  const h = Math.abs(fwd) > (fwd >= 0 ? ADAS.brakeFrom : ADAS.reverseFrom) ? hazard(c, fwd) : null;
   if (h) {
     if (h.what !== b.seen) {
       b.seen = h.what;
@@ -117,14 +139,26 @@ function emergencyBrake(c, b, fwd, thr, dt) {
     b.forget = 1;
   } else if ((b.forget -= dt) <= 0) b.seen = null;
   if (h && b.sees) {
-    if (!b.on) {
-      b.on = true;
-      msg('EMERGENCY BRAKING ENGAGED');
-      sfx.beeps();
+    b.on = fwd < 0 ? -1 : 1;
+    b.latch = 0;
+    msg('EMERGENCY BRAKING ENGAGED');
+    sfx.beeps();
+    return -b.on * ADAS.brakeHard;
+  }
+  if (b.latch) {
+    // The gas the way it stopped: off until let go of, then pressed again.
+    const push = thr * b.latch;
+    if (push <= 0) b.released = true;
+    else if (b.released) b.latch = 0;
+    else {
+      if (!b.told) {
+        b.told = true;
+        msg('LIFT OFF THE GAS, THEN PRESS AGAIN');
+      }
+      return 0;
     }
-    b.hold = 0.3;
-  } else if (b.on && ((b.hold -= dt) <= 0 || fwd <= 5)) b.on = false;
-  return b.on && fwd > 5 ? -ADAS.brakeHard : thr;
+  }
+  return thr;
 }
 
 /** Anti-theft goes off: the car stops for good, and the alarm sounds. */
