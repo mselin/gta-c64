@@ -453,3 +453,51 @@ test('the boot loads the sunset picture, and the title screen shows it in turn w
   await game.read((s) => (s.G.titleAt = s.G.clock - 11));
   assert.ok((await matches(0)) > 190, 'then the picture page');
 });
+
+test('with heat, at the wheel, a cyan arrow with an S points to the paint shop', async () => {
+  await game.start();
+  // Cyan pixels in a band 26 pixels deep round the edge of the view, where arrows go.
+  const cyan = () =>
+    game.page.evaluate(async () => {
+      const { PAL, VH } = await import('/js/config.js');
+      await new Promise((d) => window.requestAnimationFrame(() => window.requestAnimationFrame(d)));
+      const d = document.getElementById('c').getContext('2d').getImageData(32, 36, 320, VH).data,
+        [r, g, b] = [1, 3, 5].map((i) => parseInt(PAL[3].slice(i, i + 2), 16));
+      let n = 0;
+      for (let y = 0; y < VH; y++)
+        for (let x = 0; x < 320; x++) {
+          if (x > 26 && x < 320 - 26 && y > 26 && y < VH - 26) continue;
+          const o = (y * 320 + x) * 4;
+          if (d[o] === r && d[o + 1] === g && d[o + 2] === b) n++;
+        }
+      return n;
+    });
+  await game.read((s) => {
+    const { G, P } = s;
+    const car = s.mkCar(s.KIND.sedan, P.x, P.y, 0, 0);
+    G.cars = G.cars.filter((c) => c.parked);
+    G.cars.push(car);
+    // Only the player's car and parked ones: no police turn up, no traffic drives into the view's edge.
+    const clear = () => {
+      G.cars = G.cars.filter((c) => c === P.car || c.parked);
+      G.peds = [];
+      window.requestAnimationFrame(clear);
+    };
+    P.car = car;
+    car.driver = true;
+    clear();
+  });
+  const calm = await cyan();
+  await game.read((s) => {
+    s.G.heat = 2;
+    s.G.heatPts = 30;
+  });
+  const hot = await cyan();
+  assert.ok(hot - calm >= 25, `the arrow and its S: ${calm} cyan pixels without heat, ${hot} with`);
+  // On foot, no arrow, heat or not.
+  await game.read((s) => {
+    s.P.car.driver = false;
+    s.P.car = null;
+  });
+  assert.ok((await cyan()) - calm < 10, 'none on foot');
+});

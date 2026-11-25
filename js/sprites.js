@@ -168,7 +168,8 @@ export function pedSpr(p, pose) {
 }
 export const ARW = (() => {
   const rows = ['...#...', '...##..', '######.', '#######', '######.', '...##..', '...#...'];
-  return [1, 7].map((col) => {
+  // White and yellow, the job arrow's two flashes; cyan, the paint shop's.
+  return [1, 7, 3].map((col) => {
     const a = new Int8Array(49);
     rows.forEach((r, y) => [...r].forEach((ch, x) => (a[y * 7 + x] = ch === '#' ? col : -1)));
     return mkSprite(a, 7, 7, 16, 11);

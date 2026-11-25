@@ -549,6 +549,16 @@ same screen distance at any scale, about the edge of the view (75, 60 and 65 at 
 **Cooling down:** with heat above 0 and no chasing car or officer near, the heat drops one level every
 9 seconds. Its points fall to that level's threshold.
 
+**The paint shop, PAINT & PRAY** (`PAINT` in `js/world.js`, the P marker; the rule is in `updHeat`):
+- **What it does:** driving within 16 pixels of it with heat, or in a car more than 5 below its full health, costs
+  $200. The heat and its points go to 0, the car is repaired and any fire put out, and it gets a new colour unless
+  its kind has its own (a police car stays a police car). "PAINT & PRAY: NEW COLOUR, SAME SINS. -$200". With less
+  than $200: "PAINT & PRAY: NO CASH, NO ABSOLUTION." At most once every 4 seconds.
+- **The arrow to it** (`drawWorld` in `js/render.js`): with heat above 0, at the wheel, while the shop is off
+  screen, a cyan (3) arrow at the edge of the view points to it, placed as the job arrow is. Beside it, on the side
+  towards the middle of the view, an S in cyan on a black square. The job arrow shows as well, if there is one. On
+  foot, or with no heat, there is none.
+
 **The siren:** with heat above 0 and the police near (a chasing car within `NOTICE.car`, or an officer on foot within `NOTICE.foot`
 who is not knocked down):
 - **Sound:** it wails every 0.7 seconds, two square-wave notes of 0.33 seconds, 620 Hz then 830 Hz.
