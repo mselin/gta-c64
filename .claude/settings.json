@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git grep:*)",
+      "Bash(npm ci)",
+      "Bash(npm test)",
+      "Bash(npm run lint)",
+      "Bash(npm run test:unit)",
+      "Bash(npm run test:e2e)",
+      "Bash(npx prettier --check:*)",
+      "Bash(python3 .github/scripts/check_repo.py)",
+      "Bash(node tools/make-icons.mjs --check)"
+    ]
+  }
+}
