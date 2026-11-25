@@ -40,7 +40,7 @@ export function updBullets(dt) {
           break;
         }
     } else if (!P.car && G.screen === 'play' && hyp(P.x - b.x, P.y - b.y) < HIT.shot) {
-      hurt(11, 'RESISTING ARREST. ALLEGEDLY.');
+      hurt(11, 'RESISTING ARREST. ALLEGEDLY.', true); // only officers' shots reach the player
       b.l = 0;
     }
     if (b.l > 0)

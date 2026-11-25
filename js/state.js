@@ -38,7 +38,7 @@ const freshPlayer = () => ({
   a: PI / 2,
   hp: 100,
   ammo: 12,
-  knife: false, // found on the street or dropped; lost when wasted or busted
+  knife: false, // found on the street or dropped; the police take it, with the ammo (down in player.js)
   car: null,
   cd: 0,
   anim: 0, // steps walked: the walking pose (figures.js)

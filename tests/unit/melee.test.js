@@ -146,7 +146,7 @@ test('a police officer knocked down cannot arrest, shoot or notice anyone until 
   assert.equal(G.screen, 'down', 'and the arrest goes ahead');
 });
 
-test('picking up a knife arms the player; a spare one is pawned; going down loses it', () => {
+test('picking up a knife arms the player; a spare one is pawned; the police take it', () => {
   G.pickups = [{ x: P.x, y: P.y, type: 'knife', temp: 20, t: 0 }];
   updPickups(DT);
   assert.equal(P.knife, true);
@@ -156,11 +156,10 @@ test('picking up a knife arms the player; a spare one is pawned; going down lose
   updPickups(DT);
   assert.equal(G.cash, cash + 10);
   down('dead');
-  assert.equal(P.knife, false, 'lost when wasted');
-  P.knife = true;
+  assert.equal(P.knife, true, 'kept when wasted with no police about (tests/unit/seized.test.js)');
   G.screen = 'play';
   down('busted');
-  assert.equal(P.knife, false, 'and when busted');
+  assert.equal(P.knife, false, 'taken when busted');
 });
 
 test('knives lie about the city, and someone the player kills sometimes drops one', () => {

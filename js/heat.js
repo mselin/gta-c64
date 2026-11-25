@@ -31,6 +31,23 @@ export function crime(n) {
     sfx.alarm();
   }
 }
+/**
+ * Whether the police are about the player: a police car chasing them within `NOTICE.car`, a manned police car on
+ * patrol within `NOTICE.patrol`, or an officer on foot who is not knocked down within `NOTICE.foot`. The distances
+ * the police notice the player at. The car the player is driving does not count, nor an empty or wrecked one.
+ */
+export function policeNear() {
+  const p = ppos();
+  for (const c of G.cars) {
+    if (c === P.car) continue;
+    const d = hyp(c.x - p.x, c.y - p.y);
+    if (c.ai === 'cop' && d < NOTICE.car) return true;
+    if (c.ai === 'traffic' && c.kind === KIND.police && c.driver && !c.dead && d < NOTICE.patrol) return true;
+  }
+  for (const q of G.peds)
+    if (q.type === 'cop' && !(q.ko > 0) && hyp(q.x - p.x, q.y - p.y) < NOTICE.foot) return true;
+  return false;
+}
 export function updHeat(dt) {
   const p = ppos();
   let near = false;

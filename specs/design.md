@@ -209,7 +209,8 @@ they have one, otherwise with their fists. Nobody fires in the water.
 - A pickup marked **K** (black on light grey). 6% of the pickups around the city are knives, and someone the
   player kills drops one 8% of the time, unless the player already has one.
 - Picking it up says so. A spare one is pawned for $10.
-- The player keeps it until they are wasted or busted.
+- The player keeps it until the police take it, with the ammo: see **Wasted or busted** under Heat and the
+  police.
 
 **Ammo** stops at 99. An ammo pickup gives up to 12, as many as fit.
 
@@ -573,6 +574,20 @@ who is not knocked down):
   are swimming, in the canal or a fountain pool.
 - **Boxed in:** if the player's car is slower than 12 px/s with a chasing car within 24 pixels, the player is
   arrested after 2 seconds of it.
+
+**Wasted or busted** (`down` and `respawn` in `js/player.js`). The player comes back, with full health, no heat
+and no police about:
+- **Wasted:** at the hospital, billed up to $500: "ST. INVOICE HOSPITAL: AMBULANCE RIDE -$… (OUT OF NETWORK)".
+- **Busted:** at the police station, fined a fifth of their cash: "CIVIL ASSET FORFEITURE: -$…. YOUR WEAPONS ARE
+  NOW "EVIDENCE"". Busted with no cash at all, the game is over.
+- **The police take the weapons:** the knife and all the ammo, the moment the player goes down:
+  - **Busted:** always.
+  - **Wasted with the police about:** a chasing car, a manned police car on patrol or an officer on foot who is not
+    knocked down, within the distances they notice the player at (the table above). The player's own car does not
+    count, nor an empty or wrecked police car. The hospital's line then ends ". THE POLICE KEPT YOUR WEAPONS AS
+    "EVIDENCE"".
+  - **Shot dead by an officer:** however far off the officer is.
+  - **Wasted with no police about**, in a crash or a car blowing up: the player keeps the knife and the ammo.
 
 **A stolen police car.** The police know their own cruisers, and know the player is not one of them:
 - **The rule:** driving a police car with heat below 2, the moment a chasing car, an officer on foot or a patrol
