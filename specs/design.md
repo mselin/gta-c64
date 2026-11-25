@@ -322,6 +322,12 @@ Speeds are split into forward (along the car) and sideways. Each frame, in this 
     At its top speed of 215 the sports car turns at 2.3 radians a second, on a line of radius 94, and holds its
     speed round the bend. (Before, it turned at 3 regardless, slid, and dropped to about 177.)
   - **The handbrake** lets the back go: the car turns 1.3 times as fast, with no grip limit, and slides.
+  - **Settling on a straight line.** A car someone is driving (the player's, or a police car), going faster than
+    5 either way, not spinning, not on the handbrake and with the wheel straight, that points within 0.2 radians
+    (about 11°, one step of its 32-direction picture) of one of the eight ways, the axes and the diagonals, turns
+    onto it at half the rate its steering would, and then keeps exactly to it (`snap`, `settle`). Otherwise a car
+    let go of a little off a street's line, looking straight in its picture, would drift across the street. Turning
+    is as smooth as before, and a car pointing further off any of the eight keeps the way it points.
 - **Throttle:** forward speed rises by the acceleration. Top speed is 0.7 of the table's below 40 hp; backwards,
   0.4 of top speed.
 - **Braking** (pulling back while going forward faster than 5) takes off 2.2 × the acceleration; once stopped,

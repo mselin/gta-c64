@@ -4,7 +4,7 @@
 // stolen car for good and sets off its alarm. Only ever while the player drives.
 import { test, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADAS, ALARM_COP, ALARM_SAYS, BLD, HIT, KIND, MW, WALK } from '../../js/config.js';
+import { ADAS, ALARM_COP, ALARM_SAYS, BLD, HANDLING, HIT, KIND, MW, WALK } from '../../js/config.js';
 import { HOSP, genMap, map } from '../../js/world.js';
 import { G, K, P, edge, resetState } from '../../js/state.js';
 import { mkCar, mkPed } from '../../js/entities.js';
@@ -109,10 +109,14 @@ test('cursed lane assist takes the wheel now and then at speed, says so, then gi
   assert.equal(G.msgTxt, 'CURSED LANE ASSIST TOOK OVER');
   assert.ok(most > 0.1, `it swerved the car (by up to ${most.toFixed(2)} radians)`);
   assert.ok(c.lane.next >= ADAS.swerveEvery[0] - 0.5, 'and will not again for a while');
-  // Given back: with no steering, the car keeps the way it is pointing.
-  const a1 = c.a;
+  // Given back: with no steering, the car keeps the way it is pointing, or settles onto the nearest of the eight
+  // ways if it is close to one (HANDLING.snap); lane assist turns it no more.
+  const a1 = c.a,
+    eighth = Math.PI / 4;
   run(1);
-  assert.ok(Math.abs(c.a - a1) < 1e-9, 'the wheel is the player’s again');
+  const kept = Math.abs(c.a - a1) < 1e-9,
+    settled = Math.abs(c.a / eighth - Math.round(c.a / eighth)) < 1e-9 && Math.abs(c.a - a1) < HANDLING.snap;
+  assert.ok(kept || settled, `the wheel is the player’s again (${a1.toFixed(3)} to ${c.a.toFixed(3)})`);
 });
 
 test('lane assist leaves a slow car alone', () => {

@@ -291,9 +291,19 @@ export const GRIP = { sedan: 450, sports: 490, van: 370, taxi: 450, police: 510,
  * - grass: what is left of the grip there, and the extra drag that slows a car on it, per second;
  * - spin: how much a knock off the middle turns a car (bigger is less), and how fast its tyres stop the spin, in
  *   radians a second each second for each unit of grip;
- * - bounce: what share of the closing speed two cars part with after a crash.
+ * - bounce: what share of the closing speed two cars part with after a crash;
+ * - snap, settle: a car someone is driving, with the wheel straight, within `snap` radians of one of the eight
+ *   ways (the axes and the diagonals), turns onto it at `settle` of the rate its steering would, and keeps to it.
  */
-export const HANDLING = { grassGrip: 0.55, grassDrag: 0.8, spinInertia: 3.5, spinGrip: 1 / 80, bounce: 0.3 };
+export const HANDLING = {
+  grassGrip: 0.55,
+  grassDrag: 0.8,
+  spinInertia: 3.5,
+  spinGrip: 1 / 80,
+  bounce: 0.3,
+  snap: 0.2,
+  settle: 0.5,
+};
 /**
  * Cursed driver assistance (js/adas.js, and specs/design.md under Cars). What share of cars has each, sports cars
  * `sports` times as many; and how each behaves while the player drives. Speeds in city pixels a second, times in
