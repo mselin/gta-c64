@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The player on foot and at the wheel: movement, weapons, getting in and out of cars, dying and getting arrested.
-import { DIRS, HIT, JACK, KIND, MELEE, ZOOM, PACE, PERSON } from './config.js';
+import { DIRS, HIT, JACK, KIND, KO, MELEE, ZOOM, PACE, PERSON } from './config.js';
 import { angDiff, clamp, hyp, pick } from './util.js';
 import { COPS, HOSP, footClear, waterAt, foot } from './world.js';
 import { noise, sfx } from './audio.js';
-import { G, K, P, bigText, edge, msg, touch, weapon, carBodyAt } from './state.js';
+import { G, K, P, bigText, edge, msg, onScreen, pop, touch, weapon, carBodyAt } from './state.js';
 import { mkPed } from './entities.js';
 import { crime } from './heat.js';
 import { carPhys, sidePos } from './cars.js';
@@ -88,10 +88,17 @@ function enterCar() {
   if (!best) return;
   const c = best;
   if (c.driver) {
-    const s = sidePos(c) || { x: c.x, y: c.y };
-    const q = mkPed(s.x, s.y, 'civ');
-    q.flee = 6;
+    // The driver is thrown out at the door and lands on the ground, facing away from the car, as if knocked down:
+    // they lie there KO.t seconds, then get up as anyone knocked down does. From a police car, a police officer.
+    const s = sidePos(c) || { x: c.x, y: c.y },
+      q = mkPed(s.x, s.y, c.kind === KIND.police ? 'cop' : 'civ'),
+      out = hyp(s.x - c.x, s.y - c.y) || 1;
+    q.dx = (s.x - c.x) / out;
+    q.dy = (s.y - c.y) / out;
+    q.ko = KO.t;
     G.peds.push(q);
+    scare(q.x, q.y, 60, 2);
+    if (onScreen(q.x, q.y, 0)) pop(q.x, q.y - 8, 'OOF', 10);
     crime(c.kind === KIND.police ? 16 : 4);
     msg(c.kind === KIND.police ? 'OFFICER: "THAT IS A COMPANY CAR!"' : pick(JACK));
   }
