@@ -138,7 +138,9 @@ People are seen from above, about the size of a swimmer's splash, so that they r
 police trousers or a white cap, and no one else is ever drawn with a white outline.
 
 **In the water:** a swimmer is a head, one arm and ripples, about 11 pixels across, in the person's own skin
-and hair colours. The player's head keeps its outlines.
+and hair colours. The player's head keeps its outlines. The canal and the fountain pools are both water, and
+nobody shoots while swimming in either: not the player, who cannot punch or stab there either, and not the
+police.
 
 **Hit distances** (`HIT` in `js/config.js`) match the drawn body, so what you see is what you hit. Each
 distance is measured from the person's middle, in city pixels. The person's part goes by PERSON (see
@@ -560,6 +562,8 @@ who is not knocked down):
 - **Patrol cars join in:** a patrol car within 130 joins the chase.
 - **Officers on foot:** when a chasing car and the player are both slower than 30 px/s within 36 pixels of
   each other, an officer gets out, up to four on foot at once.
+- **Officers shoot** from heat 3, at the player within 95 pixels, every 1.1 to 1.7 seconds, but not while they
+  are swimming, in the canal or a fountain pool.
 - **Boxed in:** if the player's car is slower than 12 px/s with a chasing car within 24 pixels, the player is
   arrested after 2 seconds of it.
 
