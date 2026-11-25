@@ -558,6 +558,42 @@ who is not knocked down):
 > **C64 note.** The C64 version keeps few cars at once (six, by the sprite multiplexer). That leaves few patrol
 > cars, so the cruiser is noticed less often there unless chasing cars spawn sooner.
 
+**GAGGLE cameras** (`js/cams.js`; the numbers are `CAM` in `js/config.js`): the city's surveillance network, on
+poles at a scattering of crossings.
+
+- **Where:** at each crossing where 3 × avenue + 2 × street (counting from 0) is a multiple of 5, 17 in all, on
+  the pavement at the first corner, going round from the south-east, that is pavement or plaza: 22 pixels each
+  way from the middle of the crossing.
+- **What one sees:** anything within 90 pixels with no building, tree or fountain in the way. One that is going
+  off or has been put out of action sees nothing.
+- **A crime it sees** (the player where it is when they commit it): any crime counts half again. Its light flashes
+  for a second, and the next police car comes at once rather than in its turn. At most every 6 seconds the status
+  line says one of `CAM_SEEN`, at random:
+  `GAGGLE CAM: SHARED WITH 3,000 AGENCIES`, `GAGGLE CAM SAW THAT. SO DID THE COPS.`,
+  `GAGGLE CAM: SMILE. THIS IS EVIDENCE.`, `GAGGLE CAM: YOUR GOOD SIDE, REPORTED`,
+  `GAGGLE CAM: CRIME LOGGED. AND SOLD.`, `GAGGLE CAM: TRENDING AT PRECINCT 64`.
+- **Reckless driving it sees** is a crime of 2: faster than 125 on the road, or faster than 60 on a pavement or
+  plaza. Each camera reports it at most every 4 seconds.
+- **Watching:** while a camera sees the player with heat above 0, the heat does not cool, police near or not.
+- **Putting one out of action:** the player's car going faster than 15 into it (its pole within the car's body
+  and 1.5 pixels), or one of the player's bullets within 6 pixels of a point 5 pixels up its pole.
+  - **The alarm first:** for 3 seconds it warbles, a square wave at 1700 Hz and 1300 Hz in turn, every 0.15
+    seconds, quieter the further away the player is and unheard from 300 pixels, its light flashing with the
+    high note. Sparks fly. The tampering is a crime of 4, and the next police car comes at once. The status line
+    says one of `CAM_TAMPER`: `GAGGLE CAM: TAMPERING DETECTED. HELP!`, `GAGGLE CAM: THIS INCIDENT IS LOGGED!`,
+    `GAGGLE CAM: YOU CANNOT DELETE THE CLOUD`.
+  - **Then it goes dark,** and the status line says one of `CAM_DOWN`: `GAGGLE CAM OFFLINE. PRIVACY, BRIEFLY.`,
+    `GAGGLE CAM DOWN. A PIGEON APPLAUDS.`, `GAGGLE CAM: 404 CRIME NOT FOUND`, `GAGGLE CAM DOWN. THE GEESE APPROVE.`
+  - **Back up:** the city puts it back up 120 seconds later, once it is off the screen.
+- **The look,** at the city's scale: a dark grey (11) pole 1 × 8 pixels with a black camera 5 × 3 on top, and a
+  light 2 × 2 at its front, light red (10): on for a third of every 2 seconds as it records, flashing 4 times a
+  second after a report, and with the alarm's high note while it goes off. Out of action, the pole lies on the
+  ground, 8 × 1, with the camera 3 × 3 at its end.
+
+> **C64 note.** The cameras are fixed: a table of 17 places, and one character, or two, for each, in the
+> city's own characters. What a camera sees can be a list of the characters it watches, worked out ahead,
+> rather than a line of sight each frame.
+
 ## Banners
 
 `bigText` in `js/state.js`, drawn by `drawWorld` in `js/render.js`.
