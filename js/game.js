@@ -37,6 +37,8 @@ function resetGame() {
 }
 function startGame() {
   G.screen = 'play';
+  // The press that started the game is not a shot as well, however long it is held (updPlayer).
+  G.holdFire = true;
   if (started) {
     msg('BACK TO WORK. THE ELECTION WILL NOT BUY ITSELF.');
     return;

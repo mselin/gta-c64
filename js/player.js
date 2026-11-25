@@ -243,7 +243,9 @@ export function updPlayer(dt) {
       P.anim += dt * 9;
     } else P.anim = 0; // standing still: the middle pose
     P.cd -= dt;
-    if (K.fire && P.cd <= 0 && !swim) {
+    // Fire shoots, unless it is still held from the press that started the game.
+    if (!K.fire) G.holdFire = false;
+    if (K.fire && !G.holdFire && P.cd <= 0 && !swim) {
       const fx = Math.cos(P.a),
         fy = Math.sin(P.a);
       if (P.ammo > 0) {
