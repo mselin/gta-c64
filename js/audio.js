@@ -125,6 +125,20 @@ export const sfx = {
     tone(500, 900, 0.12, 'square', 0.25);
     tone(500, 900, 0.12, 'square', 0.25, 0.15);
   },
+  // Cursed lane assist taking the wheel: a cheerful chime.
+  chime() {
+    tone(988, 988, 0.09, 'triangle', 0.25);
+    tone(784, 784, 0.14, 'triangle', 0.25, 0.1);
+  },
+  // Emergency braking: three quick high beeps.
+  beeps() {
+    [0, 0.09, 0.18].forEach((d) => tone(1760, 1760, 0.06, 'square', 0.15, d));
+  },
+  // A car alarm: its high or low note, at `v` (1 beside it) of its loudness.
+  carAlarm(hi, v) {
+    const f = hi ? 1250 : 850;
+    tone(f, f, 0.22, 'square', 0.16 * v);
+  },
 };
 export function engineSound(on, speed) {
   if (!AC || !engG) return;

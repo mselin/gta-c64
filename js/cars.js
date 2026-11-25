@@ -25,6 +25,7 @@ import { crime } from './heat.js';
 import { killPed } from './peds.js';
 import { hurt } from './player.js';
 import { failJob } from './missions.js';
+import { alarmStep } from './adas.js';
 
 export function carHits(c, x, y) {
   const h = c.kind.L / 2 - 4,
@@ -495,6 +496,7 @@ function explode(c) {
 export function updCars(dt) {
   for (const c of G.cars) {
     sinkStep(c, dt);
+    alarmStep(c, dt);
     if (c.dead) {
       if (hyp(c.vx, c.vy) > 2) carPhys(c, 0, 0, dt);
       else c.w = 0;

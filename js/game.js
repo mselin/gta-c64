@@ -6,6 +6,7 @@ import { HOSP, parkSpots } from './world.js';
 import { engineSound } from './audio.js';
 import { G, P, edge, msg, ppos, resetState } from './state.js';
 import { mkCar, mkHonk } from './entities.js';
+import { fitAssists, immobilised } from './adas.js';
 import { resetHeat, updHeat } from './heat.js';
 import { updCars } from './cars.js';
 import { resetPeds, updPeds } from './peds.js';
@@ -123,15 +124,16 @@ export function update(dt) {
     ty = clamp(p.y + clamp(ly, -VIEW_H / 2 + 16, VIEW_H / 2 - 16) - VIEW_H / 2, 0, WPX - VIEW_H);
   G.camX += (tx - G.camX) * Math.min(1, 6 * dt);
   G.camY += (ty - G.camY) * Math.min(1, 6 * dt);
-  engineSound(!!P.car && G.screen === 'play', P.car ? hyp(P.car.vx, P.car.vy) : 0);
+  engineSound(!!P.car && !immobilised(P.car) && G.screen === 'play', P.car ? hyp(P.car.vx, P.car.vy) : 0);
 }
 export function initWorld() {
   for (const s of parkSpots) {
     const r = R(),
-      c = mkCar(r < 0.6 ? KIND.sedan : r < 0.8 ? KIND.van : KIND.sports, s.x, s.y, s.a);
+      c = fitAssists(mkCar(r < 0.6 ? KIND.sedan : r < 0.8 ? KIND.van : KIND.sports, s.x, s.y, s.a));
     c.parked = true;
     G.cars.push(c);
   }
+  // The car beside the hospital, the first the player is likely to take, has none of the cursed assistance.
   const c = mkCar(KIND.sedan, HOSP.x + 40, HOSP.y, 0, 14);
   c.parked = true;
   G.cars.push(c);
