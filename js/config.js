@@ -196,6 +196,59 @@ export const JACK = [
   'DRIVER: "MY PODCAST WILL HEAR ABOUT THIS."',
   'DRIVER: "JOKE\'S ON YOU, IT NEEDS A SERVICE."',
 ];
+/**
+ * GAGGLE cameras (js/cams.js, and specs/design.md under Heat and the police): the city's surveillance network, on
+ * poles at the crossings where (3 × avenue + 2 × street) is a multiple of `every`. In city pixels and seconds:
+ * - see: how far one sees, where no building is in the way;
+ * - boost: a crime one sees counts this much more; while one sees the player with heat, the heat does not cool;
+ * - speeding, pavement: driving faster than these, on the road or on a pavement or plaza, one reports, as a
+ *   crime of `reckless`, at most once each `again` seconds;
+ * - knock, hit: the player's car going faster than `knock` into one, or a bullet within `hit` of it, sets off its
+ *   alarm for `alarm` seconds (a note every `beat`, heard up to `heard` away), reporting tampering as a crime of
+ *   `tamper`; then it goes dark, until the city puts it back up `fix` seconds later, out of sight;
+ * - sayGap: the least time between two of its messages about crimes it saw.
+ */
+export const CAM = {
+  name: 'GAGGLE',
+  every: 5,
+  see: 90,
+  boost: 0.5,
+  speeding: 125,
+  pavement: 60,
+  reckless: 2,
+  again: 4,
+  knock: 15,
+  hit: 4,
+  alarm: 3,
+  beat: 0.15,
+  heard: 300,
+  tamper: 4,
+  fix: 120,
+  sayGap: 6,
+};
+const CN = CAM.name;
+/** What the status line says when a camera sees a crime, at random. */
+export const CAM_SEEN = [
+  `${CN} CAM: SHARED WITH 3,000 AGENCIES`,
+  `${CN} CAM SAW THAT. SO DID THE COPS.`,
+  `${CN} CAM: SMILE. THIS IS EVIDENCE.`,
+  `${CN} CAM: YOUR GOOD SIDE, REPORTED`,
+  `${CN} CAM: CRIME LOGGED. AND SOLD.`,
+  `${CN} CAM: TRENDING AT PRECINCT 64`,
+];
+/** When the player rams or shoots one, and its alarm starts. */
+export const CAM_TAMPER = [
+  `${CN} CAM: TAMPERING DETECTED. HELP!`,
+  `${CN} CAM: THIS INCIDENT IS LOGGED!`,
+  `${CN} CAM: YOU CANNOT DELETE THE CLOUD`,
+];
+/** When its alarm has run out and it goes dark. */
+export const CAM_DOWN = [
+  `${CN} CAM OFFLINE. PRIVACY, BRIEFLY.`,
+  `${CN} CAM DOWN. A PIGEON APPLAUDS.`,
+  `${CN} CAM: 404 CRIME NOT FOUND`,
+  `${CN} CAM DOWN. THE GEESE APPROVE.`,
+];
 /** What the status line says about a car alarm the player can hear, a while into it (js/adas.js). */
 export const ALARM_SAYS = [
   'BWEEP BWEEP. NOBODY LOOKS UP.',

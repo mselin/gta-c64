@@ -6,6 +6,7 @@ import { PAINT, districtAt } from './world.js';
 import { sfx, tone } from './audio.js';
 import { G, P, msg, ppos } from './state.js';
 import { down } from './player.js';
+import { reported, seenBy } from './cams.js';
 
 let district = '';
 let newsT = 12;
@@ -15,7 +16,11 @@ export function resetHeat() {
   newsT = 12;
   paintCd = 0;
 }
+/** A crime by the player, worth `n` points of heat; more if a GAGGLE camera sees them do it (js/cams.js). */
 export function crime(n) {
+  const p = ppos(),
+    cam = seenBy(p.x, p.y);
+  if (cam) n += reported(cam, n);
   G.heatPts = Math.min(230, G.heatPts + n);
   G.heatCool = 0;
   let h = 0;

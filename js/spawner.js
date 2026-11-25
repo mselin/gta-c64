@@ -14,6 +14,10 @@ function nearCar(x, y, r) {
   for (const c of G.cars) if (Math.abs(c.x - x) < r && Math.abs(c.y - y) < r) return true;
   return false;
 }
+/** The next police car comes at once, rather than in its turn: a GAGGLE camera has called it in. */
+export function hurry() {
+  spC = 0;
+}
 function spawnRoad(cop) {
   const p = ppos();
   for (let tr = 0; tr < 10; tr++) {
