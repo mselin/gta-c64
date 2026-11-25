@@ -175,3 +175,37 @@ export const ARW = (() => {
     return mkSprite(a, 7, 7, 16, 11);
   });
 })();
+/**
+ * The police helicopter, facing east: a dark blue cabin with a white stripe and a light blue windscreen, its tail on a
+ * thin boom with a fin at the end (HELI_BODY); and its rotor, two blades crossing, light grey (HELI_ROTOR).
+ */
+const grid = (rows, cols) => {
+  const w = rows[0].length,
+    a = new Int8Array(w * rows.length);
+  rows.forEach((r, y) => [...r].forEach((ch, x) => (a[y * w + x] = ch in cols ? cols[ch] : -1)));
+  return [a, w, rows.length];
+};
+export const HELI_BODY = (() => {
+  const [a, w, h] = grid(
+    [
+      '.........6666...',
+      '6.......66666ee.',
+      '6.......666666ee',
+      '66666666wwwwwwee',
+      '6.......666666ee',
+      '6.......66666ee.',
+      '.........6666...',
+    ],
+    { 6: 6, e: 14, w: 1 },
+  );
+  return mkSprite(a, w, h, 32, 18);
+})();
+export const HELI_ROTOR = (() => {
+  const n = 19,
+    a = new Int8Array(n * n).fill(-1);
+  for (let i = 0; i < n; i++) {
+    a[9 * n + i] = 15;
+    a[i * n + 9] = 15;
+  }
+  return mkSprite(a, n, n, 16, 28);
+})();

@@ -549,6 +549,25 @@ same screen distance at any scale, about the edge of the view (75, 60 and 65 at 
 **Cooling down:** with heat above 0 and no chasing car or officer near, the heat drops one level every
 9 seconds. Its points fall to that level's threshold.
 
+**The police helicopter** (`js/heli.js`; the numbers are `HELI` in `js/config.js`), at heat 5:
+- **It comes** from 220 pixels away, from any side, out of sight. Once it comes into view the game says "POLICE
+  HELICOPTER OVERHEAD. SMILE, YOU ARE ON THE EVENING NEWS."
+- **It follows the player** wherever they go, on foot or at the wheel, straight over buildings and water. It
+  matches the player's speed, closes the gap in about half a second on top of that, and turns to face where it
+  is going. Its top speed is 260 px/s, faster than any car, and it accelerates at 320 px/s², quicker than any
+  car does, so it cannot be shaken off. Over the player it drifts up to 5 pixels round them.
+- **It never lands** and does nothing to the player: no shots and no arrest. It only lights them up.
+- **The heat does not cool** while it is overhead, within 21 pixels (16 + 5) of the player. It is not the police
+  near, though: it does not set the siren off, nor take the player's weapons if they are wasted.
+- **It goes** once the heat is below 5, at the paint shop say: it flies straight on the way it is facing, lighting
+  nobody up, and is gone 300 pixels away. Wasted or busted, it is gone at once with the rest of the police.
+- **How it looks** (`drawHeli` in `js/render.js`, its frames `HELI_BODY` and `HELI_ROTOR` in `js/sprites.js`):
+  - **The searchlight:** a ring of 16 yellow (7) dots, 16 across, going round on the ground under it.
+  - **The helicopter:** drawn 14 pixels above that, over everything in the city. It has a dark blue (6) cabin with a
+    white (1) stripe and a light blue (14) windscreen, and a thin boom to a tail fin, 16 × 7.
+  - **The rotor:** two light grey (15) blades crossing, 19 across, spinning.
+- **Its sound:** a chop every 0.09 seconds, a short burst of low noise, while it is about.
+
 **The paint shop, PAINT & PRAY** (`PAINT` in `js/world.js`, the P marker; the rule is in `updHeat`):
 - **What it does:** driving within 16 pixels of it with heat, or in a car more than 5 below its full health, costs
   $200. The heat and its points go to 0, the car is repaired and any fire put out, and it gets a new colour unless

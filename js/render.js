@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Draws every screen: boot, title, the city with its HUD, and the win screen.
-import { BOOT, BX, BY, GOAL, KIND, PAL, PI, SH, SW, TITLE_PAGES, VH, ZOOM } from './config.js';
+import { BOOT, BX, BY, GOAL, HELI, KIND, PAL, PI, SH, SW, TITLE_PAGES, VH, ZOOM } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { cx, g, scr } from './screen.js';
 import { ctext, text } from './font.js';
-import { ARW, carSpr, pedSpr } from './sprites.js';
+import { ARW, HELI_BODY, HELI_ROTOR, carSpr, pedSpr } from './sprites.js';
 import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
@@ -71,6 +71,33 @@ function drawSwimmer(p) {
   g.fillStyle = PAL[p.skin];
   g.fillRect(wx - 1, wy, 3, 2);
   g.fillRect(f ? wx - 3 : wx + 3, wy - 1, 1, 2);
+}
+/**
+ * The police helicopter: its searchlight on the ground under it, a ring of yellow dots going round, then the
+ * helicopter itself HELI.alt above that, over everything in the city, its rotor spinning.
+ */
+function drawHeli() {
+  const h = G.heli;
+  if (!h || !onScreen(h.x, h.y - HELI.alt, 40)) return;
+  const z = ZOOM,
+    r = (HELI.light / 2) * z,
+    cx = sx(h.x),
+    cy = sy(h.y);
+  if (!h.leaving) {
+    g.fillStyle = PAL[7];
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * PI * 2 + G.clock * 2;
+      g.fillRect(
+        Math.round(cx + Math.cos(a) * r) - (z >> 1),
+        Math.round(cy + Math.sin(a) * r) - (z >> 1),
+        z,
+        z,
+      );
+    }
+  }
+  const y = h.y - HELI.alt;
+  drawSpr(HELI_BODY, h.a, h.x, y);
+  drawSpr(HELI_ROTOR, G.clock * 40, h.x + Math.cos(h.a) * 3, y + Math.sin(h.a) * 3);
 }
 function drawWorld() {
   camXi = Math.round(G.camX * ZOOM);
@@ -187,6 +214,7 @@ function drawWorld() {
     g.fillStyle = PAL[b.own ? 1 : 7];
     g.fillRect(sx(b.x), sy(b.y), 2 * ZOOM, 2 * ZOOM);
   }
+  drawHeli();
   for (const p of G.parts) {
     g.fillStyle = PAL[p.col];
     const s = p.s || 1;
