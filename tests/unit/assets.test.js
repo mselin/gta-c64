@@ -74,11 +74,15 @@ const C64 = new Set(PAL.map((hex) => hex.toLowerCase()));
 const hex = (px, o) =>
   '#' + [px[o], px[o + 1], px[o + 2]].map((v) => v.toString(16).padStart(2, '0')).join('');
 
-for (const file of ['ending-jail.png', 'ending-office.png']) {
+for (const [file, height] of [
+  ['ending-jail.png', 150],
+  ['ending-office.png', 150],
+  ['title-sunset.png', 180],
+]) {
   const img = decodePng(readFileSync(new URL('../../assets/' + file, import.meta.url)));
 
-  test(`${file} is 320 by 150`, () => {
-    assert.deepEqual([img.w, img.h], [320, 150]);
+  test(`${file} is 320 by ${height}`, () => {
+    assert.deepEqual([img.w, img.h], [320, height]);
   });
 
   test(`${file} is fully opaque and uses only the sixteen C64 colours`, () => {

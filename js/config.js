@@ -48,6 +48,14 @@ export let ZOOM = 2,
 export const ZOOMS = [1, 2, 3],
   DEFAULT_ZOOM = 2;
 /** The kinds of car. `m` is the mass, a sedan's being 1: it decides who pushes whom in a crash. */
+/**
+ * The boot, in seconds from the start: LOADING appears at `loading`; from `picture` the screen goes black and the
+ * sunset picture loads in a character row at a time, the border flashing, until it has all arrived at `loaded`;
+ * then READY. and RUN, and the title screen at `end`.
+ */
+export const BOOT = { loading: 3.3, picture: 3.6, loaded: 6.2, ready: 6.6, end: 7.4 };
+/** The title screen shows its two pages in turn: the text for `text` seconds, then the sunset picture. */
+export const TITLE_PAGES = { text: 10, picture: 8 };
 export const KIND = {
   sedan: { n: 'sedan', L: 20, W: 11, max: 150, acc: 120, hp: 100, m: 1 },
   sports: { n: 'sports', L: 20, W: 10, max: 215, acc: 180, hp: 80, m: 0.85 },

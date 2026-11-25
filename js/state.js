@@ -60,6 +60,7 @@ export const G = {
   screen: 'boot',
   bootT: 0,
   clock: 0,
+  titleAt: 0, // when the title screen last came up (G.clock): it starts on its text page
   sidPlayer: null, // the SID player module once it has loaded
   station: 0, // index of the tuned radio station
   nowPlaying: null, // the radio track that is loaded, or null

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Game flow: world setup and the per-frame update.
-import { GOAL, KIND, VIEW_H, VIEW_W, WPX } from './config.js';
+import { BOOT, GOAL, KIND, VIEW_H, VIEW_W, WPX } from './config.js';
 import { R, clamp, hyp } from './util.js';
 import { HOSP, parkSpots } from './world.js';
 import { engineSound } from './audio.js';
@@ -53,7 +53,7 @@ export function update(dt) {
   radioTick(dt);
   if (G.screen === 'boot') {
     G.bootT += dt;
-    if (G.bootT > 6.2 || edge.fire || edge.use) G.screen = 'title';
+    if (G.bootT > BOOT.end || edge.fire || edge.use) G.screen = 'title';
     return;
   }
   if (G.screen === 'title') {

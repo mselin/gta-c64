@@ -6,6 +6,7 @@ Bitmap pictures the game loads. Edit them in any paint program and save over the
 |---|---|---|
 | `ending-jail.png` | Game over: arrested with no money | 320 × 150 |
 | `ending-office.png` | Victory: the election is bought | 320 × 150 |
+| `title-sunset.png` | The title screen, in turn with its text, and the boot's loading picture | 320 × 180 |
 | `icon-16.png`, `icon-32.png` | The browser tab | 16 × 16, 32 × 32 |
 | `icon-180.png` | A phone's home screen | 180 × 180 |
 | `icon-source.png` | What the icons are drawn from | 360 × 360 |
@@ -19,7 +20,13 @@ check the files match it. The rules below are for the end screens.
 The end screens add their own title, captions and "New game?" line around the picture, and the victory screen
 draws the cigar smoke over it, rising from about (252, 62).
 
-## Rules for editing the end screens
+The sunset picture is the owner's artwork, with its SLEAZEBURG 64 logo, made C64-like by
+[`tools/title-picture.py`](../tools/title-picture.py), which also leaves out the artwork's Commodore logo. The
+title screen draws "PRESS FIRE" and the greetings under it.
+
+## Rules for editing the pictures
+
+These hold for the end screens and the sunset picture alike.
 
 `npm run test:unit` checks all of these, and says which pixels break them.
 
