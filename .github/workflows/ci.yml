@@ -270,9 +270,13 @@ jobs:
           node-version: 22
       - name: Put the game together
         run: node desktop/stage.mjs "$RUNNER_TEMP/site"
+      # Named after the run's attempt, so that re-running this job (as the deploy step asks when GitHub Pages fails)
+      # deploys its own upload: a run keeps the uploads of every attempt, and two of the same name stop the deploy
+      # ("Multiple artifacts named github-pages were unexpectedly found").
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ${{ runner.temp }}/site
+          name: github-pages-${{ github.run_attempt }}
       # GitHub's deploy step sometimes cannot find the page it was handed a moment before ("No artifacts named
       # github-pages were found"), though the upload just above succeeded: the list of the run's artifacts lags
       # behind. A look a little later finds it. So the deploy gets three tries, with a wait before the second
@@ -281,6 +285,8 @@ jobs:
       - id: deploy
         continue-on-error: true
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
       - name: Wait before the second try
         if: steps.deploy.outcome == 'failure'
         run: sleep 30
@@ -288,9 +294,13 @@ jobs:
         if: steps.deploy.outcome == 'failure'
         continue-on-error: true
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
       - name: Wait before the last try
         if: steps.deploy_again.outcome == 'failure'
         run: sleep 90
       - id: deploy_last
         if: steps.deploy_again.outcome == 'failure'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
