@@ -712,6 +712,8 @@ The owner's artwork, in its own colours rather than the C64's: an icon sits outs
 - **The browser tab (16 × 16, 32 × 32):** the circle, transparent round it.
 - **A phone's home screen (180 × 180):** the circle 168 across on the circle's deep purple (#250762), with no
   transparency, which a phone would show as black, and a margin for it to round the corners off.
+- **The desktop app** (`desktop/src-tauri/icons`): the same circle, transparent round it, at every size Windows,
+  macOS and Linux ask for, from 16 to 1024.
 
 ## Only in the browser and desktop versions
 

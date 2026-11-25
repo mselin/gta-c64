@@ -63,6 +63,22 @@ installers: `npm run build -- --no-bundle`; it is then `src-tauri/target/release
 
 On macOS, an app you built yourself opens without a Gatekeeper warning, because it was not downloaded.
 
+### The icons
+
+`src-tauri/icons` holds the app's icons, Big Honk the goose, as Windows, macOS and Linux want them. They are made
+from the owner's goose artwork, which is not in the repository. From the repository's root:
+
+```sh
+python3 tools/icon-source.py ARTWORK.jpg goose-1024.png 1024
+python3 -c "from PIL import Image; import numpy as np; a = np.array(Image.open('goose-1024.png')); q = Image.fromarray(a[..., :3]).quantize(64, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert('RGB'); Image.fromarray(np.dstack([np.array(q), a[..., 3]]), 'RGBA').save('goose-1024.png')"
+cd desktop && npx tauri icon ../goose-1024.png -o /tmp/icons
+```
+
+The second line takes the picture down to 64 colours, which keeps the files smaller without showing. Copy
+`32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.png`, `icon.ico` and `icon.icns` from `/tmp/icons` into
+`src-tauri/icons`; the app uses only those. They come out the same each time, but for `icon.icns`, whose parts
+Tauri writes in no fixed order. The web game's own icons are in `assets/` (`tools/make-icons.mjs`).
+
 ## Testing
 
 Automatic, on every change, on Linux, Windows and macOS:
