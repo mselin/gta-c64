@@ -3,8 +3,8 @@
 // that stops for people and cars on the move (and for things standing still, sometimes), or an anti-theft device
 // that, a while after the car is stolen, stops it for good and sets off its alarm. They work only while the player
 // drives: the city's own drivers switched them off long ago. The numbers are ADAS in js/config.js.
-import { ADAS, HIT, KIND } from './config.js';
-import { R, hyp } from './util.js';
+import { ADAS, ALARM_SAYS, HIT, KIND } from './config.js';
+import { R, hyp, pick } from './util.js';
 import { sfx } from './audio.js';
 import { G, msg, ppos } from './state.js';
 import { carHits } from './cars.js';
@@ -151,7 +151,10 @@ export function assist(c, thr, steer, dt) {
   return { thr, steer };
 }
 
-/** A car's alarm, while it sounds: two notes in turn, quieter the further away, its lights flashing with them. */
+/**
+ * A car's alarm, while it sounds: two notes in turn, quieter the further away, its lights flashing with them. A
+ * while into it, the status line has a word on it, if the player can hear it.
+ */
 export function alarmStep(c, dt) {
   if (!(c.alarm > 0)) return;
   if (c.dead || c.flooded) {
@@ -159,7 +162,12 @@ export function alarmStep(c, dt) {
     c.alarmHi = false;
     return;
   }
+  const p = ppos(),
+    d = hyp(c.x - p.x, c.y - p.y),
+    say = ADAS.alarmFor - ADAS.alarmSay,
+    was = c.alarm;
   c.alarm -= dt;
+  if (was > say && c.alarm <= say && d < ADAS.alarmHeard) msg(pick(ALARM_SAYS));
   if (c.alarm <= 0) {
     c.alarmHi = false;
     return;
@@ -167,7 +175,5 @@ export function alarmStep(c, dt) {
   if ((c.alarmT -= dt) > 0) return;
   c.alarmT = ADAS.alarmBeat;
   c.alarmHi = !c.alarmHi;
-  const p = ppos(),
-    d = hyp(c.x - p.x, c.y - p.y);
   if (d < ADAS.alarmHeard * 0.95) sfx.carAlarm(c.alarmHi, 1 - d / ADAS.alarmHeard);
 }
