@@ -20,8 +20,9 @@ check the files match it. The rules below are for the end screens.
 The end screens add their own title, captions and "New game?" line around the picture, and the victory screen
 draws the cigar smoke over it, rising from about (252, 62).
 
-The sunset picture is the owner's artwork, made C64-like by a script, with "SLEAZEBURG 64" in the game's own
-letters in place of the artwork's logo. The title screen draws "PRESS FIRE" and the greetings under it.
+The sunset picture is the owner's artwork, with its SLEAZEBURG 64 logo, made C64-like by
+[`tools/title-picture.py`](../tools/title-picture.py), which also leaves out the artwork's Commodore logo. The
+title screen draws "PRESS FIRE" and the greetings under it.
 
 ## Rules for editing the pictures
 

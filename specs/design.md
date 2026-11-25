@@ -684,9 +684,11 @@ cult. At 280 the time left as `m:ss`, white, flashing red under 15 seconds. With
 starting on the text each time it comes up (`TITLE_PAGES`). Fire starts the game from either.
 - **The sunset picture** (`assets/title-sunset.png`, 320 × 180, the 16 colours in double-wide pixels, as the end
   pictures): a sunset over the city's skyline and the canal, palms, a police helicopter, a man in sunglasses with
-  a cigarette, a woman in sunglasses, a car, and Big Honk in sunglasses and a gold chain. Across the middle,
-  "SLEAZEBURG" in the game's letters, bold, in white with cyan and light blue stripes, and under it a big "64",
-  yellow over light red, between speed stripes in the sunset's colours, on a black plate.
+  a cigarette, a woman in sunglasses, a car, and Big Honk in sunglasses and a gold chain. Across the middle, the
+  logo on a dark plate with a rounded purple rim: "SLEAZEBURG" in slanted letters, white shading to pink, and
+  under it a big "64", yellow shading to orange, between speed stripes in the sunset's colours, with a stripe bar
+  under it all. The owner's artwork, made C64-like by `tools/title-picture.py`, which leaves out the artwork's
+  Commodore logo and carries the stripes across where it was.
 - **Under it:** "PRESS FIRE TO COMMIT CRIMES", blinking, and the greetings scrolling.
 
 **The boot** (`drawBoot`, `BOOT`): the C64's start-up screen, then `LOAD"CRIME",8,1`, SEARCHING and LOADING.
