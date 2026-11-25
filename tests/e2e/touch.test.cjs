@@ -357,6 +357,7 @@ test('FR-17: held upright, the game asks to be turned sideways', async () => {
   await game.page.setViewportSize({ width: 921, height: 448 });
   await game.page.setViewportSize({ width: 448, height: 921 });
   assert.equal(await notice.isVisible(), false);
-  await game.page.touchscreen.tap(224, 200);
+  // A tap on the game itself (the screen spans about 270 to 650 down) skips the boot.
+  await game.page.touchscreen.tap(224, 460);
   await game.until((s) => s.G.screen === 'title');
 });
