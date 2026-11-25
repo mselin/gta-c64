@@ -679,11 +679,12 @@ cult. At 280 the time left as `m:ss`, white, flashing red under 15 seconds. With
 - **The bars:** six one-pixel bars above and six below run through the same colours.
 - **"64":** yellow (7), sitting on the baseline at the end of the name.
 
-**Icon** (`tools/make-icons.mjs`, drawn from the same letters and colours):
-- **32 × 32:** the "S" at three times its size in the raster colours, a yellow "64" beside it, and a light
-  blue and a purple bar above and below.
-- **16 × 16:** the "S" alone at twice its size, since the "64" turns to mush that small.
-- **Phones and the desktop app** use the 32 × 32 design scaled up by whole numbers.
+**Icon** (`tools/make-icons.mjs`, from `assets/icon-source.png`): Big Honk, the goose, in sunglasses and a gold
+chain, against a sunset in stripes of yellow, orange and pink, in a deep purple circle with a light purple rim.
+The owner's artwork, in its own colours rather than the C64's: an icon sits outside the game's screen.
+- **The browser tab (16 × 16, 32 × 32):** the circle, transparent round it.
+- **A phone's home screen (180 × 180):** the circle 168 across on the circle's deep purple (#250762), with no
+  transparency, which a phone would show as black, and a margin for it to round the corners off.
 
 ## Only in the browser and desktop versions
 

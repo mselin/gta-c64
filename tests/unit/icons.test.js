@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// The icons a browser shows in its tab and a phone on its home screen. They are drawn by tools/make-icons.mjs,
-// and every page names them: a page that does not makes the browser ask for /favicon.ico, which is not there.
+// The icons a browser shows in its tab and a phone on its home screen: the goose, drawn by tools/make-icons.mjs
+// from assets/icon-source.png. Every page names them: a page that does not makes the browser ask for
+// /favicon.ico, which is not there.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { icons, picture, picture16, samePicture } from '../../tools/make-icons.mjs';
-import { PAL } from '../../js/config.js';
+import { icons, readPng } from '../../tools/make-icons.mjs';
 
 const here = (path) => new URL('../../' + path, import.meta.url);
 const ICONS = {
@@ -31,12 +31,31 @@ test('each icon is the size its name says, and square', () => {
   }
 });
 
-test('the icons use only the C64 colours, and are not blank', () => {
-  for (const grid of [picture(), picture16()]) {
-    const used = new Set(grid.flat());
-    for (const c of used) assert.ok(c >= 0 && c < PAL.length, `colour ${c}`);
-    assert.ok(used.size >= 2, `${used.size} colours`);
+test('the tab icons are the circle, transparent round it; the phone one is solid, as phones need', () => {
+  for (const path of ['assets/icon-16.png', 'assets/icon-32.png']) {
+    const { w, h, px } = readPng(readFileSync(here(path))),
+      alpha = (x, y) => px[(y * w + x) * 4 + 3],
+      colours = new Set();
+    for (const [x, y] of [
+      [0, 0],
+      [w - 1, 0],
+      [0, h - 1],
+      [w - 1, h - 1],
+    ])
+      assert.equal(alpha(x, y), 0, `${path}: a corner is transparent`);
+    assert.equal(alpha(w >> 1, h >> 1), 255, `${path}: the middle is solid`);
+    for (let o = 0; o < px.length; o += 4) if (px[o + 3] === 255) colours.add(px.readUIntBE(o, 3));
+    assert.ok(colours.size > 20, `${path}: a picture, not a blank (${colours.size} colours)`);
   }
+  const phone = readFileSync(here('assets/icon-180.png'));
+  assert.equal(phone[25], 2, 'the phone icon is RGB, with no transparency');
+});
+
+test('the icon source is the goose circle, transparent round it', () => {
+  const { w, h, px } = readPng(readFileSync(here('assets/icon-source.png')));
+  assert.deepEqual([w, h], [360, 360]);
+  assert.equal(px[3], 0, 'a corner is transparent');
+  assert.equal(px[(180 * w + 180) * 4 + 3], 255, 'the middle is solid');
 });
 
 for (const page of ['index.html', 'terms.html', 'privacy.html'])

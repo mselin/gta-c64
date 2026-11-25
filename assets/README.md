@@ -8,10 +8,13 @@ Bitmap pictures the game loads. Edit them in any paint program and save over the
 | `ending-office.png` | Victory: the election is bought | 320 × 150 |
 | `icon-16.png`, `icon-32.png` | The browser tab | 16 × 16, 32 × 32 |
 | `icon-180.png` | A phone's home screen | 180 × 180 |
+| `icon-source.png` | What the icons are drawn from | 360 × 360 |
 
-The icons are drawn by [`tools/make-icons.mjs`](../tools/make-icons.mjs) from the game's own letter shapes
-and colours. Change the script and run `node tools/make-icons.mjs` rather than editing them; the tests check
-the files match it. The rules below are for the end screens.
+The icons are Big Honk, the goose, in sunglasses and a gold chain on a sunset: the owner's artwork.
+[`tools/icon-source.py`](../tools/icon-source.py) made `icon-source.png` from it, transparent round the
+circle, and [`tools/make-icons.mjs`](../tools/make-icons.mjs) shrinks that to the icons. To change them, change
+`icon-source.png` (or the script) and run `node tools/make-icons.mjs` rather than editing the icons; the tests
+check the files match it. The rules below are for the end screens.
 
 The end screens add their own title, captions and "New game?" line around the picture, and the victory screen
 draws the cigar smoke over it, rising from about (252, 62).
