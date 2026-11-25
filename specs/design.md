@@ -443,25 +443,31 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
 
 - **Which cars** (`fitAssists`): each car, as it is parked at the start or appears in traffic, has each of these by
   its share, each rolled on its own: lane assist 20 %, emergency braking 25 %, anti-theft 20 %. Sports cars twice
-  as often. Never the job's limo or the car beside the hospital at the start, and never anti-theft in a police
-  car.
+  as often. Never the job's limo or the car beside the hospital at the start, and never a police car: the police
+  drive cars without any of it, and so does the player who steals one.
 - **Cursed lane assist.** After 6 to 14 seconds (at random) of driving faster than 50, it takes the wheel for 0.8
   seconds: hard one way, then every 0.2 seconds hard one way or the other, changing its mind 2 times in 3. The
   player's steering does nothing meanwhile; the throttle and brakes still work. Then it gives the wheel back and
   waits again. The status line says `CURSED LANE ASSIST TOOK OVER`, with a chime.
-- **Emergency braking.** Going forward faster than 30, it looks as far ahead as the car needs to stop, braking 1.5
-  times as hard as its own brakes, with 0.06 seconds to notice and 4 pixels to spare: v² / (2 × 3.3 × acceleration)
-  \+ 0.06 v + 4. A sedan at 150 looks 41 pixels ahead, a sports car at 215 56.
-  - **What it looks for:** people in the car's path, within HIT.car + 1 of the line it drives along, counted from
-    where it would run them over; other cars' bodies, at its front corners and the middle of its bumper; and walls.
+- **Emergency braking**, going forward faster than 30 or reversing faster than 10.
+  - **How far it looks:** going forward, 2 car lengths, or as far as the car needs to stop if that is more. That
+    is braking 1.5 times as hard as its own brakes, with 0.06 seconds to notice and 4 pixels to spare:
+    v² / (2 × 3.3 × acceleration) + 0.06 v + 4. A sedan looks 40 pixels ahead up to about 147, a sports car at 215
+    56. Reversing, it looks 1 car length behind its back bumper.
+  - **What it looks for:** people in the car's way, within HIT.car + 1 of the line it drives along; ahead, counted
+    from where it would run them over, and behind, from its back bumper. Also other cars' bodies, at the corners
+    and the middle of the bumper it is going towards, and walls.
   - **What it sees:** people walking or riding, and cars moving faster than 10, every time. Things standing still
     (walls, parked cars and wrecks, someone knocked down or waiting at a car, a cultist in their ring) only 35 % of
-    the time. That is decided once for each thing as the car comes up to it, and kept until nothing has been
-    ahead for a second.
-  - **Seen:** it brakes hard, whatever the throttle, until the way has been clear for 0.3 seconds or the car has
-    stopped. Steering still works. The status line says `EMERGENCY BRAKING ENGAGED`, with three quick beeps.
-  - Below 30 it does not look out, so the player can creep up to anything; and a car going slower than 30 runs
-    nobody over.
+    the time. That is decided once for each thing as the car comes up to it, and kept until nothing has been in
+    the way for a second.
+  - **Seen:** it brakes hard, whatever the throttle, to a full stop, even if the way clears. Steering still works.
+    The status line says `EMERGENCY BRAKING ENGAGED`, with three quick beeps.
+  - **Stopped:** holding the gas the way it was going does nothing. The player has to let go of it and press it
+    again. Still holding it, the status line says `LIFT OFF THE GAS, THEN PRESS AGAIN`. The other way works at
+    once: after a stop going forward, the car reverses straight away.
+  - Below 30 going forward it does not look out, so the player can creep up to anything; and a car going slower
+    than 30 runs nobody over.
 - **Anti-theft.** After 10 to 25 seconds (at random) with the player at the wheel, it stops the car for good: no
   engine, and no engine sound, and the brakes on until it has stopped. The status line says
   `ANTI-THEFT ENGAGED: ENGINE IMMOBILISED`. Getting back in says `THE IMMOBILISER SAYS NO`, and it still will not
@@ -476,8 +482,8 @@ drivers switched it off long ago. Nothing shows which a car has until it acts.
     or `CAR ALARMS: IGNORED SINCE 1987`.
 
 > **C64 note.** The alarm takes a SID voice for its 20 seconds. Emergency braking is one look along the car's way
-> each frame: a stopping distance from a table for each kind and speed, the few people and cars about, and a few
-> steps of the wall test.
+> each frame: how far, from a table for each kind and speed (never under 2 car lengths ahead), the few people and
+> cars about, and a few steps of the wall test. Letting go of the gas and pressing it again is one bit.
 
 ## Heat and the police
 

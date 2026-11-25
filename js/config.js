@@ -296,9 +296,11 @@ export const HANDLING = { grassGrip: 0.55, grassDrag: 0.8, spinInertia: 3.5, spi
  * - lane: lane assist takes the wheel after `swerveEvery` seconds driven faster than `swerveFrom`, holds it for
  *   `swerveFor`, turning it hard one way or the other for `swerveJerk` at a time, and changing its mind `flip` of
  *   the time;
- * - brake: emergency braking looks out ahead faster than `brakeFrom`, and brakes `brakeHard` times as hard as the
- *   car's own brakes. It sees people and cars on the move every time, and things standing still `brakeStill` of
- *   the time; it stops `gap` short, allowing `react` seconds for it to notice;
+ * - brake: emergency braking looks out ahead faster than `brakeFrom`, and behind reversing faster than
+ *   `reverseFrom`. Ahead it looks `lookAhead` car lengths, or further if the car needs more to stop, braking
+ *   `brakeHard` times as hard as its own brakes, `gap` short, with `react` seconds to notice; behind,
+ *   `lookBehind` car lengths. It sees people and cars on the move every time, and things standing still
+ *   `brakeStill` of the time. It brakes to a full stop;
  * - theft: anti-theft stops the car after `stealAfter` seconds of the player driving it; its alarm sounds for
  *   `alarmFor`, a note every `alarmBeat`, heard up to `alarmHeard` away. `alarmSay` seconds in, once the
  *   anti-theft message has had its time, the status line says one of ALARM_SAYS, if the player can hear it.
@@ -314,6 +316,9 @@ export const ADAS = {
   swerveJerk: 0.2,
   flip: 2 / 3,
   brakeFrom: 30,
+  reverseFrom: 10,
+  lookAhead: 2,
+  lookBehind: 1,
   brakeHard: 1.5,
   brakeStill: 0.35,
   gap: 4,

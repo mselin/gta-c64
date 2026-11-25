@@ -4,11 +4,11 @@
 // stolen car for good and sets off its alarm. Only ever while the player drives.
 import { test, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADAS, ALARM_SAYS, BLD, KIND, MW, WALK } from '../../js/config.js';
+import { ADAS, ALARM_SAYS, BLD, HIT, KIND, MW, WALK } from '../../js/config.js';
 import { HOSP, genMap, map } from '../../js/world.js';
 import { G, K, P, edge, resetState } from '../../js/state.js';
 import { mkCar, mkPed } from '../../js/entities.js';
-import { assist, fit, fitAssists, hazard, immobilised, stopping } from '../../js/adas.js';
+import { assist, fit, fitAssists, hazard, immobilised, lookout, stopping } from '../../js/adas.js';
 import { updCars } from '../../js/cars.js';
 import { updPeds } from '../../js/peds.js';
 import { updPlayer } from '../../js/player.js';
@@ -62,14 +62,14 @@ const share = (n, f) => {
 };
 const near = (a, b, d, what) => assert.ok(Math.abs(a - b) <= d, `${what}: ${a.toFixed(3)}, not ${b} ± ${d}`);
 
-test('some cars have each, sports cars twice as often; never the limo, nor anti-theft in a police car', () => {
+test('some cars have each, sports cars twice as often; never the limo or a police car', () => {
   const of = (kind, n = 4000) => {
     const cars = Array.from({ length: n }, () => fitAssists(mkCar(kind, 0, 0, 0)));
     return (w) => cars.filter((c) => c[w]).length / n;
   };
   const sedan = of(KIND.sedan),
     sports = of(KIND.sports),
-    police = of(KIND.police),
+    police = of(KIND.police, 1000),
     limo = of(KIND.limo, 500);
   for (const [w, p] of [
     ['lane', ADAS.lane],
@@ -79,9 +79,8 @@ test('some cars have each, sports cars twice as often; never the limo, nor anti-
     near(sedan(w), p, 0.03, `sedans with ${w}`);
     near(sports(w), p * ADAS.sports, 0.035, `sports cars with ${w}`);
     assert.equal(limo(w), 0, `no limo has ${w}`);
+    assert.equal(police(w), 0, `no police car has ${w}`);
   }
-  near(police('aeb'), ADAS.brake, 0.03, 'police cars with emergency braking');
-  assert.equal(police('theft'), 0, 'no police car has anti-theft');
 });
 
 test('the car beside the hospital at the start has none of it', () => {
@@ -185,6 +184,108 @@ for (const sees of [1, 0]) {
   });
 }
 
+/** Someone walking along the line the car is on, `along` pixels from where it would run them over, towards it. */
+const walker = (c, along) => {
+  const p = Object.assign(mkPed(c.x + along, MID, 'civ'), { dx: -1, dy: 0, t: 1e9 });
+  G.peds = [p];
+  return p;
+};
+
+test('emergency braking brakes to a full stop, even when the way clears', () => {
+  const c = drive(MID - 200, 140, 'aeb');
+  walker(c, 60);
+  K.up = true;
+  run(0.1, () => {});
+  assert.ok(c.aeb.on, 'it is braking');
+  G.peds = []; // whoever it was has gone
+  let least = Infinity;
+  run(2, () => (least = Math.min(least, speed(c))));
+  assert.ok(least < 0.6, `the car stopped (down to ${least.toFixed(2)} px/s)`);
+});
+
+test('after it stops the car, the gas does nothing until let go of and pressed again; the other way works at once', () => {
+  const c = drive(MID - 200, 140, 'aeb');
+  walker(c, 60);
+  K.up = true;
+  run(0.1);
+  G.peds = [];
+  run(2); // to a stop, the gas held all the while
+  const x = c.x;
+  run(2);
+  assert.ok(Math.abs(c.x - x) < 0.5, 'holding the gas, it goes nowhere');
+  assert.equal(G.msgTxt, 'LIFT OFF THE GAS, THEN PRESS AGAIN');
+  K.up = false;
+  run(0.1);
+  K.up = true;
+  run(1);
+  assert.ok(c.x > x + 10, `let go of and pressed again, it drives on (${(c.x - x).toFixed(1)} px)`);
+
+  // The other way at once: stopped going forward, it reverses without letting go first.
+  const d = drive(MID - 200, 140, 'aeb');
+  G.cars = [d];
+  Object.assign(P, { car: d });
+  walker(d, 60);
+  run(0.1);
+  G.peds = [];
+  run(2);
+  K.up = false;
+  K.down = true;
+  const x2 = d.x;
+  run(1);
+  assert.ok(d.x < x2 - 5, `it reverses at once (${(d.x - x2).toFixed(1)} px)`);
+});
+
+test('emergency braking looks at least 2 car lengths ahead, and further when the car needs more to stop', () => {
+  const L = KIND.sedan.L,
+    c = drive(MID, 0, 'aeb'),
+    from = 6 + HIT.nose; // where someone ahead is run over, from the car's middle
+  assert.equal(lookout(c, 35), ADAS.lookAhead * L, 'slow: 2 car lengths');
+  assert.ok(lookout(c, 150) >= ADAS.lookAhead * L);
+  assert.equal(lookout(c, 150), Math.max(2 * L, stopping(c, 150)));
+  const sports = fit(mkCar(KIND.sports, MID, MID, 0), 'aeb');
+  assert.ok(
+    lookout(sports, 215) > 2 * KIND.sports.L,
+    'a fast sports car needs more than 2 lengths, and gets it',
+  );
+  walker(c, from + 2 * L - 2);
+  assert.ok(hazard(c, 35), 'someone just inside 2 car lengths, at 35 px/s');
+  walker(c, from + 2 * L + 3);
+  assert.equal(hazard(c, 35), null, 'and not just beyond');
+});
+
+test('emergency braking works reversing, looking 1 car length behind, and the reverse gas stays off until pressed again', () => {
+  const L = KIND.sedan.L,
+    c = drive(MID, -40, 'aeb');
+  assert.equal(lookout(c, -40), ADAS.lookBehind * L, '1 car length behind');
+  // Someone walking up behind the car, just inside a car length from its back bumper.
+  const p = Object.assign(mkPed(MID - L / 2 - L + 2, MID, 'civ'), { dx: 1, dy: 0, t: 1e9 });
+  G.peds = [p];
+  assert.ok(hazard(c, -40), 'seen behind');
+  p.x = MID - L / 2 - L - 3;
+  assert.equal(hazard(c, -40), null, 'not beyond a car length');
+  p.x = MID - L / 2 - L / 2;
+  K.down = true; // reversing into them
+  run(0.05);
+  assert.equal(c.aeb.on, -1, 'it brakes reversing');
+  assert.equal(G.msgTxt, 'EMERGENCY BRAKING ENGAGED');
+  G.peds = [];
+  run(1.5);
+  const x = c.x;
+  run(1);
+  assert.ok(Math.abs(c.x - x) < 0.5, 'stopped, and the reverse gas held does nothing');
+  K.down = false;
+  run(0.1);
+  K.down = true;
+  run(1);
+  assert.ok(c.x < x - 5, 'let go of and pressed again, it reverses');
+});
+
+test('emergency braking looks out reversing from ' + ADAS.reverseFrom + ' px/s', () => {
+  const c = drive(MID, -(ADAS.reverseFrom + 5), 'aeb');
+  G.peds = [Object.assign(mkPed(MID - 18, MID, 'civ'), { dx: 1, dy: 0, t: 1e9 })];
+  assert.ok(assist(c, -1, 0, DT).thr > 0, 'it brakes a slow reverse');
+});
+
 test('anti-theft stops the car a while after it is stolen, for good, and sets off its alarm', () => {
   const c = drive(MID - 400, 100, 'theft');
   c.theft.left = 1;
@@ -256,6 +357,6 @@ test('none of it does anything for the city’s own drivers', () => {
   run(2);
   assert.equal(immobilised(c), false, 'no anti-theft');
   assert.equal(c.lane.left, 0, 'no lane assist');
-  assert.equal(c.aeb.on, false, 'no emergency braking');
+  assert.equal(c.aeb.on, 0, 'no emergency braking');
   assert.equal(G.msgTxt, '');
 });
