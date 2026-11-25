@@ -4,7 +4,7 @@
 // stolen car for good and sets off its alarm. Only ever while the player drives.
 import { test, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADAS, ALARM_SAYS, BLD, HANDLING, HIT, KIND, MW, WALK } from '../../js/config.js';
+import { ADAS, ALARM_COP, ALARM_SAYS, BLD, HANDLING, HIT, KIND, MW, WALK } from '../../js/config.js';
 import { HOSP, genMap, map } from '../../js/world.js';
 import { G, K, P, edge, resetState } from '../../js/state.js';
 import { mkCar, mkPed } from '../../js/entities.js';
@@ -62,7 +62,7 @@ const share = (n, f) => {
 };
 const near = (a, b, d, what) => assert.ok(Math.abs(a - b) <= d, `${what}: ${a.toFixed(3)}, not ${b} ± ${d}`);
 
-test('some cars have each, sports cars twice as often; never the limo or a police car', () => {
+test('some cars have each, sports cars twice as often; never the limo; every police car anti-theft and nothing else', () => {
   const of = (kind, n = 4000) => {
     const cars = Array.from({ length: n }, () => fitAssists(mkCar(kind, 0, 0, 0)));
     return (w) => cars.filter((c) => c[w]).length / n;
@@ -79,8 +79,12 @@ test('some cars have each, sports cars twice as often; never the limo or a polic
     near(sedan(w), p, 0.03, `sedans with ${w}`);
     near(sports(w), p * ADAS.sports, 0.035, `sports cars with ${w}`);
     assert.equal(limo(w), 0, `no limo has ${w}`);
-    assert.equal(police(w), 0, `no police car has ${w}`);
   }
+  assert.deepEqual(
+    [police('lane'), police('aeb'), police('theft')],
+    [0, 0, 1],
+    'police cars: anti-theft, every one',
+  );
 });
 
 test('the car beside the hospital at the start has none of it', () => {
@@ -349,6 +353,23 @@ for (const near of [true, false]) {
     } else assert.ok(!ALARM_SAYS.includes(G.msgTxt), 'nothing about an alarm the player cannot hear');
   });
 }
+
+test('a stolen police car stops on the normal anti-theft timer, and its alarm says: what did you expect?', () => {
+  const c = fitAssists(mkCar(KIND.police, MID - 200, MID, 0));
+  assert.ok(c.theft && !c.lane && !c.aeb, 'anti-theft, and nothing else');
+  assert.ok(
+    c.theft.left >= ADAS.stealAfter[0] && c.theft.left <= ADAS.stealAfter[1],
+    `on the normal timer (${c.theft.left.toFixed(1)} s)`,
+  );
+  c.vx = 60;
+  G.cars = [c];
+  Object.assign(P, { x: c.x, y: c.y, car: c });
+  c.theft.left = 0.05;
+  run(0.2);
+  assert.equal(immobilised(c), true);
+  run(ADAS.alarmSay);
+  assert.equal(G.msgTxt, ALARM_COP);
+});
 
 test('none of it does anything for the city’s own drivers', () => {
   const c = fit(mkCar(KIND.sedan, MID, MID, 0), 'lane', 'aeb', 'theft');
