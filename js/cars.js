@@ -232,6 +232,17 @@ export function carPhys(c, thr, steer, dt, hb) {
     const most = grip / Math.max(1, Math.abs(f0));
     yaw = clamp(yaw, -most, most);
   }
+  // Settling on a straight line: a car someone is driving, with the wheel straight and not spinning, within
+  // HANDLING.snap of one of the eight ways (the axes and the diagonals), turns onto it and keeps exactly to it.
+  // Otherwise a car let go of a little off a street's line would drift across the street for ever.
+  if (!steer && !hb && !c.w && (c === P.car || c.ai === 'cop') && Math.abs(f0) > 5) {
+    const to = Math.round(c.a / (PI / 4)) * (PI / 4),
+      off = angDiff(to, c.a);
+    if (Math.abs(off) < HANDLING.snap) {
+      const most = Math.abs(yaw) * HANDLING.settle * dt;
+      c.a = Math.abs(off) <= most ? to : c.a + Math.sign(off) * most;
+    }
+  }
   // A spin from a knock turns the car too, and the tyres stop it.
   c.a += (steer * yaw + c.w) * dt;
   if (c.w) {
