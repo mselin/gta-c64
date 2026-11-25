@@ -3,10 +3,12 @@
 """Make assets/icon-source.png from the owner's goose artwork (not in the repository).
 
     python3 tools/icon-source.py ARTWORK.jpg assets/icon-source.png
+    python3 tools/icon-source.py ARTWORK.jpg goose-1024.png 1024     (for the desktop app's icons)
 
 The artwork is Big Honk in sunglasses and a gold chain on a sunset, in a circle, on white. This keeps the circle,
 makes the white round it transparent, and shrinks it to 360 x 360, twice the largest icon, for
-tools/make-icons.mjs to draw the icons from. Needs Python 3 with Pillow, NumPy and OpenCV
+tools/make-icons.mjs to draw the icons from; or to another size, given third. The desktop app's icons
+(desktop/src-tauri/icons) are made from a 1024 x 1024 one with `npx tauri icon` (see desktop/README.md). Needs Python 3 with Pillow, NumPy and OpenCV
 (pip install pillow numpy opencv-python-headless).
 """
 import sys
@@ -14,7 +16,8 @@ import numpy as np
 import cv2
 from PIL import Image
 
-SRC, OUT, SIZE = sys.argv[1], sys.argv[2], 360
+SRC, OUT = sys.argv[1], sys.argv[2]
+SIZE = int(sys.argv[3]) if len(sys.argv) > 3 else 360
 
 rgb = np.array(Image.open(SRC).convert('RGB'))
 h, w, _ = rgb.shape
