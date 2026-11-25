@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const net = require('node:net');
 const os = require('node:os');
 const path = require('node:path');
+const { isDeepStrictEqual } = require('node:util');
 const { openGame } = require('./helpers.cjs');
 
 const BRIDGE = 'http://127.0.0.1:26464';
@@ -67,6 +68,17 @@ const setting = () =>
     line: document.getElementById('drpstat').textContent,
   }));
 
+/**
+ * Wait until the last request the bridge got matches `want` (a request body, or a test of the request), then check
+ * it. By what has happened, not by the clock: a slow browser reports later than a fast one.
+ */
+async function lastSent(seen, want, timeout = 15000) {
+  const ok = typeof want === 'function' ? want : (r) => isDeepStrictEqual(r && r.body, want);
+  for (const end = Date.now() + timeout; Date.now() < end && !ok(seen.at(-1));) await game.wait(100);
+  if (typeof want === 'function') assert.ok(ok(seen.at(-1)), JSON.stringify(seen.at(-1)));
+  else assert.deepEqual(seen.at(-1).body, want);
+}
+
 test('off by default: the page never reaches for the bridge', async () => {
   await mockBridge(CONNECTED);
   await game.start();
@@ -96,8 +108,7 @@ test('switched on, the page reports the game state and the setting shows it is c
   await game.press('Escape');
   await game.press('Space');
   await game.until((s) => s.G.screen === 'play');
-  await game.wait(2500);
-  assert.deepEqual(seen.at(-1).body, {
+  await lastSent(seen, {
     v: 1,
     mode: 'roaming',
     district: 'gentrifia',
@@ -105,8 +116,7 @@ test('switched on, the page reports the game state and the setting shows it is c
     heat: 0,
   });
   await game.read((s) => s.crime(70));
-  await game.wait(2500);
-  assert.deepEqual(seen.at(-1).body, {
+  await lastSent(seen, {
     v: 1,
     mode: 'chase',
     district: 'gentrifia',
@@ -119,8 +129,7 @@ test('switched on, the page reports the game state and the setting shows it is c
   await openInfo();
   await game.page.click('#bdrp');
   await game.until((s) => s.presence.status().status === 'off');
-  await game.wait(300);
-  assert.equal(seen.at(-1).method, 'DELETE');
+  await lastSent(seen, (r) => r && r.method === 'DELETE');
   const count = seen.length;
   await game.wait(2500);
   assert.equal(seen.length, count, 'nothing more is sent once it is off');
