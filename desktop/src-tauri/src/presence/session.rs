@@ -19,7 +19,7 @@ pub const LOG_WINDOW: u64 = 30_000; // ...in this long; past that only counted
 
 pub type Dial = Box<dyn FnMut() -> io::Result<Conn> + Send>;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct Status {
     pub ok: bool,
     pub name: &'static str,

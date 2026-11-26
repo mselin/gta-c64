@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync/atomic"
 	"time"
 )
 
@@ -64,6 +65,10 @@ func dialDiscord() (io.ReadWriteCloser, error) {
 
 type discordConn struct{ rw io.ReadWriteCloser }
 
+// exchanges counts the exchanges with Discord still under way, finished or not: for the tests, which check that
+// giving up on a silent Discord really ends the exchange rather than leaving it waiting.
+var exchanges atomic.Int32
+
 // call sends one frame and reads the reply. Discord answers every frame, so the exchange is kept strictly
 // one at a time; that also suits Windows, where reads and writes on one pipe handle cannot overlap.
 // If nothing comes back in time the connection is closed, which unblocks the exchange.
@@ -74,7 +79,9 @@ func (c *discordConn) call(op uint32, payload []byte) (uint32, []byte, error) {
 		err  error
 	}
 	done := make(chan reply, 1)
+	exchanges.Add(1)
 	go func() {
+		defer exchanges.Add(-1)
 		head := make([]byte, 8)
 		binary.LittleEndian.PutUint32(head, op)
 		binary.LittleEndian.PutUint32(head[4:], uint32(len(payload)))

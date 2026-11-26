@@ -3,8 +3,12 @@
 package main
 
 import (
+	"errors"
+	"io"
+	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -119,4 +123,65 @@ func TestOnlyRealOriginsCanBeAllowed(t *testing.T) {
 			t.Errorf("%q allowed, but it is not an origin", o)
 		}
 	}
+}
+
+// Talking to Discord can take seconds when whatever serves its endpoint is slow. None of that time is spent
+// holding up the game's requests or a status read: they come back at once, and leave the latest state for the
+// exchange under way, or the next tick, to send.
+func TestASlowDiscordHoldsUpNoRequest(t *testing.T) {
+	dialing, release := make(chan struct{}), make(chan struct{})
+	var logMu sync.Mutex
+	b := &Bridge{
+		schema: loadSchema(),
+		appID:  "123456789012345678",
+		now:    time.Now,
+		random: func() int { return 0 },
+		dial: func() (io.ReadWriteCloser, error) {
+			close(dialing)
+			<-release
+			return nil, errors.New("gave up")
+		},
+		logf: func(string, ...any) { logMu.Lock(); logMu.Unlock() },
+	}
+	go b.Update(state("roaming", "gentrifia", "car", 0))
+	<-dialing
+	done := make(chan struct{})
+	go func() {
+		b.Status()
+		b.Update(state("chase", "gentrifia", "car", 2))
+		b.Tick()
+		b.Stop()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("a request waited for Discord")
+	}
+	close(release)
+}
+
+// A Discord that takes the request and never answers is given up on after ipcTimeout, and the exchange really
+// ends: nothing is left waiting on it, with its connection, every time the bridge tries again.
+func TestASilentDiscordIsLetGo(t *testing.T) {
+	ours, theirs := net.Pipe()
+	go io.Copy(io.Discard, theirs) // reads everything, answers nothing
+	defer theirs.Close()
+	before := exchanges.Load()
+	err := (&discordConn{ours}).handshake("123456789012345678")
+	if err == nil {
+		t.Fatal("a silent Discord answered")
+	}
+	waitForExchanges(t, before)
+}
+
+// waitForExchanges waits up to two seconds for the exchanges under way to fall back to n.
+func waitForExchanges(t *testing.T, n int32) {
+	t.Helper()
+	for end := time.Now().Add(2 * time.Second); time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+		if exchanges.Load() == n {
+			return
+		}
+	}
+	t.Fatalf("%d exchanges with Discord still waiting after giving up", exchanges.Load()-n)
 }

@@ -25,7 +25,8 @@ impl<T: Read + Write + Send> Pipe for T {}
 /// One open connection to Discord, or to whatever answered in its place.
 pub struct Conn {
     pipe: Box<dyn Pipe>,
-    /// Interrupts a read or write that is still waiting: on Windows a pipe has no timeouts of its own.
+    /// Interrupts a read or write that is still waiting, once an exchange has taken TIMEOUT in all: on Windows
+    /// a pipe has no timeouts of its own, and on Unix a socket's are for each read and write only.
     cancel: Option<Box<dyn Fn() + Send + Sync>>,
 }
 
@@ -87,9 +88,15 @@ pub fn dial_one(path: &Path) -> io::Result<Conn> {
     let stream = std::os::unix::net::UnixStream::connect(path)?;
     stream.set_read_timeout(Some(TIMEOUT))?;
     stream.set_write_timeout(Some(TIMEOUT))?;
+    // The timeouts above are for each read and write. A peer that sends a byte now and then could stretch a
+    // whole exchange far past them, so the watchdog (Conn::guarded) also shuts the socket after TIMEOUT for the
+    // exchange as a whole, which ends whatever read is waiting.
+    let watchdog = stream.try_clone()?;
     Ok(Conn {
         pipe: Box::new(stream),
-        cancel: None,
+        cancel: Some(Box::new(move || {
+            let _ = watchdog.shutdown(std::net::Shutdown::Both);
+        })),
     })
 }
 
@@ -288,6 +295,42 @@ mod tests {
         let _ = std::fs::remove_file(&link);
         std::os::unix::fs::symlink(&real, &link).unwrap();
         assert!(dial_one(&link).is_err(), "a link to a socket");
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    /// A peer that sends a byte every second never trips the socket's own timeout, which is for each read;
+    /// the exchange as a whole is still cut off after TIMEOUT.
+    #[cfg(unix)]
+    #[test]
+    fn a_peer_that_trickles_is_cut_off_after_the_timeout() {
+        use std::io::{Read, Write};
+        use std::os::unix::net::UnixListener;
+        let dir = std::env::temp_dir().join(format!("sb64-trickle-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("discord-ipc-0");
+        let _ = std::fs::remove_file(&path);
+        let listener = UnixListener::bind(&path).unwrap();
+        std::thread::spawn(move || {
+            let (mut s, _) = listener.accept().unwrap();
+            let mut frame = [0u8; 64];
+            let _ = s.read(&mut frame);
+            // A header saying 1 MiB follows, a byte a second: it would take days.
+            let head = [3u8, 0, 0, 0, 0, 0, 16, 0];
+            for b in head.iter().cycle().take(60) {
+                if s.write_all(&[*b]).is_err() {
+                    return;
+                }
+                std::thread::sleep(Duration::from_secs(1));
+            }
+        });
+        let mut conn = dial_one(&path).expect("dialling");
+        let started = std::time::Instant::now();
+        assert!(
+            conn.ping().is_err(),
+            "a trickling peer finished an exchange"
+        );
+        let took = started.elapsed();
+        assert!(took < TIMEOUT + Duration::from_secs(2), "took {took:?}");
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }
