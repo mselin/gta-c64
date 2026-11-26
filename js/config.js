@@ -368,8 +368,10 @@ export const GRIP = { sedan: 450, sports: 490, van: 370, taxi: 450, police: 510,
  * - spin: how much a knock off the middle turns a car (bigger is less), and how fast its tyres stop the spin, in
  *   radians a second each second for each unit of grip;
  * - bounce: what share of the closing speed two cars part with after a crash;
- * - snap, settle: a car someone is driving, with the wheel straight, within `snap` radians of one of the eight
- *   ways (the axes and the diagonals), turns onto it at `settle` of the rate its steering would, and keeps to it.
+ * - snap, settle, settleMin, settleMax: a car someone is driving, with the wheel straight, within `snap` radians of
+ *   one of the eight ways (the axes and the diagonals), eases onto it: it turns `settle` times how far off it still
+ *   is each second, gentler as it lines up, between `settleMin` and `settleMax` radians a second (a sixth of the
+ *   steering's rate or less) and never faster than its steering would; then it keeps to it.
  */
 export const HANDLING = {
   grassGrip: 0.55,
@@ -378,8 +380,12 @@ export const HANDLING = {
   spinGrip: 1 / 80,
   bounce: 0.3,
   snap: 0.2,
-  settle: 0.5,
+  settle: 3,
+  settleMin: 0.08,
+  settleMax: 0.5,
 };
+/** How many directions a car's picture is drawn in: a step of 360° / 64, under 6°. */
+export const CAR_DIRS = 64;
 /**
  * Cursed driver assistance (js/adas.js, and specs/design.md under Cars). What share of cars has each, sports cars
  * `sports` times as many; and how each behaves while the player drives. Speeds in city pixels a second, times in

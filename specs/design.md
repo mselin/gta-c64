@@ -334,10 +334,16 @@ Speeds are split into forward (along the car) and sideways. Each frame, in this 
   - **The handbrake** lets the back go: the car turns 1.3 times as fast, with no grip limit, and slides.
   - **Settling on a straight line.** A car someone is driving (the player's, or a police car), going faster than
     5 either way, not spinning, not on the handbrake and with the wheel straight, that points within 0.2 radians
-    (about 11°, one step of its 32-direction picture) of one of the eight ways, the axes and the diagonals, turns
-    onto it at half the rate its steering would, and then keeps exactly to it (`snap`, `settle`). Otherwise a car
-    let go of a little off a street's line, looking straight in its picture, would drift across the street. Turning
-    is as smooth as before, and a car pointing further off any of the eight keeps the way it points.
+    (about 11°) of one of the eight ways, the axes and the diagonals, eases onto it and then keeps exactly to it
+    (`snap`). Otherwise a car let go of a little off a street's line would drift across the street. Turning is as
+    smooth as before, and a car pointing further off any of the eight keeps the way it points.
+  - **The settle is gentle, so the lock does not show** (`settle`, `settleMin`, `settleMax`). The car turns 3 times
+    how far off it still is each second, between 0.08 and 0.5 radians a second, and never faster than its steering
+    would. That is a sixth of the steering's rate or less. It reads as the car straightening up, not a snap: let go
+    10° off, its picture turns one step at once and the last about 0.4 seconds later. (Before, it turned at half the
+    steering's rate and jumped a whole 11° picture step within 0.05 seconds.)
+  - **The car's picture** is drawn in 64 directions (`CAR_DIRS`), a step of under 6°, so turning and settling move
+    in small steps. (It was 32, steps of 11°.)
 - **Throttle:** forward speed rises by the acceleration. Top speed is 0.7 of the table's below 40 hp; backwards,
   0.4 of top speed.
 - **Braking** (pulling back while going forward faster than 5) takes off 2.2 × the acceleration; once stopped,
