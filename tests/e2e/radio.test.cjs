@@ -117,6 +117,22 @@ test('a .sid file from disk plays on the tape deck with its own credits', async 
   await game.until((s) => s.radioState().song === 2 && s.radioState().playing);
 });
 
+test('the tape deck refuses a file that is not a SID file, or is far too big for one', async () => {
+  await game.page.setInputFiles('#sidfile', {
+    name: 'fake.sid',
+    mimeType: 'application/octet-stream',
+    buffer: Buffer.from('<html>not a tune</html>'),
+  });
+  await game.until((s) => /ONLY PLAYS .SID FILES/.test(s.G.msgTxt));
+  await game.page.setInputFiles('#sidfile', {
+    name: 'huge.sid',
+    mimeType: 'application/octet-stream',
+    buffer: Buffer.concat([Buffer.from('PSID'), Buffer.alloc(200000)]),
+  });
+  await game.until((s) => /SID FILE AND A HALF/.test(s.G.msgTxt));
+  assert.notEqual((await radio()).station, 'TAPE DECK', 'no tape deck for either');
+});
+
 test('the information page credits the music and links each tune to HVSC', async () => {
   await game.press('KeyI');
   await game.until((s) => s.G.infoOpen);

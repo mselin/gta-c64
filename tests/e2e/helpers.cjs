@@ -102,8 +102,18 @@ async function openGame(options = {}) {
   game.screen = () => game.read((s) => s.G.screen);
   game.press = (key) => page.keyboard.press(key);
   game.wait = (ms) => page.waitForTimeout(ms);
-  /** Wait until a condition on the game handle holds. */
-  game.until = (fn, timeout = 8000) => page.waitForFunction(`(${fn})(window.sleazeburg)`, null, { timeout });
+  /**
+   * Wait until a condition on the game handle holds. It is checked from here every 30 ms, not by waitForFunction:
+   * that evaluates the condition with eval inside the page, which the page's Content-Security-Policy forbids.
+   */
+  game.until = async (fn, timeout = 8000) => {
+    const end = Date.now() + timeout;
+    for (;;) {
+      if (await page.evaluate(`(${fn})(window.sleazeburg)`)) return;
+      if (Date.now() > end) throw new Error(`timed out after ${timeout} ms waiting for: ${fn}`);
+      await page.waitForTimeout(30);
+    }
+  };
   /**
    * Press a key every 300 ms until a condition holds. For prompts that ignore input for a moment of game time,
    * which on a slow machine is longer than the same moment on the clock.

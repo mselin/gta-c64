@@ -66,6 +66,9 @@ function giveUp() {
   msg('RADIO: THIS BROWSER CANNOT PLAY SID TUNES. BACK TO THE HOUSE BAND.');
   radioListener();
 }
+/** Whether bytes are a SID file: PSID or RSID at the start. */
+export const isSid = (d) =>
+  d.length > 4 && ['PSID', 'RSID'].includes(String.fromCharCode(d[0], d[1], d[2], d[3]));
 function trackBytes(t) {
   return t.bytes
     ? Promise.resolve(t.bytes)
@@ -75,9 +78,8 @@ function trackBytes(t) {
           return r.arrayBuffer();
         })
         .then((b) => {
-          const d = new Uint8Array(b),
-            m = String.fromCharCode(d[0], d[1], d[2], d[3]);
-          if (m !== 'PSID' && m !== 'RSID') throw 0;
+          const d = new Uint8Array(b);
+          if (!isSid(d)) throw 0;
           return (t.bytes = d);
         });
 }
@@ -256,23 +258,26 @@ export function radioInit() {
     })
     .catch(() => {});
 }
+/** The biggest file the tape deck takes, in bytes: 64K of tune and room for the header. */
+export const SID_MAX = 0x10000 + 0x400;
 function sidFile(f) {
   if (!f) return;
-  if (!/\.(sid|psid|dat)$/i.test(f.name)) {
-    msg('THE TAPE DECK ONLY PLAYS .SID FILES. STANDARDS, PLEASE.');
-    return;
-  }
-  let k = radio.findIndex((s) => s.tape);
-  if (k < 0) {
-    k = radio.length - 1;
-    radio.splice(k, 0, { name: 'TAPE DECK', tagline: 'YOUR OWN CASSETTE', tape: true, tracks: [], i: 0 });
-  }
-  const tk = { bytes: null, sub: null, secs: 600, title: '', author: '', released: '', id: 0 };
-  radio[k].tracks = [tk];
-  radio[k].i = 0;
+  const notSid = () => msg('THE TAPE DECK ONLY PLAYS .SID FILES. STANDARDS, PLEASE.');
+  if (!/\.(sid|psid|dat)$/i.test(f.name)) return notSid();
+  // A real SID file is at most 64K of tune and a header: anything much bigger is not one, and would only fill
+  // memory. Nor is a file without PSID or RSID at the start.
+  if (f.size > SID_MAX) return msg('THAT IS NOT A SID FILE. THAT IS A SID FILE AND A HALF.');
   f.arrayBuffer().then((b) => {
-    tk.bytes = new Uint8Array(b);
-    G.station = radio.findIndex((s) => s.tape);
+    const d = new Uint8Array(b);
+    if (!isSid(d)) return notSid();
+    let k = radio.findIndex((s) => s.tape);
+    if (k < 0) {
+      k = radio.length - 1;
+      radio.splice(k, 0, { name: 'TAPE DECK', tagline: 'YOUR OWN CASSETTE', tape: true, tracks: [], i: 0 });
+    }
+    radio[k].tracks = [{ bytes: d, sub: null, secs: 600, title: '', author: '', released: '', id: 0 }];
+    radio[k].i = 0;
+    G.station = k;
     silence();
     if (!G.musicOn) setMusic(true);
     radioListener();

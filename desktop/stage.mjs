@@ -3,7 +3,7 @@
 // game loads goes in: not the tests, the tooling or node_modules, which the folder above also holds.
 //
 //   node stage.mjs [folder]
-import { cpSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,5 +32,15 @@ rmSync(dist, { recursive: true, force: true });
 for (const f of FILES) {
   mkdirSync(dirname(join(dist, f)), { recursive: true });
   cpSync(join(game, f), join(dist, f), { recursive: true });
+}
+// The page's own Content-Security-Policy is for GitHub Pages, which cannot send one as a header. The app has its
+// own, in tauri.conf.json, and both would apply at once: the page's would block the app's IPC and the scripts
+// Tauri adds. So the app's copy goes without it.
+if (!process.argv[2]) {
+  const page = join(dist, 'index.html'),
+    html = readFileSync(page, 'utf8'),
+    bare = html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\r?\n?/, '');
+  if (bare === html) throw new Error('index.html: no Content-Security-Policy meta tag to take out');
+  writeFileSync(page, bare);
 }
 console.log(`staged ${FILES.length} entries in ${dist}`);
