@@ -331,6 +331,31 @@ test('FR-16: the dialogs on a touch screen answer to the buttons they name', asy
   assert.equal(await game.screen(), 'title', 'the car button means no');
 });
 
+test('FR-16: in a car, the dialog that asks for the gun button shows the gun on it, not the horn', async () => {
+  await startByTouch();
+  await game.read((s) => {
+    const car = s.mkCar(s.KIND.sedan, s.P.x, s.P.y, 0);
+    car.driver = true;
+    s.G.cars.push(car);
+    s.P.car = car;
+  });
+  const shows = () =>
+    game.page.evaluate(() => {
+      const on = (sel) => window.getComputedStyle(document.querySelector(sel)).display !== 'none';
+      return { gun: on('#pad [data-k=fire] .gun'), horn: on('#pad [data-k=fire] .horn') };
+    });
+  await game.until(() => document.querySelector('#pad').dataset.car === '1');
+  assert.deepEqual(await shows(), { gun: false, horn: true }, 'driving: the horn');
+  await game.page.touchscreen.tap(...(await centre('#pad [data-k=esc]')));
+  await game.until((s) => s.G.quitAsk);
+  await game.until(() => document.querySelector('#pad').dataset.car === '0');
+  assert.deepEqual(await shows(), { gun: true, horn: false }, 'the dialog says GUN = YES: the gun');
+  await game.page.touchscreen.tap(...(await centre('#pad [data-k=use]')));
+  await game.until((s) => !s.G.quitAsk);
+  await game.until(() => document.querySelector('#pad').dataset.car === '1');
+  assert.deepEqual(await shows(), { gun: false, horn: true }, 'back to driving: the horn again');
+});
+
 test('FR-16: changing station with the music off says to tap the music button', async () => {
   await startByTouch();
   await game.page.touchscreen.tap(...(await centre('#pad [data-k=radio]')));
