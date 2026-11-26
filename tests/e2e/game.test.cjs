@@ -537,3 +537,22 @@ test('on the title screen D goes from classic to modern and back; M is still the
   await game.until((s) => s.G.screen === 'play');
   assert.equal(await game.read((s) => s.G.cams.length), 0, 'classic: no cameras');
 });
+
+test('the page carries a Content-Security-Policy that lets the game run as it is', async () => {
+  const csp = await game.page.evaluate(
+    () => document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content || '',
+  );
+  for (const d of ["default-src 'self'", "object-src 'none'", "base-uri 'none'", 'connect-src'])
+    assert.ok(csp.includes(d), d);
+  // The game boots and plays under it: no violation is reported.
+  const seen = [];
+  await game.page.exposeFunction('cspViolation', (v) => seen.push(v));
+  await game.page.evaluate(() =>
+    document.addEventListener('securitypolicyviolation', (e) =>
+      window.cspViolation(e.violatedDirective + ' ' + e.blockedURI),
+    ),
+  );
+  await game.start();
+  await game.wait(500);
+  assert.deepEqual(seen, []);
+});
