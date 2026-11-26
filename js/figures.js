@@ -47,8 +47,14 @@ export const FRAMES_PER_STEP = 4;
 /** How long the arm stays out after a shot, a punch or a stab, in seconds. */
 export const ARM_OUT_T = 0.2;
 
-/** How someone is drawn: 'player', 'cop', 'scoot', 'cult', 'honk', or 'civ' for everyone else. */
-export const lookOf = (p) => (['player', 'cop', 'scoot', 'cult', 'honk'].includes(p.type) ? p.type : 'civ');
+/** How someone is drawn: 'player', 'cop', 'scoot', 'skate', 'cult', 'honk', or 'civ' for everyone else. */
+export const lookOf = (p) =>
+  ['player', 'cop', 'scoot', 'skate', 'cult', 'honk'].includes(p.type) ? p.type : 'civ';
+/**
+ * A skater: a light grey (15) hoodie, on a cyan (3) skateboard with black wheels, going SKATE.spd city pixels a
+ * second (the board's speed, as a scooter's is the scooter's).
+ */
+export const SKATE = { shirt: 15, board: 3, wheels: 0, spd: 46 };
 /** The outlines for a person, innermost first. */
 export const outlineOf = (p) => (lookOf(p) === 'player' ? PLAYER_OUTLINE : OUTLINE);
 /** The walking pose `anim` steps into a walk. Standing still is anim 0: the middle pose. */
@@ -85,6 +91,7 @@ export function colourAt(p, pose, x, y) {
   if (p.type === 'honk') return gooseAt(pose, x, y);
   const look = lookOf(p);
   if (pose === DOWN) return lyingAt(p, look, x, y);
+  if (look === 'skate') return skaterAt(p, x, y);
   const walker = look !== 'scoot' && look !== 'cult',
     out = walker && (pose === SHOOT || pose === PUNCH || pose === STAB),
     s = walker && !out ? STRIDES[pose] : 0,
@@ -139,8 +146,35 @@ export function colourAt(p, pose, x, y) {
 }
 
 /**
+ * A skater going +x, seen from above: the board along the way they go, its ends rounded and a wheel at each
+ * corner; the skater standing across it, side on, as skaters stand: a foot towards each end, shoulders along the
+ * board, arms out along it for balance, and facing to the right (+y), the back of the hoodie shaded.
+ */
+function skaterAt(p, x, y) {
+  let c = -1;
+  const box = (x0, x1, y0, y1) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
+  const disc = (cx, cy, r) => (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
+  for (const wx of [-4.2, 4.2]) for (const wy of [-2.9, 2.9]) if (disc(wx, wy, 1.1)) c = SKATE.wheels;
+  if (box(-5.4, 5.4, -2.5, 2.5) || disc(-5.4, 0, 2.5) || disc(5.4, 0, 2.5)) c = SKATE.board;
+  // Feet on the board, one towards each end, past the shoulders.
+  for (const fx of [-4.4, 4.4]) if (box(fx - 1.2, fx + 1.2, -1, 1)) c = p.legs ?? 11;
+  // Shoulders along the board, narrower than it, so the board shows all round; the back (-y) shaded.
+  if (Math.abs(x) <= 3.8 && Math.abs(y) <= 2 && Math.abs(x) / 3.8 + Math.abs(y) / 2 <= 1.6)
+    c = y < -0.6 ? SHADE[p.shirt] : p.shirt;
+  // Arms out along the board, a hand past each end of the shoulders, a little forward.
+  for (const side of [-1, 1]) {
+    if (nearLine(x, y, side * 2.6, 0.8, side * 5.4, 3.8, 1)) c = p.shirt;
+    if (disc(side * 5.8, 4.4, 1.3)) c = p.skin;
+  }
+  // The head, side on: hair, and the face to the right.
+  if (disc(0, 0.3, 1.9)) c = y > 1 ? p.skin : p.hair;
+  return c;
+}
+
+/**
  * Someone knocked flat on their back, head to the front: legs out straight behind, arms flung wide, face up with
- * the hair or cap at the crown. A cultist's robe covers their legs; a scooter rider's scooter lies beside them.
+ * the hair or cap at the crown. A cultist's robe covers their legs; a scooter rider's scooter, or a skater's
+ * board, lies beside them.
  */
 function lyingAt(p, look, x, y) {
   let c = -1;
@@ -149,6 +183,10 @@ function lyingAt(p, look, x, y) {
   if (look === 'scoot') {
     if (box(-6, 4, 5.2, 6.8)) c = 12;
     if (disc(-6, 6, 1.2) || disc(4, 6, 1.2)) c = 0;
+  }
+  if (look === 'skate') {
+    for (const wx of [-3.4, 3.4]) if (disc(wx, 7.4, 0.9)) c = SKATE.wheels;
+    if (box(-4.4, 4.4, 5, 6.6) || disc(-4.4, 5.8, 0.8) || disc(4.4, 5.8, 0.8)) c = SKATE.board;
   }
   if (look !== 'cult')
     for (const side of [-1, 1]) if (box(-8, -2, side * 1.7 - 1.1, side * 1.7 + 1.1)) c = p.legs ?? 11;

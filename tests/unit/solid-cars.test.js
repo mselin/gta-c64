@@ -35,8 +35,8 @@ const inside = (p) => !!carBodyAt(p.x, p.y, foot() * 0.9);
 /** Someone walking east at the car, `y` off its middle, a little to the west of it. */
 const walker = (type, y = 0) => Object.assign(mkPed(MID - 30, MID + y, type), { dx: 1, dy: 0, t: 1e9 });
 
-for (const type of ['civ', 'scoot']) {
-  test(`a ${type === 'civ' ? 'passer-by' : 'scooter rider'} stops short of a parked car, steps round it, and carries on`, () => {
+for (const type of ['civ', 'scoot', 'skate']) {
+  test(`a ${{ civ: 'passer-by', scoot: 'scooter rider', skate: 'skater' }[type]} stops short of a parked car, steps round it, and carries on`, () => {
     const c = parked(),
       p = walker(type);
     G.peds = [p];

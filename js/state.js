@@ -109,6 +109,10 @@ export function pop(x, y, t, col) {
 export const ppos = () => P.car || P;
 /** Whether the game is on the modern difficulty: cursed driver assistance, car alarms and GAGGLE cameras. */
 export const modern = () => G.difficulty === 'modern';
+/** Who rides along the pavements: e-scooter riders ('scoot') on the modern difficulty, skaters ('skate') on classic. */
+export const rider = () => (modern() ? 'scoot' : 'skate');
+/** Whether someone rides rather than walks: a scooter rider or a skater. */
+export const isRider = (p) => p.type === 'scoot' || p.type === 'skate';
 /**
  * The car whose body is at (x, y), with `r` to spare round it, or null: the car's length and width, turned with
  * it. Cars are solid for anyone on foot, stopped or moving; one on the bottom of the canal is out of the way.

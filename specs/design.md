@@ -41,7 +41,7 @@ drawn larger, so that a person is nearer their real size beside a car.
     touch screen counts as on them.
 
   A car's numbers stay in city pixels (its size, speed, grip, getting in and out), and so do places (jobs,
-  crossings). A scooter's speed is the scooter's.
+  crossings). A scooter's or a skateboard's speed is its own.
 - **The view** is 320 / ZOOM × 176 / ZOOM city pixels. The camera looks ahead of a moving car by 0.3 × its
   speed, but no further than keeps the car 24 pixels inside the view across and 16 up and down. The police notice
   the player from 150, 120 and 130 screen pixels, as before: those distances are divided by ZOOM in the city.
@@ -55,7 +55,7 @@ drawn larger, so that a person is nearer their real size beside a car.
 
   The player changes it with **Z**, or the SCALE button on the info page. It is remembered.
 - **Changing it in play** keeps everyone where they are. People already about keep their pace on screen, a
-  scooter its speed, and the view centres on the player.
+  scooter or a skateboard its speed, and the view centres on the player.
 
 > **C64 note.** The C64 version has one scale, its own choice. At 2, a car is an X- and Y-expanded sprite (a 24 ×
 > 21 sprite drawn 48 × 42, enough for a 40 × 22 car) and a tile is 4 × 4 characters. But the view scrolls a
@@ -115,10 +115,14 @@ People are seen from above, about the size of a swimmer's splash, so that they r
   - The arm stays out for 0.2 seconds (`ARM_OUT_T`), then the walk carries on.
 - **Knocked down:** flat on their back, head to the front: legs out straight behind in the trousers' colour,
   arms flung wide, face up with the hair (or a police officer's cap) at the crown. A cultist's robe covers the
-  legs; a scooter rider's scooter lies on its side beside them. Two small yellow (7) stars go round just above
+  legs; a scooter rider's scooter, or a skater's board, lies on its side beside them. Two small yellow (7) stars go round just above
   the head until they get up.
 - **Not walking:**
   - A scooter rider stands on the deck, hands on the handlebar.
+  - A skater stands side on across a skateboard, as skaters stand, the board along the way they go: a foot towards
+    each end, the shoulders along the board and narrower than it so the board shows all round, the arms out
+    towards its ends for balance, and the face to the right. The board is cyan (3), its ends rounded, with a black
+    (0) wheel at each corner.
   - A cultist stands in a wide robe, hands held together in front, the hood hanging down the back.
   - Neither swings arms or feet.
 - **Outline:**
@@ -131,7 +135,8 @@ People are seen from above, about the size of a swimmer's splash, so that they r
 | The player | yellow (7) | black (0) | black hair (0) | white outer outline |
 | Police officer | light blue (14) | blue (6) | white cap (1) with a black peak | yellow (7) badge on the cap |
 | Passer-by | one of purple 4, orange 8, cyan 3, red 2, light red 10, brown 9, green 5, white 1 | one of dark grey 11, brown 9, black 0, grey 12 | hair black 0, brown 9, orange 8 or yellow 7, never the shirt's colour | |
-| Scooter rider | light green (13) | | | stands on a deck behind a handlebar |
+| Scooter rider (modern) | light green (13) | | | stands on a deck behind a handlebar |
+| Skater (classic) | light grey hoodie (15) | | | stands side on across a cyan (3) skateboard |
 | Cultist | purple robe (4) | | light blue hood (14) | long robe, hood up |
 
 **No one else may look like the player or the police.** Passers-by never wear yellow, either police blue,
@@ -163,7 +168,7 @@ pixel or two. The police arrest from 7 × PERSON.
 and width, turned with it, and a person may come no nearer than their footprint. A car on the bottom of the canal
 is out of the way. (A moving car still runs people over, as under Hit distances.)
 
-- **A passer-by or a scooter rider** with a car in the way stops just short of it and waits 0.4 seconds
+- **A passer-by, a scooter rider or a skater** with a car in the way stops just short of it and waits 0.4 seconds
   (`ROUND_CAR`). Then they step sideways, away from the car's middle, so round its nearer end, until their way is
   clear. Then they carry on the way they were going. With no way round, or after 3 seconds, they turn another way.
 - **The police on foot, and anyone fleeing**, go round the same way: blocked by a car, they step to the side away
@@ -245,7 +250,7 @@ The car's health bar is 28 pixels wide, so `AMMO99` fits beside it.
 | Bandage | 14 % | `+` (red on white) | 40 health back, to at most 100, and costs $20 |
 | Knife | 6 % | `K` (black on light grey) | see [Fighting on foot](#fighting-on-foot) |
 
-- **Dropped by people the player kills** (except scooter riders, which pay $0): cash 40 % of the time
+- **Dropped by people the player kills** (except scooter riders and skaters, which pay $0): cash 40 % of the time
   ($10 to $90 in steps of $10), or a knife 8 % if the player has none. A dropped pickup lasts 20 seconds and
   flashes in its last 4.
 
@@ -767,6 +772,17 @@ game. More settings can be added to the list later.
 - **The settings:** CLASSIC, where a visit starts, and MODERN.
 - **Modern** adds to the city the cursed driver assistance, with the anti-theft's car alarms, and the GAGGLE
   cameras. On classic there are none of them.
+- **The riders** (`rider` and `isRider` in `js/state.js`): on the pavements, where modern has e-scooter riders,
+  classic has skaters (`SKATE` in `js/figures.js`: 46 px/s on the board, against a scooter's 52). They are the same
+  otherwise: the same share of the passers-by, $0 when killed, and what the rider jobs count. The two rider jobs
+  speak of skaters on classic (`jobWords` in `js/missions.js`, from each job's `classic` words):
+
+  | Modern | Classic |
+  |---|---|
+  | SCOOTER SEASON: FLATTEN 3 E-SCOOTER BROS. THE PAVEMENT THANKS YOU. | SKATE OR DIE: FLATTEN 3 SKATER DUDES. THE PAVEMENT THANKS YOU. |
+  | MICROMOBILITY AUDIT: 5 MORE SCOOTER BROS. THEY RESPAWN FASTER THAN POTHOLES. | GNARLY AUDIT: 5 MORE SKATER DUDES. THEY RESPAWN FASTER THAN POTHOLES. |
+
+  Changing the difficulty turns the riders about into the other kind.
 - **Changing it:** D goes on to the next setting, round to the first again. It works only on the title screen,
   where there is nothing to walk right; in play D is right, as always. M stays the music. On a touch screen, a
   tap on the setting's line changes it, while the text page shows.
