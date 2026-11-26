@@ -101,3 +101,22 @@ func TestDevelopmentCopiesAreNotTrustedByDefault(t *testing.T) {
 		}
 	}
 }
+
+func TestOnlyRealOriginsCanBeAllowed(t *testing.T) {
+	for _, o := range []string{
+		"http://localhost:8064", "https://example.com", "http://127.0.0.1:9000", "https://sub.example.org:8443",
+	} {
+		if !validOrigin(o) {
+			t.Errorf("%q refused, but it is an origin", o)
+		}
+	}
+	for _, o := range []string{
+		"null", "*", "example.com", "file:///tmp", "ftp://example.com", "https://", "https://example.com/",
+		"https://example.com/game", "https://user@example.com", "https://example.com?x", "https://example.com#x",
+		"javascript:alert(1)", "https://:8000",
+	} {
+		if validOrigin(o) {
+			t.Errorf("%q allowed, but it is not an origin", o)
+		}
+	}
+}
