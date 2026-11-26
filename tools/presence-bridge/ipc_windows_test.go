@@ -147,3 +147,35 @@ func TestThePipesServerCannotActAsTheBridgesUser(t *testing.T) {
 		t.Fatal("the pipe's server did not finish")
 	}
 }
+
+// The same over a real named pipe whose server takes the connection and never answers: closing the pipe
+// cancels the read still waiting on it (CancelIoEx), so the exchange ends instead of keeping the handle.
+func TestASilentPipeServerIsLetGo(t *testing.T) {
+	const (
+		pipeAccessDuplex = 0x3
+		invalidHandle    = ^uintptr(0)
+	)
+	name := fmt.Sprintf(`\\.\pipe\sleazeburg-presence-silent-%d`, os.Getpid())
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	namePtr, err := syscall.UTF16PtrFromString(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle, _, callErr := kernel32.NewProc("CreateNamedPipeW").Call(
+		uintptr(unsafe.Pointer(namePtr)), pipeAccessDuplex, 0, 1, 4096, 4096, 0, 0)
+	if handle == invalidHandle {
+		t.Fatalf("CreateNamedPipe: %v", callErr)
+	}
+	defer syscall.CloseHandle(syscall.Handle(handle))
+	go kernel32.NewProc("ConnectNamedPipe").Call(handle, 0) // accepts, then says nothing
+
+	rw, err := dialIPC(name)
+	if err != nil {
+		t.Fatalf("opening the pipe: %v", err)
+	}
+	before := exchanges.Load()
+	if err := (&discordConn{rw}).handshake("123456789012345678"); err == nil {
+		t.Fatal("a silent pipe answered")
+	}
+	waitForExchanges(t, before)
+}

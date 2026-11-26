@@ -28,8 +28,19 @@ func dialIPC(path string) (io.ReadWriteCloser, error) {
 	if err != nil {
 		return nil, &os.PathError{Op: "open", Path: path, Err: err}
 	}
-	// os.NewFile sees that the handle is a pipe, so closing it interrupts a read that is still waiting.
-	return os.NewFile(uintptr(h), path), nil
+	return &pipe{os.NewFile(uintptr(h), path), h}, nil
+}
+
+// pipe is Discord's pipe. Closing it first cancels any read or write still waiting on it (CancelIoEx), so that
+// a server that never answers cannot leave one blocked, with its handle, every time the bridge gives up on it.
+type pipe struct {
+	*os.File
+	h syscall.Handle
+}
+
+func (p *pipe) Close() error {
+	syscall.CancelIoEx(p.h, nil)
+	return p.File.Close()
 }
 
 // privateDir is only needed where the claim file is written, which is Linux.

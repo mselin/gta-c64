@@ -21,6 +21,14 @@ const MAX_STATE: usize = 1024;
 
 pub struct Service {
     session: Arc<Mutex<Session>>,
+    /// The page's latest word, for the presence thread to take: a state, or None for stop. The page never
+    /// takes the session's lock, which that thread holds while it talks to Discord (seconds, if whatever
+    /// serves Discord's endpoint is slow); it leaves its state here and goes.
+    mailbox: Arc<Mutex<Option<Option<GameState>>>>,
+    /// What the presence thread last saw, for the page.
+    status: Arc<Mutex<Status>>,
+    /// The schema the page's states are checked against: a copy of the session's, so checking needs no lock.
+    schema: Schema,
     poke: Mutex<Sender<()>>,
 }
 
@@ -31,7 +39,7 @@ impl Service {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.subsec_nanos())
             .unwrap_or(1) as usize;
-        let session = Session::new(
+        Service::run(Session::new(
             Schema::load(),
             APP_ID.into(),
             Box::new(move || started.elapsed().as_millis() as u64),
@@ -50,23 +58,43 @@ impl Service {
             }),
             Box::new(discord::dial),
             Box::new(|line| eprintln!("presence: {line}")),
-        );
+        ))
+    }
+
+    /// Runs a session on a thread of its own: a tick a second, and one at once whenever the page says something.
+    fn run(session: Session) -> Service {
+        let status = Arc::new(Mutex::new(session.status()));
         let session = Arc::new(Mutex::new(session));
+        let mailbox: Arc<Mutex<Option<Option<GameState>>>> = Arc::new(Mutex::new(None));
         let (poke, wait) = channel::<()>();
-        let worker = session.clone();
+        let (worker, letters, shown) = (session.clone(), mailbox.clone(), status.clone());
         std::thread::Builder::new()
             .name("presence".into())
             .spawn(move || loop {
-                // A tick a second, and one at once whenever the game says something.
                 let _ = wait.recv_timeout(Duration::from_secs(1));
-                match worker.lock() {
-                    Ok(mut s) => s.tick(),
+                let letter = match letters.lock() {
+                    Ok(mut m) => m.take(),
                     Err(_) => return,
+                };
+                let Ok(mut s) = worker.lock() else { return };
+                match letter {
+                    Some(None) => s.stop(),
+                    Some(Some(st)) => s.update(st),
+                    None => {}
+                }
+                s.tick();
+                let now = s.status();
+                drop(s);
+                if let Ok(mut st) = shown.lock() {
+                    *st = now;
                 }
             })
             .expect("cannot start the presence thread");
         Service {
             session,
+            mailbox,
+            status,
+            schema: Schema::load(),
             poke: Mutex::new(poke),
         }
     }
@@ -85,28 +113,69 @@ impl Service {
                 )
             }
         };
-        let mut s = self
-            .session
-            .lock()
-            .map_err(|_| "presence is unavailable".to_string())?;
-        match state {
-            None => s.stop(),
-            Some(st) => {
-                s.schema.check(&st)?;
-                s.update(st);
-            }
+        // Checked here, so that a refused state is refused to the page at once.
+        if let Some(st) = &state {
+            self.schema.check(st)?;
         }
-        let status = s.status();
-        drop(s);
+        *self
+            .mailbox
+            .lock()
+            .map_err(|_| "presence is unavailable".to_string())? = Some(state);
         if let Ok(poke) = self.poke.lock() {
             let _ = poke.send(());
         }
-        Ok(status)
+        self.status
+            .lock()
+            .map(|s| s.clone())
+            .map_err(|_| "presence is unavailable".to_string())
     }
 
     pub fn close(&self) {
         if let Ok(mut s) = self.session.lock() {
             s.close();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The presence thread can spend seconds dialling a Discord that is slow to answer. The page's calls do
+    /// not wait for it: they leave their state and come back at once.
+    #[test]
+    fn the_page_never_waits_on_discord() {
+        let started = Instant::now();
+        let session = Session::new(
+            Schema::load(),
+            APP_ID.into(),
+            Box::new(move || started.elapsed().as_millis() as u64),
+            Box::new(|| 0),
+            Box::new(|| 0),
+            Box::new(|| {
+                std::thread::sleep(Duration::from_secs(3));
+                Err(std::io::Error::other("gave up"))
+            }),
+            Box::new(|_| {}),
+        );
+        let service = Service::run(session);
+        let state = serde_json::json!({ "v": 1, "mode": "loading" });
+        service.handle(Some(state.clone())).expect("a valid state");
+        // Long enough for the presence thread to be in the middle of dialling.
+        std::thread::sleep(Duration::from_millis(300));
+        let asked = Instant::now();
+        service.handle(Some(state)).expect("a valid state");
+        service.handle(None).expect("stop");
+        assert!(
+            asked.elapsed() < Duration::from_millis(500),
+            "the page waited {:?}",
+            asked.elapsed()
+        );
+        assert!(
+            service
+                .handle(Some(serde_json::json!({ "v": 1, "mode": "no such mode" })))
+                .is_err(),
+            "a state the schema does not list is still refused at once"
+        );
     }
 }

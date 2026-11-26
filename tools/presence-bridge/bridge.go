@@ -39,6 +39,10 @@ type Bridge struct {
 	// claimDir, if it exists, is where presence programs on one machine tell each other who should show.
 	claimDir string
 
+	// mu guards everything below and is only ever held briefly. io is held while talking to Discord, which can
+	// take seconds (ipcTimeout) if whatever serves its endpoint is slow, and never together with mu: so a slow or
+	// silent Discord holds up no HTTP request and no status read. See sync.
+	io          sync.Mutex
 	mu          sync.Mutex
 	active      bool      // a session is running
 	hidden      bool      // paused for too long; shows again when play resumes
@@ -98,7 +102,6 @@ func (b *Bridge) mayAlsoSend(now time.Time) bool {
 // Update takes a state from the game. It also counts as a heartbeat.
 func (b *Bridge) Update(st State) {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	now := b.now()
 	resumed := b.hidden && st.Mode != "paused"
 	if !b.active || resumed {
@@ -114,20 +117,22 @@ func (b *Bridge) Update(st State) {
 		}
 	}
 	b.state, b.lastBeat = st, now
-	b.flush()
+	b.mu.Unlock()
+	b.sync()
 }
 
 // Stop ends the session at once: the tab closed, the game quit or the setting was switched off.
 func (b *Bridge) Stop() {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	b.end("stopped by the game")
+	b.mu.Unlock()
+	b.sync()
 }
 
-// Tick runs once a second: it notices a game that has gone quiet, and sends anything that was held back.
+// Tick runs once a second: it notices a game that has gone quiet, checks Discord is still there, and sends
+// anything that was held back.
 func (b *Bridge) Tick() {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	now := b.now()
 	if b.active && now.Sub(b.lastBeat) > heartbeatTimeout {
 		b.end("no heartbeat from the game")
@@ -136,20 +141,40 @@ func (b *Bridge) Tick() {
 		b.hidden = true
 		b.logf("paused for a long time: hiding")
 	}
-	if b.conn != nil && now.Sub(b.lastPing) >= pingEvery {
+	b.mu.Unlock()
+	if !b.io.TryLock() {
+		return // a request is talking to Discord: the next tick does this
+	}
+	defer b.io.Unlock()
+	b.mu.Lock()
+	c := b.conn
+	ping := c != nil && now.Sub(b.lastPing) >= pingEvery
+	if ping {
 		b.lastPing = now
-		if err := b.conn.ping(); err != nil {
+	}
+	b.mu.Unlock()
+	if ping {
+		err := c.ping()
+		b.mu.Lock()
+		if err != nil && b.conn == c {
 			b.lost(err)
 		}
+		b.mu.Unlock()
 	}
-	b.flush()
+	b.syncHeld()
 }
 
-// Close clears the presence and releases everything. Called on exit.
+// Close clears the presence and releases everything. Called on exit: it waits for any exchange with Discord
+// that is under way, so that the clear is the last thing sent.
 func (b *Bridge) Close() {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	b.end("bridge exiting")
+	b.mu.Unlock()
+	b.io.Lock()
+	defer b.io.Unlock()
+	b.syncHeld()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if b.conn != nil {
 		b.conn.rw.Close()
 		b.conn = nil
@@ -177,7 +202,6 @@ func (b *Bridge) end(why string) {
 	}
 	b.active, b.hidden, b.state = false, false, State{}
 	b.sessionLog("session ended: " + why)
-	b.flush()
 }
 
 func (b *Bridge) lost(err error) {
@@ -191,59 +215,44 @@ func (b *Bridge) lost(err error) {
 	}
 }
 
-// flush brings Discord into line with the session, within the rate limit.
-func (b *Bridge) flush() {
-	var want *Activity
-	if b.active && !b.hidden && b.appID != "" {
-		a := b.schema.Render(b.state, b.pick)
-		want = &a
-	}
-	b.claim(want != nil)
-	if (want == nil) == (b.sent == nil) && (want == nil || *want == *b.sent) {
+// sync brings Discord into line with the session, within the rate limit. If another call is already talking
+// to Discord it returns at once: that one, or the next tick a second later, sends whatever is wanted by then.
+func (b *Bridge) sync() {
+	if !b.io.TryLock() {
 		return
 	}
-	now := b.now()
-	// Changes of text wait their turn, and the latest one wins. Clearing, and showing after a clear, do not.
-	if want != nil && b.sent != nil && now.Sub(b.lastSend) < minUpdateGap {
-		return
-	}
-	if b.conn == nil {
-		if want == nil {
-			b.sent = nil
-			return
-		}
-		if now.Sub(b.lastDial) < redialEvery {
-			return
-		}
-		b.lastDial = now
-		rw, err := b.dial()
-		if err == nil {
-			c := &discordConn{rw}
-			if err = c.handshake(b.appID); err == nil {
-				b.conn, b.lastPing = c, now
-				if b.downLogged {
-					b.logf("Discord is back")
-				}
-				b.downLogged = false
-			} else {
-				rw.Close()
-			}
-		}
+	defer b.io.Unlock()
+	b.syncHeld()
+}
+
+// syncHeld is sync with b.io held. It decides with b.mu held, talks to Discord without it, and records what
+// happened with it held again.
+func (b *Bridge) syncHeld() {
+	b.mu.Lock()
+	dial := b.needDial()
+	b.mu.Unlock()
+	if dial {
+		c, err := b.connect()
+		b.mu.Lock()
+		b.connected(c, err)
+		b.mu.Unlock()
 		if err != nil {
-			if !b.downLogged {
-				b.downLogged = true
-				b.logf("cannot reach Discord (%v); will keep trying", err)
-			}
 			return
 		}
 	}
-	if !b.mayAlsoSend(now) {
-		return // held back: a later tick sends whatever is wanted by then
+	b.mu.Lock()
+	c, want, start, nonce, now, ok := b.nextSend()
+	b.mu.Unlock()
+	if !ok {
+		return
 	}
-	b.sends = append(b.sends, now)
-	b.nonce++
-	if err := b.conn.setActivity(want, b.start, fmt.Sprint(b.nonce)); err != nil {
-		b.lost(err)
+	err := c.setActivity(want, start, nonce)
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if err != nil {
+		if b.conn == c {
+			b.lost(err)
+		}
 		return
 	}
 	if want == nil {
@@ -252,6 +261,92 @@ func (b *Bridge) flush() {
 		b.logf("showing: %s | %s", want.Details, want.State)
 	}
 	b.sent, b.lastSend = want, now
+}
+
+// wanted is what Discord should show now, nil for nothing; and whether that differs from what it shows and is
+// due to be sent. Changes of text wait their turn (minUpdateGap) and the latest one wins; clearing, and showing
+// after a clear, do not wait. With b.mu held.
+func (b *Bridge) wanted(now time.Time) (*Activity, bool) {
+	var want *Activity
+	if b.active && !b.hidden && b.appID != "" {
+		a := b.schema.Render(b.state, b.pick)
+		want = &a
+	}
+	b.claim(want != nil)
+	if (want == nil) == (b.sent == nil) && (want == nil || *want == *b.sent) {
+		return want, false
+	}
+	if want != nil && b.sent != nil && now.Sub(b.lastSend) < minUpdateGap {
+		return want, false
+	}
+	return want, true
+}
+
+// needDial reports whether Discord should be dialled now: something is to be shown, there is no connection and
+// the last try was redialEvery ago. With b.mu held.
+func (b *Bridge) needDial() bool {
+	now := b.now()
+	want, due := b.wanted(now)
+	if !due || b.conn != nil {
+		return false
+	}
+	if want == nil {
+		b.sent = nil
+		return false
+	}
+	if now.Sub(b.lastDial) < redialEvery {
+		return false
+	}
+	b.lastDial = now
+	return true
+}
+
+// connect dials Discord and introduces the bridge. Without b.mu: it can take up to ipcTimeout.
+func (b *Bridge) connect() (*discordConn, error) {
+	rw, err := b.dial()
+	if err != nil {
+		return nil, err
+	}
+	c := &discordConn{rw}
+	if err := c.handshake(b.appID); err != nil {
+		rw.Close()
+		return nil, err
+	}
+	return c, nil
+}
+
+// connected records how a dial went. With b.mu held.
+func (b *Bridge) connected(c *discordConn, err error) {
+	if err != nil {
+		if !b.downLogged {
+			b.downLogged = true
+			b.logf("cannot reach Discord (%v); will keep trying", err)
+		}
+		return
+	}
+	b.conn, b.lastPing = c, b.now()
+	if b.downLogged {
+		b.logf("Discord is back")
+	}
+	b.downLogged = false
+}
+
+// nextSend decides what to send, if anything, and takes its place in the rate limit. With b.mu held.
+func (b *Bridge) nextSend() (c *discordConn, want *Activity, start time.Time, nonce string, now time.Time, ok bool) {
+	now = b.now()
+	want, due := b.wanted(now)
+	if !due || b.conn == nil {
+		if want == nil && b.conn == nil {
+			b.sent = nil
+		}
+		return
+	}
+	if !b.mayAlsoSend(now) {
+		return // held back: a later tick sends whatever is wanted by then
+	}
+	b.sends = append(b.sends, now)
+	b.nonce++
+	return b.conn, want, b.start, fmt.Sprint(b.nonce), now, true
 }
 
 // claim cooperates with other presence programs on the same machine. Each one that wants to show writes
