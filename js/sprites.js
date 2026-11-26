@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Car, pedestrian and arrow sprites, pre-rotated from small pixel grids.
-import { PI, RGB } from './config.js';
+import { CAR_DIRS, PI, RGB } from './config.js';
 import { hash } from './util.js';
 import { sinkStage } from './entities.js';
 import { FRAME, frame, lookOf } from './figures.js';
@@ -144,7 +144,8 @@ export function carSpr(c) {
   if (sprC[key]) return sprC[key];
   let src = carSrc(c.kind, c.dead ? -2 : c.col);
   if (stage) src = submerge(src, c.kind.L, c.kind.W, stage);
-  return (sprC[key] = mkSprite(src, c.kind.L, c.kind.W, 32, 34));
+  // 64 directions, a step of under 6°: turning, and settling onto a street's line, look smooth.
+  return (sprC[key] = mkSprite(src, c.kind.L, c.kind.W, CAR_DIRS, 34));
 }
 const pedC = {};
 /** Someone on foot facing 16 ways round, in pose `pose` (see figures.js, which draws them). */

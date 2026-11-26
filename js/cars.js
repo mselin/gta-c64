@@ -233,13 +233,18 @@ export function carPhys(c, thr, steer, dt, hb) {
     yaw = clamp(yaw, -most, most);
   }
   // Settling on a straight line: a car someone is driving, with the wheel straight and not spinning, within
-  // HANDLING.snap of one of the eight ways (the axes and the diagonals), turns onto it and keeps exactly to it.
-  // Otherwise a car let go of a little off a street's line would drift across the street for ever.
+  // HANDLING.snap of one of the eight ways (the axes and the diagonals), eases onto it and keeps exactly to it.
+  // Otherwise a car let go of a little off a street's line would drift across the street for ever. It eases on,
+  // quick at first and gentler as it lines up, so it looks like the car straightening up, not a lock.
   if (!steer && !hb && !c.w && (c === P.car || c.ai === 'cop') && Math.abs(f0) > 5) {
     const to = Math.round(c.a / (PI / 4)) * (PI / 4),
       off = angDiff(to, c.a);
     if (Math.abs(off) < HANDLING.snap) {
-      const most = Math.abs(yaw) * HANDLING.settle * dt;
+      const most =
+        Math.min(
+          Math.abs(yaw),
+          clamp(HANDLING.settle * Math.abs(off), HANDLING.settleMin, HANDLING.settleMax),
+        ) * dt;
       c.a = Math.abs(off) <= most ? to : c.a + Math.sign(off) * most;
     }
   }

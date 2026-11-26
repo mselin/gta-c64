@@ -113,3 +113,21 @@ test('on the handbrake, or spinning from a knock, it does not', () => {
   carPhys(d, 0, 0, DT, true);
   assert.equal(d.a, 0.1, 'the handbrake: left as it is');
 });
+
+test('settling is gentle: it eases on no faster than HANDLING.settleMax, a sixth of the steering or less', () => {
+  for (const off of [0.19, -0.12, 0.05]) {
+    const c = drive(off);
+    K.up = true;
+    let fastest = 0,
+      prev = c.a;
+    for (let i = 0; i < 90; i++) {
+      updPlayer(DT);
+      fastest = Math.max(fastest, Math.abs(c.a - prev) / DT);
+      prev = c.a;
+    }
+    assert.equal(c.a, 0, 'and it gets there');
+    assert.ok(fastest <= HANDLING.settleMax + 1e-9, `${fastest.toFixed(3)} rad/s at most`);
+    // Steering at 100 px/s turns a sedan about 3 radians a second: the settle is far gentler than any turn.
+    assert.ok(HANDLING.settleMax <= 3 / 6);
+  }
+});
