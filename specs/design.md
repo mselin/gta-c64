@@ -458,6 +458,8 @@ middle. Cars that overlap are pushed apart. Then, if they are closing:
 
 `js/adas.js`; the numbers are `ADAS` in `js/config.js`.
 
+**Only on the modern difficulty** (see "Difficulty" under Title screen and icon); on classic no car has any.
+
 Some cars come with driver assistance, all of it cursed. It works only while the player drives: the city's own
 drivers switched it off long ago. Nothing shows which a car has until it acts.
 
@@ -634,7 +636,7 @@ and no police about:
 > cars, so the cruiser is noticed less often there unless chasing cars spawn sooner.
 
 **GAGGLE cameras** (`js/cams.js`; the numbers are `CAM` in `js/config.js`): the city's surveillance network, on
-poles at a scattering of crossings.
+poles at a scattering of crossings. Only on the modern difficulty; on classic there are none.
 
 - **Where:** at each crossing where 3 × avenue + 2 × street (counting from 0) is a multiple of 5, 17 in all, on
   the pavement at the first corner, going round from the south-east, that is pavement or plaza: 22 pixels each
@@ -753,6 +755,23 @@ as well, however long it is held: fire shoots once it has been let go of and pre
   under it all. The owner's artwork, made C64-like by `tools/title-picture.py`, which leaves out the artwork's
   Commodore logo and carries the stripes across where it was.
 - **Under it:** "PRESS FIRE TO COMMIT CRIMES", blinking, and the greetings scrolling.
+
+**Difficulty** (`DIFFICULTIES` in `js/config.js`; `G.difficulty`), a setting on the title screen, for a harder
+game. More settings can be added to the list later.
+- **The settings:** CLASSIC, where a visit starts, and MODERN.
+- **Modern** adds to the city the cursed driver assistance, with the anti-theft's car alarms, and the GAGGLE
+  cameras. On classic there are none of them.
+- **Changing it:** D goes on to the next setting, round to the first again. It works only on the title screen,
+  where there is nothing to walk right; in play D is right, as always. M stays the music. On a touch screen, a
+  tap on the setting's line changes it, while the text page shows.
+- **The line:** "DIFFICULTY: CLASSIC - PRESS D" (or MODERN), centred on the text page 106 pixels down, under
+  "8 BITS. 16 COLOURS. 0 SCRUPLES.": grey (12) on classic, yellow (7) on modern. On a touch screen it ends
+  "TAP HERE". D brings the text page back, so the line shows.
+- **The city follows it** when play starts, or goes on from the title screen, with the setting changed. Going to
+  modern, the cars get their assistance as new cars do, and the cameras go up. Going to classic, every car loses
+  its assistance and any alarm, the player's own car too, and the cameras come down. With the setting unchanged
+  the city stays as it was. The car beside the hospital at the start never has any.
+- **It lasts the visit:** a new game keeps it; reloading the page starts on classic again.
 
 **The boot** (`drawBoot`, `BOOT`): the C64's start-up screen, then `LOAD"CRIME",8,1`, SEARCHING and LOADING.
 From 3.6 seconds the screen is black and the sunset picture loads, a character row (8 pixels) at a time from

@@ -63,6 +63,14 @@ export const BOOT = { loading: 3.3, picture: 3.6, loaded: 6.2, ready: 11.2, end:
 export const HELI = { heat: 5, spd: 260, acc: 320, alt: 14, light: 16, orbit: 5, from: 220, gone: 300 };
 /** The title screen shows its two pages in turn: the text for `text` seconds, then the sunset picture. */
 export const TITLE_PAGES = { text: 10, picture: 8 };
+/**
+ * The difficulty settings, chosen on the title screen with D (or a tap on its line), in the order D goes through
+ * them; the first is where a visit starts. 'modern' adds the cursed driver assistance, car alarms and the GAGGLE
+ * cameras to the city. More can be added later.
+ */
+export const DIFFICULTIES = ['classic', 'modern'];
+/** The difficulty line on the title's text page, its top in screen pixels. */
+export const DIFFICULTY_Y = 106;
 export const KIND = {
   sedan: { n: 'sedan', L: 20, W: 11, max: 150, acc: 120, hp: 100, m: 1 },
   sports: { n: 'sports', L: 20, W: 10, max: 215, acc: 180, hp: 80, m: 0.85 },

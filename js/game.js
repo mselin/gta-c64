@@ -4,7 +4,7 @@ import { BOOT, GOAL, KIND, VIEW_H, VIEW_W, WPX } from './config.js';
 import { R, clamp, hyp } from './util.js';
 import { HOSP, parkSpots } from './world.js';
 import { engineSound } from './audio.js';
-import { G, P, edge, msg, ppos, resetState } from './state.js';
+import { G, P, edge, modern, msg, ppos, resetState } from './state.js';
 import { mkCar, mkHonk } from './entities.js';
 import { fitAssists, immobilised } from './adas.js';
 import { resetHeat, updHeat } from './heat.js';
@@ -36,7 +36,29 @@ function resetGame() {
   initWorld();
   started = false;
 }
+// Whether the city as it stands was made on the modern difficulty: what it has follows the setting (applyModern).
+let cityModern = false;
+/**
+ * The modern difficulty decides what the city has: on it, cars with their cursed driver assistance, alarms and all,
+ * and the GAGGLE cameras; on classic, none of them. When play starts or goes on from the title screen with the
+ * difficulty changed, the city changes with it. The car the player is in loses what it had going to classic, and
+ * gets nothing new going to modern.
+ */
+function applyModern() {
+  if (modern() === cityModern) return;
+  cityModern = modern();
+  for (const c of G.cars) {
+    if (c === P.car && cityModern) continue;
+    c.lane = c.aeb = c.theft = null;
+    c.alarm = 0;
+    c.alarmHi = false;
+    if (c !== P.car && !c.bare) fitAssists(c);
+  }
+  G.cams = [];
+  if (cityModern) placeCams();
+}
 function startGame() {
+  applyModern();
   G.screen = 'play';
   // The press that started the game is not a shot as well, however long it is held (updPlayer).
   G.holdFire = true;
@@ -142,9 +164,12 @@ export function initWorld() {
   // The car beside the hospital, the first the player is likely to take, has none of the cursed assistance.
   const c = mkCar(KIND.sedan, HOSP.x + 40, HOSP.y, 0, 14);
   c.parked = true;
+  c.bare = true; // and gets none on the modern difficulty either (applyModern)
   G.cars.push(c);
   for (let i = 0; i < 34; i++) G.pickups.push(placePickup({}));
-  placeCams();
+  // The cameras, and the assistance fitted above, only on the modern difficulty.
+  cityModern = modern();
+  if (cityModern) placeCams();
   G.peds.push(mkHonk());
   G.camX = clamp(P.x - VIEW_W / 2, 0, WPX - VIEW_W);
   G.camY = clamp(P.y - VIEW_H / 2, 0, WPX - VIEW_H);

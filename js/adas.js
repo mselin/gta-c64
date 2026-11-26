@@ -6,7 +6,7 @@
 import { ADAS, ALARM_COP, ALARM_SAYS, HIT, KIND } from './config.js';
 import { R, hyp, pick } from './util.js';
 import { sfx } from './audio.js';
-import { G, msg, ppos } from './state.js';
+import { G, modern, msg, ppos } from './state.js';
 import { carHits } from './cars.js';
 import { foot } from './world.js';
 
@@ -31,6 +31,7 @@ const theft = () => ({ left: between(ADAS.stealAfter), tripped: false });
  * has neither lane assist nor emergency braking, but every one has anti-theft.
  */
 export function fitAssists(c) {
+  if (!modern()) return c; // only on the modern difficulty
   if (c.kind === KIND.limo) return c;
   if (c.kind === KIND.police) {
     c.theft = theft();
