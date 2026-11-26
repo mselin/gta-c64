@@ -1,21 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Draws every screen: boot, title, the city with its HUD, and the win screen.
-import {
-  BOOT,
-  BX,
-  BY,
-  GOAL,
-  HELI,
-  KIND,
-  DIFFICULTY_Y,
-  PAL,
-  PI,
-  SH,
-  SW,
-  TITLE_PAGES,
-  VH,
-  ZOOM,
-} from './config.js';
+import { BOOT, BX, BY, GOAL, HELI, KIND, DIFFICULTY_Y, PAL, PI, SH, SW, VH, ZOOM } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { cx, g, scr } from './screen.js';
 import { ctext, text } from './font.js';
@@ -24,7 +9,18 @@ import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
 import { jobWords } from './missions.js';
-import { G, forDifficulty, onScreen, P, ppos, sirenFlash, touch, weapon, weaponLabel } from './state.js';
+import {
+  G,
+  forDifficulty,
+  onScreen,
+  P,
+  ppos,
+  sirenFlash,
+  titlePage,
+  touch,
+  weapon,
+  weaponLabel,
+} from './state.js';
 import { npText, radio, radioAudible } from './radio.js';
 import { drawEnding } from './endings.js';
 import { help } from './help.js';
@@ -114,6 +110,32 @@ function drawHeli() {
   const y = h.y - HELI.alt;
   drawSpr(HELI_BODY, h.a, h.x, y);
   drawSpr(HELI_ROTOR, G.clock * 40, h.x + Math.cos(h.a) * 3, y + Math.sin(h.a) * 3);
+}
+/** The place in `pts` nearest the player, or null. */
+function nearest(pts) {
+  const p = ppos();
+  let best = null,
+    bd = Infinity;
+  for (const q of pts) {
+    const d = hyp(q.x - p.x, q.y - p.y);
+    if (d < bd) {
+      bd = d;
+      best = q;
+    }
+  }
+  return best;
+}
+/**
+ * An arrow at the edge of the view, from `frames` (16 directions), pointing from the player to `to`, which is off
+ * screen: where the line that way leaves the view, kept 10 pixels inside it. Gives where it went and its angle.
+ */
+function edgeArrow(to, frames) {
+  const p = ppos(),
+    a = Math.atan2(to.y - p.y, to.x - p.x),
+    ax = Math.round(clamp(sx(p.x) + Math.cos(a) * 400, 10, SW - 10)),
+    ay = Math.round(clamp(sy(p.y) + Math.sin(a) * 400, 10, VH - 10));
+  g.drawImage(frames[mod(Math.round((a / (PI * 2)) * 16), 16)], ax - 5, ay - 5);
+  return { ax, ay, a };
 }
 function drawWorld() {
   camXi = Math.round(G.camX * ZOOM);
@@ -241,40 +263,12 @@ function drawWorld() {
     const w = p.t.length * 8;
     text(p.t, clamp(sx(p.x) - Math.round(w / 2), 0, SW - w), sy(p.y), p.col);
   }
-  // target arrow
-  const tg = G.job && G.job.target;
-  if (tg && !onScreen(tg.x, tg.y, -12)) {
-    const p = ppos(),
-      a = Math.atan2(tg.y - p.y, tg.x - p.x);
-    const ax = clamp(sx(p.x) + Math.cos(a) * 400, 10, SW - 10),
-      ay = clamp(sy(p.y) + Math.sin(a) * 400, 10, VH - 10);
-    const fr = ARW[Math.floor(G.clock * 5) & 1];
-    g.drawImage(fr[mod(Math.round((a / (PI * 2)) * 16), 16)], Math.round(ax) - 5, Math.round(ay) - 5);
-  } else if (!G.job) {
-    let bj = null,
-      bd = 1e9;
-    const p = ppos();
-    for (const j of JOBPTS) {
-      const d = hyp(j.x - p.x, j.y - p.y);
-      if (d < bd) {
-        bd = d;
-        bj = j;
-      }
-    }
-    if (bj && !onScreen(bj.x, bj.y, -12)) {
-      const a = Math.atan2(bj.y - p.y, bj.x - p.x),
-        ax = clamp(sx(p.x) + Math.cos(a) * 400, 10, SW - 10),
-        ay = clamp(sy(p.y) + Math.sin(a) * 400, 10, VH - 10);
-      g.drawImage(ARW[0][mod(Math.round((a / (PI * 2)) * 16), 16)], Math.round(ax) - 5, Math.round(ay) - 5);
-    }
-  }
+  // The job's target, or with no job the nearest J: an arrow at the edge of the view, flashing for a target.
+  const tg = G.job ? G.job.target : nearest(JOBPTS);
+  if (tg && !onScreen(tg.x, tg.y, -12)) edgeArrow(tg, ARW[G.job ? Math.floor(G.clock * 5) & 1 : 0]);
   // With heat, at the wheel: a cyan arrow with an S to the paint shop, where the heat goes.
   if (G.heat > 0 && P.car && !onScreen(PAINT.x, PAINT.y, -12)) {
-    const p = ppos(),
-      a = Math.atan2(PAINT.y - p.y, PAINT.x - p.x),
-      ax = Math.round(clamp(sx(p.x) + Math.cos(a) * 400, 10, SW - 10)),
-      ay = Math.round(clamp(sy(p.y) + Math.sin(a) * 400, 10, VH - 10));
-    g.drawImage(ARW[2][mod(Math.round((a / (PI * 2)) * 16), 16)], ax - 5, ay - 5);
+    const { ax, ay, a } = edgeArrow(PAINT, ARW[2]);
     // The S beside it, on the side towards the middle of the view, on black so it reads over the city.
     const lx = clamp(ax - Math.round(Math.cos(a) * 12) - 4, 1, SW - 9),
       ly = clamp(ay - Math.round(Math.sin(a) * 12) - 4, 1, VH - 9);
@@ -402,9 +396,6 @@ SUNSET.src = new URL('../assets/title-sunset.png', import.meta.url).href;
 const SUNSET_H = 180;
 /** Whether the sunset picture has loaded. For the tests. */
 export const sunsetLoaded = () => SUNSET.complete && SUNSET.naturalWidth > 0;
-/** Which page the title screen shows `t` seconds after it came up: 'text' first, then 'picture', in turn. */
-export const titlePage = (t) =>
-  t % (TITLE_PAGES.text + TITLE_PAGES.picture) < TITLE_PAGES.text ? 'text' : 'picture';
 /** The greetings scrolling along a line of the title screen. */
 function scroller(y) {
   // On classic the greetings go to skating enthusiasts rather than e-scooter ones.

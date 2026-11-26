@@ -235,9 +235,10 @@ export const JACK = [
  * - boost: a crime one sees counts this much more; while one sees the player with heat, the heat does not cool;
  * - speeding, pavement: driving faster than these, on the road or on a pavement or plaza, one reports, as a
  *   crime of `reckless`, at most once each `again` seconds;
- * - knock, hit: the player's car going faster than `knock` into one, or a bullet within `hit` of it, sets off its
- *   alarm for `alarm` seconds (a note every `beat`, heard up to `heard` away), reporting tampering as a crime of
- *   `tamper`; then it goes dark, until the city puts it back up `fix` seconds later, out of sight;
+ * - knock, hit: the player's car going faster than `knock` into one, or a bullet within `hit` of a point 5 up its
+ *   pole, sets off its alarm for `alarm` seconds (a note every `beat`, heard up to `heard` away), reporting
+ *   tampering as a crime of `tamper`; then it goes dark, until the city puts it back up `fix` seconds later, out of
+ *   sight;
  * - sayGap: the least time between two of its messages about crimes it saw.
  */
 export const CAM = {
@@ -250,7 +251,7 @@ export const CAM = {
   reckless: 2,
   again: 4,
   knock: 15,
-  hit: 4,
+  hit: 6,
   alarm: 3,
   beat: 0.15,
   heard: 300,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Shared game state, the player, held keys, and the on-screen message helpers.
-import { CLASSIC_WORDS, PI, SW, VIEW_H, VIEW_W } from './config.js';
+import { CLASSIC_WORDS, PI, SW, TITLE_PAGES, VIEW_H, VIEW_W } from './config.js';
 import { HOSP } from './world.js';
 import { wrapEven } from './util.js';
 
@@ -145,3 +145,6 @@ export const weaponLabel = () =>
   weapon() === 'gun' ? 'AMMO' + String(P.ammo).padStart(2, '0') : weapon().toUpperCase();
 export const onScreen = (x, y, m) =>
   x > G.camX - m && x < G.camX + VIEW_W + m && y > G.camY - m && y < G.camY + VIEW_H + m;
+/** Which page the title screen shows `t` seconds after it came up: 'text' first, then 'picture', in turn. */
+export const titlePage = (t) =>
+  t % (TITLE_PAGES.text + TITLE_PAGES.picture) < TITLE_PAGES.text ? 'text' : 'picture';
