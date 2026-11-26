@@ -39,7 +39,7 @@ for (const f of FILES) {
 if (!process.argv[2]) {
   const page = join(dist, 'index.html'),
     html = readFileSync(page, 'utf8'),
-    bare = html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\n/, '');
+    bare = html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\r?\n?/, '');
   if (bare === html) throw new Error('index.html: no Content-Security-Policy meta tag to take out');
   writeFileSync(page, bare);
 }
