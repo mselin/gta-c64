@@ -3,8 +3,8 @@
 // about them say which, and changing the difficulty turns the riders about into the other kind.
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { JOBS } from '../../js/config.js';
-import { G, K, P, edge, isRider, resetState, rider } from '../../js/state.js';
+import { JOBS, NEWS } from '../../js/config.js';
+import { G, K, P, edge, forDifficulty, isRider, resetState, rider } from '../../js/state.js';
 import { genMap } from '../../js/world.js';
 import { initWorld, update } from '../../js/game.js';
 import { mkPed } from '../../js/entities.js';
@@ -88,4 +88,18 @@ test('changing the difficulty turns the riders about into the other kind', () =>
   G.difficulty = 'classic';
   start();
   assert.ok(G.peds.filter(isRider).every((p) => p.type === 'skate'));
+});
+
+test('the news and the greetings speak of skaters on classic, of e-scooters on modern', () => {
+  const news = NEWS.find((n) => n.includes('E-SCOOTER'));
+  G.difficulty = 'classic';
+  assert.equal(forDifficulty(news), 'NEWS: SKATER COUNT NOW EXCEEDS POPULATION');
+  assert.equal(
+    forDifficulty('GREETINGS TO E-SCOOTER ENTHUSIASTS ...'),
+    'GREETINGS TO SKATING ENTHUSIASTS ...',
+  );
+  assert.equal(forDifficulty(NEWS[0]), NEWS[0], 'other lines are the same');
+  for (const n of NEWS) assert.doesNotMatch(forDifficulty(n), /SCOOTER/, 'no scooters on classic');
+  G.difficulty = 'modern';
+  assert.equal(forDifficulty(news), news);
 });

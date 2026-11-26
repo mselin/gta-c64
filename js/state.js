@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Shared game state, the player, held keys, and the on-screen message helpers.
-import { PI, SW, VIEW_H, VIEW_W } from './config.js';
+import { CLASSIC_WORDS, PI, SW, VIEW_H, VIEW_W } from './config.js';
 import { HOSP } from './world.js';
 import { wrapEven } from './util.js';
 
@@ -111,6 +111,8 @@ export const ppos = () => P.car || P;
 export const modern = () => G.difficulty === 'modern';
 /** Who rides along the pavements: e-scooter riders ('scoot') on the modern difficulty, skaters ('skate') on classic. */
 export const rider = () => (modern() ? 'scoot' : 'skate');
+/** A line as the difficulty has it: on classic, CLASSIC_WORDS in place of the modern ones. */
+export const forDifficulty = (t) => (modern() ? t : CLASSIC_WORDS.reduce((s, [m, c]) => s.replace(m, c), t));
 /** Whether someone rides rather than walks: a scooter rider or a skater. */
 export const isRider = (p) => p.type === 'scoot' || p.type === 'skate';
 /**
