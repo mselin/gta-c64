@@ -24,7 +24,7 @@ art = np.array(Image.open(SRC).convert('RGB'))
 assert art.shape[:2] == (844, 1500), 'expected the 1500 x 844 artwork'
 # The Commodore logo, in the gap between the stripe bars under the plate: the stripes just left of the gap,
 # copied across it.
-GAP_X0, GAP_X1, GAP_Y0, GAP_Y1 = 642, 744, 718, 792
+GAP_X0, GAP_X1, GAP_Y0, GAP_Y1 = 640, 746, 716, 800
 w = GAP_X1 - GAP_X0
 art[GAP_Y0:GAP_Y1, GAP_X0:GAP_X1] = art[GAP_Y0:GAP_Y1, GAP_X0 - w:GAP_X1 - w]
 

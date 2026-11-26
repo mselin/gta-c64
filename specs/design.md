@@ -770,7 +770,8 @@ starting on the text each time it comes up (`TITLE_PAGES`). Fire starts the game
 as well, however long it is held: fire shoots once it has been let go of and pressed again.
 - **The sunset picture** (`assets/title-sunset.png`, 320 × 180, the 16 colours in double-wide pixels, as the end
   pictures): a sunset over the city's skyline and the canal, palms, a police helicopter, a man in sunglasses with
-  a cigarette, a woman in sunglasses, a car, and Big Honk in sunglasses and a gold chain. Across the middle, the
+  a cigarette, a woman in sunglasses, a purple supercar with its headlights on (a car of either era, classic or
+  modern), and Big Honk in sunglasses and a gold chain. Across the middle, the
   logo on a dark plate with a rounded purple rim: "SLEAZEBURG" in slanted letters, white shading to pink, and
   under it a big "64", yellow shading to orange, between speed stripes in the sunset's colours, with a stripe bar
   under it all. The owner's artwork, made C64-like by `tools/title-picture.py`, which leaves out the artwork's
