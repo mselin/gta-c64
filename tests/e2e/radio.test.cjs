@@ -41,7 +41,8 @@ test('M turns the radio on at the title screen, with credits from the playlist',
   assert.equal(r.track.author, listed.author);
   assert.equal(r.track.released, listed.released);
   assert.ok(game.hvscRequests[0].endsWith(listed.hvsc), game.hvscRequests[0]);
-  assert.ok(r.level > 0.01, `audible output, level ${r.level}`);
+  // Sound comes out: some time in the next few seconds, as a tune can open with a moment of silence.
+  await game.until((s) => s.radioState().level > 0.01, 5000);
 
   await game.press('KeyM');
   await game.until((s) => !s.radioState().playing);
