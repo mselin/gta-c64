@@ -549,6 +549,7 @@ Heat is in `js/heat.js`, and the police in `js/spawner.js` and `js/cars.js`.
 | Hitting another car with a shot | 1 |
 | Firing a shot | 1.5 |
 | Stealing the limousine on that job | 10 |
+| Driving on the pavement or a plaza where the police see it | 4, at most every 3 seconds |
 
 **The police notice the player** when they come this close (`NOTICE` in `js/config.js`), in city pixels: the
 same screen distance at any scale, about the edge of the view (75, 60 and 65 at the default 2):
@@ -558,6 +559,13 @@ same screen distance at any scale, about the edge of the view (75, 60 and 65 at 
 | A police car already chasing | 150 / ZOOM |
 | An officer on foot | 120 / ZOOM |
 | A police car on patrol in ordinary traffic | 130 / ZOOM |
+
+**The police and the pavement** (`SIDEWALK` in `js/config.js`):
+- **The rule:** driving faster than 15 px/s on a pavement or plaza tile is a crime of 4 points, when a chasing car, a manned patrol car or an officer on foot who is not knocked down notices the player (the distances above).
+- **How often:** at most once every 3 seconds, however long it goes on. Two times make heat 1, and from then on patrol cars join the chase.
+- **What they say:** one of "OFFICER: THAT IS A SIDEWALK, NOT A SHORTCUT.", "POLICE: SIDEWALKS ARE FOR PEDESTRIANS AND PARKING TICKETS.", "THE COPS SAW THAT. THE PAVEMENT IS NOT A LANE." or "DRIVING ON THE SIDEWALK. IN FRONT OF THE POLICE. BOLD." If the heat goes up a level, its own announcement replaces the line.
+- **Not counted:** on foot, out of their sight, or barely moving.
+- **The cameras too:** on the modern difficulty a GAGGLE camera that sees it adds its own share, as with any crime. The cameras also report fast driving on the pavement by themselves, police or not.
 
 **Cooling down:** with heat above 0 and no chasing car or officer near, the heat drops one level every
 9 seconds. Its points fall to that level's threshold.

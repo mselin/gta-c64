@@ -1,8 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The wanted level: crimes raise it, losing the police lowers it. Also the paint shop, district names and news ticker.
-import { CCOLS, DISTRICTS, HEATMSG, HT, KIND, NEWS, NOTICE, STOLEN_CRUISER_HEAT } from './config.js';
+import {
+  CCOLS,
+  DISTRICTS,
+  HEATMSG,
+  HT,
+  KIND,
+  NEWS,
+  NOTICE,
+  PLAZA,
+  SIDEWALK,
+  SIDEWALK_SAYS,
+  STOLEN_CRUISER_HEAT,
+  WALK,
+} from './config.js';
 import { R, hyp, pick } from './util.js';
-import { PAINT, districtAt } from './world.js';
+import { PAINT, districtAt, tileAt } from './world.js';
 import { sfx, tone } from './audio.js';
 import { G, P, forDifficulty, msg, ppos } from './state.js';
 import { down } from './player.js';
@@ -12,7 +25,9 @@ import { heliOver } from './heli.js';
 let district = '';
 let newsT = 12;
 let paintCd = 0;
+let sidewalkAt = -99; // when the police last saw the player drive on the pavement (G.clock)
 export function resetHeat() {
+  sidewalkAt = -99;
   district = '';
   newsT = 12;
   paintCd = 0;
@@ -71,6 +86,16 @@ export function updHeat(dt) {
     about = policeAbout(p),
     // Close enough to keep the heat up and set the siren off: a chasing car or an officer on foot.
     near = about.chase || about.foot;
+  // Driving on the pavement where the police can see it.
+  if (G.screen === 'play' && P.car && (near || about.patrol) && G.clock - sidewalkAt > SIDEWALK.again) {
+    const t = tileAt(p.x, p.y);
+    if ((t === WALK || t === PLAZA) && hyp(P.car.vx, P.car.vy) > SIDEWALK.speed) {
+      sidewalkAt = G.clock;
+      // The line first, so that a rise in the heat, announced by crime(), has the last word.
+      msg(pick(SIDEWALK_SAYS));
+      crime(SIDEWALK.crime);
+    }
+  }
   // The police know their own cruisers, and know the player is not one of them. A patrol car in ordinary
   // traffic notices too: there are police about even before the player has any heat.
   if (G.screen === 'play' && P.car && P.car.kind === KIND.police && G.heat < STOLEN_CRUISER_HEAT) {

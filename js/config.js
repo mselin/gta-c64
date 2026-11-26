@@ -241,6 +241,18 @@ export const JACK = [
  *   sight;
  * - sayGap: the least time between two of its messages about crimes it saw.
  */
+/**
+ * The police and the pavement: the player driving faster than `speed` on a pavement or plaza where a chasing car, a
+ * patrol car or an officer on foot notices them (NOTICE) is a crime of `crime` points, at most once each `again`
+ * seconds, with one of SIDEWALK_SAYS.
+ */
+export const SIDEWALK = { speed: 15, crime: 4, again: 3 };
+export const SIDEWALK_SAYS = [
+  'OFFICER: THAT IS A SIDEWALK, NOT A SHORTCUT.',
+  'POLICE: SIDEWALKS ARE FOR PEDESTRIANS AND PARKING TICKETS.',
+  'THE COPS SAW THAT. THE PAVEMENT IS NOT A LANE.',
+  'DRIVING ON THE SIDEWALK. IN FRONT OF THE POLICE. BOLD.',
+];
 export const CAM = {
   name: 'GAGGLE',
   every: 5,
