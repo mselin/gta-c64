@@ -196,6 +196,15 @@ export const HEATMSG = [
   'HEAT 4: OVERTIME HAS BEEN APPROVED',
   'HEAT 5: THE HOMEOWNERS ASSOCIATION HAS BEEN NOTIFIED',
 ];
+/**
+ * Words the classic difficulty says in place of modern ones, wherever a line speaks of the riders: in the news on
+ * the status line and in the title's greetings (`forDifficulty` in js/state.js). Modern has scooter riders, classic
+ * skaters.
+ */
+export const CLASSIC_WORDS = [
+  ['E-SCOOTER COUNT', 'SKATER COUNT'],
+  ['E-SCOOTER ENTHUSIASTS', 'SKATING ENTHUSIASTS'],
+];
 export const NEWS = [
   'NEWS: MAYOR DENIES EXISTENCE OF POTHOLES, FALLS INTO ONE',
   'NEWS: RENT UP 40%. LANDLORDS CITE "VIBES"',

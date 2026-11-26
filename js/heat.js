@@ -4,7 +4,7 @@ import { CCOLS, DISTRICTS, HEATMSG, HT, KIND, NEWS, NOTICE, STOLEN_CRUISER_HEAT 
 import { R, hyp, pick } from './util.js';
 import { PAINT, districtAt } from './world.js';
 import { sfx, tone } from './audio.js';
-import { G, P, msg, ppos } from './state.js';
+import { G, P, forDifficulty, msg, ppos } from './state.js';
 import { down } from './player.js';
 import { reported, seenBy } from './cams.js';
 import { heliOver } from './heli.js';
@@ -143,6 +143,6 @@ export function updHeat(dt) {
   newsT -= dt;
   if (newsT <= 0) {
     newsT = 22 + R() * 15;
-    if (G.msgT <= 0) msg(pick(NEWS));
+    if (G.msgT <= 0) msg(forDifficulty(pick(NEWS)));
   }
 }

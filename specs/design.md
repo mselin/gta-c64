@@ -783,6 +783,9 @@ game. More settings can be added to the list later.
   | MICROMOBILITY AUDIT: 5 MORE SCOOTER BROS. THEY RESPAWN FASTER THAN POTHOLES. | GNARLY AUDIT: 5 MORE SKATER DUDES. THEY RESPAWN FASTER THAN POTHOLES. |
 
   Changing the difficulty turns the riders about into the other kind.
+- **The news and the greetings** speak of the riders the same way (`CLASSIC_WORDS` in `js/config.js`,
+  `forDifficulty` in `js/state.js`). On classic the news line is "NEWS: SKATER COUNT NOW EXCEEDS POPULATION", and
+  the title's greetings go to "SKATING ENTHUSIASTS". On modern they stay "E-SCOOTER".
 - **Changing it:** D goes on to the next setting, round to the first again. It works only on the title screen,
   where there is nothing to walk right; in play D is right, as always. M stays the music. On a touch screen, a
   tap on the setting's line changes it, while the text page shows.

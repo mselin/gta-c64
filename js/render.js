@@ -23,7 +23,7 @@ import { ARW, HELI_BODY, HELI_ROTOR, carSpr, pedSpr } from './sprites.js';
 import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
-import { G, onScreen, P, ppos, sirenFlash, touch, weapon, weaponLabel } from './state.js';
+import { G, forDifficulty, onScreen, P, ppos, sirenFlash, touch, weapon, weaponLabel } from './state.js';
 import { npText, radio, radioAudible } from './radio.js';
 import { drawEnding } from './endings.js';
 import { help } from './help.js';
@@ -406,9 +406,11 @@ export const titlePage = (t) =>
   t % (TITLE_PAGES.text + TITLE_PAGES.picture) < TITLE_PAGES.text ? 'text' : 'picture';
 /** The greetings scrolling along a line of the title screen. */
 function scroller(y) {
-  const off = Math.floor(G.clock * 60) % (SCROLL.length * 8);
-  text(SCROLL, -off, y, 13);
-  if (off > SCROLL.length * 8 - SW) text(SCROLL, SCROLL.length * 8 - off, y, 13);
+  // On classic the greetings go to skating enthusiasts rather than e-scooter ones.
+  const t = forDifficulty(SCROLL),
+    off = Math.floor(G.clock * 60) % (t.length * 8);
+  text(t, -off, y, 13);
+  if (off > t.length * 8 - SW) text(t, t.length * 8 - off, y, 13);
 }
 /** The title's picture page: the sunset, and under it the call to start, blinking, and the greetings. */
 function drawTitlePicture() {
