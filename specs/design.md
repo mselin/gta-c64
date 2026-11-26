@@ -644,6 +644,8 @@ and no police about:
   car notices it (the distances above), the heat goes up to 2. The game says "THE COPS KNOW THAT CRUISER. THEY
   DO NOT KNOW YOU."
 - **Higher heat** is left as it is.
+- **Not a crime:** the heat goes straight to the level, so a GAGGLE camera that sees it neither adds to it nor
+  reports it.
 - **Patrols count:** patrol cars notice it as well, so it is spotted even with no heat at all.
 - **Cars that cannot notice:** an empty or wrecked police car notices nothing.
 - **Only while driving it:** getting out of the cruiser ends it.

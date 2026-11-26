@@ -27,7 +27,7 @@ export function updBullets(dt) {
     if (b.own === 0) {
       // A GAGGLE camera: its pole and the camera on top of it, around 5 pixels up from its foot.
       for (const cam of G.cams)
-        if (!cam.dead && !(cam.alarm > 0) && hyp(cam.x - b.x, cam.y - 5 - b.y) < CAM.hit + 2) {
+        if (!cam.dead && !(cam.alarm > 0) && hyp(cam.x - b.x, cam.y - 5 - b.y) < CAM.hit) {
           tamper(cam);
           b.l = 0;
           break;

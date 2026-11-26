@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Keyboard, pointer and touch-button input.
-import { BX, BY, DIFFICULTIES, DIFFICULTY_Y, TITLE_PAGES } from './config.js';
+import { BX, BY, DIFFICULTIES, DIFFICULTY_Y } from './config.js';
 import { cv } from './screen.js';
 import { nextZoom } from './scale.js';
 import { initAudio } from './audio.js';
-import { G, K, P, edge, touch } from './state.js';
+import { G, K, P, edge, titlePage, touch } from './state.js';
 import { pickSidFile, radioInit, radioNext, radioStation, setFx, setMusic, sidVol } from './radio.js';
 import { infoToggle } from './info.js';
 import { iconSvg } from './icons.js';
@@ -145,7 +145,7 @@ let steering = null; // the pointer doing the steering
 function onDifficultyLine(e) {
   const r = cv.getBoundingClientRect(),
     y = ((e.clientY - r.top) * 272) / r.height - BY,
-    text = (G.clock - G.titleAt) % (TITLE_PAGES.text + TITLE_PAGES.picture) < TITLE_PAGES.text;
+    text = titlePage(G.clock - G.titleAt) === 'text';
   return text && y >= DIFFICULTY_Y - 4 && y < DIFFICULTY_Y + 12;
 }
 function aim(e) {

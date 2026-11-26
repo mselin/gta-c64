@@ -5,39 +5,53 @@ import { hash } from './util.js';
 import { sinkStage } from './entities.js';
 import { FRAME, frame, lookOf } from './figures.js';
 
-/** Turn a w x h grid of palette indexes (-1 for empty) into NA frames, S pixels square, each turned a step further round. */
+/**
+ * Turn a w x h grid of palette indexes (-1 for empty) into NA frames, S pixels square, each turned a step further
+ * round. Each frame is drawn the first time it is asked for: a car seen in one colour for the first time does not
+ * draw all its directions at once, in one frame of the game.
+ */
 function mkSprite(src, w, h, NA, S) {
-  const fr = [];
-  for (let a = 0; a < NA; a++) {
-    const c = document.createElement('canvas');
-    c.width = c.height = S;
-    const q = c.getContext('2d'),
-      id = q.createImageData(S, S),
-      an = (a / NA) * PI * 2,
-      cs = Math.cos(an),
-      sn = Math.sin(an);
-    for (let y = 0; y < S; y++)
-      for (let x = 0; x < S; x++) {
-        const dx = x + 0.5 - S / 2,
-          dy = y + 0.5 - S / 2,
-          sx = Math.floor(cs * dx + sn * dy + w / 2),
-          sy = Math.floor(-sn * dx + cs * dy + h / 2);
-        if (sx >= 0 && sy >= 0 && sx < w && sy < h) {
-          const p = src[sy * w + sx];
-          if (p >= 0) {
-            const o = (y * S + x) * 4,
-              c3 = RGB[p];
-            id.data[o] = c3[0];
-            id.data[o + 1] = c3[1];
-            id.data[o + 2] = c3[2];
-            id.data[o + 3] = 255;
-          }
+  const fr = new Array(NA);
+  for (let a = 0; a < NA; a++)
+    Object.defineProperty(fr, a, {
+      configurable: true,
+      enumerable: true,
+      get() {
+        const c = turned(src, w, h, (a / NA) * PI * 2, S);
+        Object.defineProperty(fr, a, { value: c, enumerable: true });
+        return c;
+      },
+    });
+  return fr;
+}
+/** One frame of mkSprite: the grid turned by `an`, on a canvas S pixels square. */
+function turned(src, w, h, an, S) {
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const q = c.getContext('2d'),
+    id = q.createImageData(S, S),
+    cs = Math.cos(an),
+    sn = Math.sin(an);
+  for (let y = 0; y < S; y++)
+    for (let x = 0; x < S; x++) {
+      const dx = x + 0.5 - S / 2,
+        dy = y + 0.5 - S / 2,
+        sx = Math.floor(cs * dx + sn * dy + w / 2),
+        sy = Math.floor(-sn * dx + cs * dy + h / 2);
+      if (sx >= 0 && sy >= 0 && sx < w && sy < h) {
+        const p = src[sy * w + sx];
+        if (p >= 0) {
+          const o = (y * S + x) * 4,
+            c3 = RGB[p];
+          id.data[o] = c3[0];
+          id.data[o + 1] = c3[1];
+          id.data[o + 2] = c3[2];
+          id.data[o + 3] = 255;
         }
       }
-    q.putImageData(id, 0, 0);
-    fr.push(c);
-  }
-  return fr;
+    }
+  q.putImageData(id, 0, 0);
+  return c;
 }
 function carSrc(k, col) {
   const L = k.L,

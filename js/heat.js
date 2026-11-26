@@ -22,6 +22,10 @@ export function crime(n) {
   const p = ppos(),
     cam = seenBy(p.x, p.y);
   if (cam) n += reported(cam, n);
+  addHeat(n);
+}
+/** `n` more points of heat, and the level they make, announced if it went up. */
+function addHeat(n) {
   G.heatPts = Math.min(230, G.heatPts + n);
   G.heatCool = 0;
   let h = 0;
@@ -33,52 +37,46 @@ export function crime(n) {
   }
 }
 /**
- * Whether the police are about the player: a police car chasing them within `NOTICE.car`, a manned police car on
- * patrol within `NOTICE.patrol`, or an officer on foot who is not knocked down within `NOTICE.foot`. The distances
- * the police notice the player at. The car the player is driving does not count, nor an empty or wrecked one.
+ * Which police are about the player at `p`, at the distances they notice the player at (NOTICE): a police car
+ * chasing them (`chase`), an officer on foot who is not knocked down (`foot`), and a manned, unwrecked police car on
+ * patrol in ordinary traffic (`patrol`). The car the player is driving is not one of them.
  */
-export function policeNear() {
-  const p = ppos();
+export function policeAbout(p = ppos()) {
+  let chase = false,
+    foot = false,
+    patrol = false;
   for (const c of G.cars) {
     if (c === P.car) continue;
     const d = hyp(c.x - p.x, c.y - p.y);
-    if (c.ai === 'cop' && d < NOTICE.car) return true;
-    if (c.ai === 'traffic' && c.kind === KIND.police && c.driver && !c.dead && d < NOTICE.patrol) return true;
+    if (c.ai === 'cop' && d < NOTICE.car) chase = true;
+    else if (c.ai === 'traffic' && c.kind === KIND.police && c.driver && !c.dead && d < NOTICE.patrol)
+      patrol = true;
   }
   for (const q of G.peds)
-    if (q.type === 'cop' && !(q.ko > 0) && hyp(q.x - p.x, q.y - p.y) < NOTICE.foot) return true;
-  return false;
+    if (q.type === 'cop' && !(q.ko > 0) && hyp(q.x - p.x, q.y - p.y) < NOTICE.foot) {
+      foot = true;
+      break;
+    }
+  return { chase, foot, patrol };
+}
+/** Whether any of the police are about the player (policeAbout): what decides if they take the weapons. */
+export function policeNear() {
+  const a = policeAbout();
+  return a.chase || a.foot || a.patrol;
 }
 /** Seconds on end that arrest a player at the wheel: boxed in by chasing cars, or an officer at the window. */
 export const BUST = { boxed: 2, window: 0.7 };
 export function updHeat(dt) {
-  const p = ppos();
-  let near = false;
-  for (const c of G.cars)
-    if (c.ai === 'cop' && hyp(c.x - p.x, c.y - p.y) < NOTICE.car) {
-      near = true;
-      break;
-    }
-  if (!near)
-    for (const q of G.peds)
-      if (q.type === 'cop' && !(q.ko > 0) && hyp(q.x - p.x, q.y - p.y) < NOTICE.foot) {
-        near = true;
-        break;
-      }
+  const p = ppos(),
+    about = policeAbout(p),
+    // Close enough to keep the heat up and set the siren off: a chasing car or an officer on foot.
+    near = about.chase || about.foot;
   // The police know their own cruisers, and know the player is not one of them. A patrol car in ordinary
   // traffic notices too: there are police about even before the player has any heat.
   if (G.screen === 'play' && P.car && P.car.kind === KIND.police && G.heat < STOLEN_CRUISER_HEAT) {
-    const patrol = G.cars.some(
-      (c) =>
-        c !== P.car &&
-        c.ai === 'traffic' &&
-        c.kind === KIND.police &&
-        c.driver &&
-        !c.dead &&
-        hyp(c.x - p.x, c.y - p.y) < NOTICE.patrol,
-    );
-    if (near || patrol) {
-      crime(HT[STOLEN_CRUISER_HEAT] - G.heatPts);
+    if (near || about.patrol) {
+      // Straight up to the level, not as a crime: no GAGGLE camera adds to it or reports it.
+      addHeat(HT[STOLEN_CRUISER_HEAT] - G.heatPts);
       msg('THE COPS KNOW THAT CRUISER. THEY DO NOT KNOW YOU.');
     }
   }

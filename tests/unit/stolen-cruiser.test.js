@@ -8,6 +8,9 @@ import { genMap } from '../../js/world.js';
 import { G, P, resetState } from '../../js/state.js';
 import { mkCar, mkPed } from '../../js/entities.js';
 import { crime, updHeat } from '../../js/heat.js';
+import { mkCam, seenBy } from '../../js/cams.js';
+
+const DT = 1 / 60;
 
 const X = 488,
   Y = 600; // on a road, away from the paint shop
@@ -109,4 +112,14 @@ test('only a police car gives the player away, and only while driving it', () =>
   P.car = null;
   updHeat(1 / 30);
   assert.equal(G.heat, 0, 'on foot');
+});
+
+test('a GAGGLE camera watching does not add to it: the heat goes to the level, as a camera has no say', () => {
+  const cam = mkCam(X + 20, Y);
+  G.cams = [cam];
+  assert.ok(seenBy(X, Y), 'the camera sees the player');
+  patrol(40);
+  updHeat(DT);
+  assert.equal(G.heatPts, HT[STOLEN_CRUISER_HEAT], 'exactly the level, nothing on top');
+  assert.ok(!(cam.flash > 0), 'and the camera does not flash for it');
 });
