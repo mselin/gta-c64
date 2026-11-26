@@ -165,7 +165,8 @@ in Discord's Activity Privacy settings.
 Options, for testing: `-port` changes the port (the game always uses 26464), `-allow-origin` adds an origin
 that may use the bridge, `-app-id` sets a different Discord application, `-version` prints the version. A
 development copy of the game (`npm start`) needs `-allow-origin http://localhost:8064`: only the game's own
-address is allowed otherwise.
+address is allowed otherwise. An origin is `scheme://host` or `scheme://host:port`, http or https: the bridge refuses to start with
+anything else, such as `null` or `*`.
 
 ### Safari and the helper window
 

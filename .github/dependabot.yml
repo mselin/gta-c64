@@ -8,3 +8,26 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  # Security fixes for the npm packages (the tests and tooling, and the desktop app's build) and the desktop app's
+  # Rust crates, which are pinned by their lock files and would otherwise never be flagged.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm:
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /desktop
+    schedule:
+      interval: monthly
+    groups:
+      desktop-npm:
+        patterns: ["*"]
+  - package-ecosystem: cargo
+    directory: /desktop/src-tauri
+    schedule:
+      interval: monthly
+    groups:
+      cargo:
+        patterns: ["*"]

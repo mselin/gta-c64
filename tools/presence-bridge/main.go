@@ -16,6 +16,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -66,6 +67,10 @@ func main() {
 	origins := defaultOrigins
 	for _, o := range strings.Split(*extra, ",") {
 		if o = strings.TrimSpace(o); o != "" {
+			if !validOrigin(o) {
+				log.Fatalf("-allow-origin %q is not an origin: give scheme://host or scheme://host:port, "+
+					"http or https, with nothing after it (not null, not *)", o)
+			}
 			origins = append(origins, o)
 		}
 	}
@@ -119,4 +124,15 @@ func envOr(name, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// validOrigin reports whether o is a web origin as a browser sends it: http or https, a host, maybe a port, and
+// nothing else. "null" (sandboxed frames and file pages from anywhere) and "*" are not origins to trust.
+func validOrigin(o string) bool {
+	u, err := url.Parse(o)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.Hostname() == "" {
+		return false
+	}
+	return u.User == nil && u.Path == "" && u.RawQuery == "" && u.Fragment == "" && !u.ForceQuery &&
+		u.Opaque == "" && u.Scheme+"://"+u.Host == o
 }
