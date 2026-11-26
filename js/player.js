@@ -14,6 +14,12 @@ import { radio } from './radio.js';
 import { ARM_OUT_T, PUNCH, SHOOT, STAB } from './figures.js';
 import { assist, immobilised } from './adas.js';
 
+/** Put the player's own bookkeeping back to how a new game starts (resetGame in game.js). */
+export function resetPlayer() {
+  downKind = '';
+  seized = false;
+  skidT = 0;
+}
 let downKind = '';
 let seized = false; // the police took the player's weapons when they last went down
 let skidT = 0;

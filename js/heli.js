@@ -11,11 +11,17 @@ export function updHeli(dt) {
   const p = ppos();
   if (!G.heli) {
     if (G.screen !== 'play' || G.heat < HELI.heat) return;
-    // It comes in from out of sight, from any side.
-    const a = R() * PI * 2;
+    // It comes in from out of sight, from any side: HELI.from away, or further where that would still be in view
+    // (near the edge of the city the view is not centred on the player).
+    let a = R() * PI * 2,
+      d = HELI.from;
+    while (onScreen(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d - HELI.alt, 40)) {
+      a += PI / 4;
+      d += 40;
+    }
     G.heli = {
-      x: p.x + Math.cos(a) * HELI.from,
-      y: p.y + Math.sin(a) * HELI.from,
+      x: p.x + Math.cos(a) * d,
+      y: p.y + Math.sin(a) * d,
       vx: 0,
       vy: 0,
       a,
@@ -37,7 +43,7 @@ export function updHeli(dt) {
     // Away from the player, the way it is facing, until it is well out of sight.
     tx = h.x + Math.cos(h.a) * 100;
     ty = h.y + Math.sin(h.a) * 100;
-    if (hyp(h.x - p.x, h.y - p.y) > HELI.gone) {
+    if (hyp(h.x - p.x, h.y - p.y) > HELI.gone && !onScreen(h.x, h.y - HELI.alt, 40)) {
       G.heli = null;
       return;
     }
@@ -47,8 +53,9 @@ export function updHeli(dt) {
     ty = p.y + Math.sin(h.t * 0.9) * HELI.orbit;
   }
   // How fast the player is going, from where they were a moment ago: the helicopter matches it, so it keeps up.
-  const pvx = h.px == null || h.leaving ? 0 : (p.x - h.px) / dt,
-    pvy = h.py == null || h.leaving ? 0 : (p.y - h.py) / dt;
+  const track = h.px != null && !h.leaving && dt > 0,
+    pvx = track ? (p.x - h.px) / dt : 0,
+    pvy = track ? (p.y - h.py) / dt : 0;
   h.px = p.x;
   h.py = p.y;
   // It wants to go as fast as the player and close the gap in about half a second on top of that, no faster than

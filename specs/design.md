@@ -573,7 +573,9 @@ same screen distance at any scale, about the edge of the view (75, 60 and 65 at 
 - **The heat does not cool** while it is overhead, within 21 pixels (16 + 5) of the player. It is not the police
   near, though: it does not set the siren off, nor take the player's weapons if they are wasted.
 - **It goes** once the heat is below 5, at the paint shop say: it flies straight on the way it is facing, lighting
-  nobody up, and is gone 300 pixels away. Wasted or busted, it is gone at once with the rest of the police.
+  nobody up, and is gone once it is 300 pixels away and out of view. Wasted or busted, it is gone with the rest of
+  the police when the player comes back. At any zoom it comes in from out of view, further off than 220 pixels where
+  the view is not centred on the player, near the edge of the city.
 - **How it looks** (`drawHeli` in `js/render.js`, its frames `HELI_BODY` and `HELI_ROTOR` in `js/sprites.js`):
   - **The searchlight:** a ring of 16 yellow (7) dots, 16 across, going round on the ground under it.
   - **The helicopter:** drawn 14 pixels above that, over everything in the city. It has a dark blue (6) cabin with a
@@ -615,7 +617,13 @@ who is not knocked down):
 - **Officers shoot** from heat 3, at the player within 95 pixels, every 1.1 to 1.7 seconds, but not while they
   are swimming, in the canal or a fountain pool.
 - **Boxed in:** if the player's car is slower than 12 px/s with a chasing car within 24 pixels, the player is
-  arrested after 2 seconds of it.
+  arrested after 2 seconds of it on end. "BOXED IN. LIKE YOUR CAREER PROSPECTS."
+- **An officer at the window:** an officer on foot within 13 pixels of the player's car while it goes slower than
+  22 px/s arrests them after 0.7 seconds of it on end, however many officers there are. "PLEASE STEP OUT OF THE
+  STOLEN VEHICLE."
+- **Each count is its own** (`BUST` in `js/heat.js`, `boxedT` and `windowT` on the car) and goes back to 0 the
+  moment the player is free of it. (Before mselin/gta-c64#94, one count served both and never went back, so
+  a close escape left the player a moment's touch from arrest for the rest of the game.)
 
 **Wasted or busted** (`down` and `respawn` in `js/player.js`). The player comes back, with full health, no heat
 and no police about:

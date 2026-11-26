@@ -319,6 +319,7 @@ function updHonk(p, dt) {
   honkMove(p, p.dx * p.spd, p.dy * p.spd, dt);
 }
 export function updPeds(dt) {
+  G.copAtWindow = false;
   const pl = ppos();
   for (const p of G.peds.slice()) {
     p.anim += dt * p.spd * 0.15;
@@ -357,13 +358,8 @@ export function updPeds(dt) {
         if (onScreen(p.x, p.y, 0)) sfx.shot();
       }
       if (!P.car && d < 7 * PERSON) down('busted');
-      else if (P.car && d < 13 && hyp(P.car.vx, P.car.vy) < 22) {
-        P.car.bust += dt;
-        if (P.car.bust > 0.7) {
-          P.car.bust = 0;
-          down('busted', 'PLEASE STEP OUT OF THE STOLEN VEHICLE');
-        }
-      }
+      // At the window of the player's slow car: updHeat counts how long, once a frame, however many officers.
+      else if (P.car && d < 13 && hyp(P.car.vx, P.car.vy) < 22) G.copAtWindow = true;
       continue;
     }
     if (p.flee > 0) {

@@ -10,6 +10,10 @@ import { fitAssists } from './adas.js';
 let spT = 0;
 let spP = 0;
 let spC = 0;
+/** The spawn timers back to how a new game starts (resetGame in game.js). */
+export function resetSpawner() {
+  spT = spP = spC = 0;
+}
 function nearCar(x, y, r) {
   for (const c of G.cars) if (Math.abs(c.x - x) < r && Math.abs(c.y - y) < r) return true;
   return false;
