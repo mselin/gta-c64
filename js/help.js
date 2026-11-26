@@ -17,6 +17,8 @@ export const HELP = {
     ],
     start: 'PRESS FIRE TO COMMIT CRIMES',
     musicOff: 'MUSIC IS OFF - PRESS M TO TURN IT ON',
+    // The title's difficulty line: D goes on to the next.
+    difficulty: (name) => 'DIFFICULTY: ' + name.toUpperCase() + ' - PRESS D',
     radioMusicOff: ' (MUSIC IS OFF - PRESS M)',
     confirm: 'Y = YES    N = NO',
     newGame: 'NEW GAME?   Y = YES   N = NO',
@@ -31,6 +33,7 @@ export const HELP = {
     ],
     start: 'TAP THE SCREEN TO COMMIT CRIMES',
     musicOff: 'MUSIC IS OFF - TAP THE NOTE BUTTON',
+    difficulty: (name) => 'DIFFICULTY: ' + name.toUpperCase() + ' - TAP HERE',
     radioMusicOff: ' (MUSIC IS OFF - TAP THE NOTE BUTTON)',
     confirm: 'GUN = YES    CAR = NO',
     newGame: 'NEW GAME?  TAP = YES  CAR = NO',

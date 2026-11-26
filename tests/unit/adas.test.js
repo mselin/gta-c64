@@ -18,7 +18,10 @@ const DT = 1 / 60;
 const MID = (MW * 16) / 2;
 const saved = { ...ADAS };
 
-before(() => genMap());
+before(() => {
+  genMap();
+  G.difficulty = 'modern'; // driver assistance is fitted only on the modern difficulty (tests/unit/difficulty.test.js)
+});
 beforeEach(() => {
   resetState();
   G.screen = 'play';

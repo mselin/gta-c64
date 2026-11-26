@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Keyboard, pointer and touch-button input.
-import { BX, BY } from './config.js';
+import { BX, BY, DIFFICULTIES, DIFFICULTY_Y, TITLE_PAGES } from './config.js';
 import { cv } from './screen.js';
 import { nextZoom } from './scale.js';
 import { initAudio } from './audio.js';
@@ -44,6 +44,12 @@ function press(k) {
     return;
   }
   if (G.infoOpen) return;
+  if (k === 'difficulty') {
+    // The next difficulty, and the title back to its text page, where its line says which.
+    G.difficulty = DIFFICULTIES[(DIFFICULTIES.indexOf(G.difficulty) + 1) % DIFFICULTIES.length];
+    G.titleAt = G.clock;
+    return;
+  }
   if (G.quitAsk) {
     if (k === 'yes' || k === 'fire') {
       G.quitAsk = false;
@@ -84,7 +90,8 @@ export function initInput() {
     if (G.infoOpen && k !== 'info' && k !== 'esc') return;
     if (k) {
       e.preventDefault();
-      if (!e.repeat) press(k);
+      // On the title screen, D is the difficulty: there is nothing to walk right on it.
+      if (!e.repeat) press(G.screen === 'title' && e.code === 'KeyD' ? 'difficulty' : k);
     }
   });
   addEventListener('keyup', (e) => {
@@ -97,12 +104,13 @@ export function initInput() {
   addEventListener('blur', () => {
     for (const k in K) K[k] = false;
   });
-  cv.addEventListener('pointerdown', () => {
+  cv.addEventListener('pointerdown', (e) => {
     cv.focus();
     initAudio();
     radioInit();
     if (G.sidPlayer) G.sidPlayer.unlock();
-    if (G.screen !== 'play' && G.screen !== 'down' && !G.infoOpen) edge.fire = true;
+    if (G.screen === 'title' && !G.infoOpen && onDifficultyLine(e)) press('difficulty');
+    else if (G.screen !== 'play' && G.screen !== 'down' && !G.infoOpen) edge.fire = true;
   });
   initTouch();
   document.querySelectorAll('#pad [data-icon]').forEach((el) => (el.innerHTML = iconSvg(el.dataset.icon)));
@@ -133,6 +141,13 @@ export function initInput() {
 // Only touch and pen count, so a mouse on a desktop behaves as it always has. The buttons sit outside the
 // steering area, so a second finger can fire or brake while the first steers.
 let steering = null; // the pointer doing the steering
+/** Whether a pointer is on the title's difficulty line, while the title shows its text page. */
+function onDifficultyLine(e) {
+  const r = cv.getBoundingClientRect(),
+    y = ((e.clientY - r.top) * 272) / r.height - BY,
+    text = (G.clock - G.titleAt) % (TITLE_PAGES.text + TITLE_PAGES.picture) < TITLE_PAGES.text;
+  return text && y >= DIFFICULTY_Y - 4 && y < DIFFICULTY_Y + 12;
+}
 function aim(e) {
   // From the page to the game screen: the canvas is 384 by 272, with the 320 by 200 game screen inside a border.
   const r = cv.getBoundingClientRect();

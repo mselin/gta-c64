@@ -513,3 +513,27 @@ test('at heat 5 the police helicopter comes and hovers over the player, drawn wi
   );
   assert.match(await game.read((s) => s.G.msgTxt), /POLICE HELICOPTER/);
 });
+
+test('on the title screen D goes from classic to modern and back; M is still the music', async () => {
+  await game.press('Space');
+  await game.until((s) => s.G.screen === 'title');
+  assert.equal(await game.read((s) => s.G.difficulty), 'classic');
+  const music = await game.read((s) => s.G.musicOn);
+  await game.press('KeyM');
+  await game.wait(200);
+  assert.notEqual(await game.read((s) => s.G.musicOn), music, 'M switches the music');
+  assert.equal(await game.read((s) => s.G.difficulty), 'classic', 'M is not the difficulty');
+  await game.press('KeyD');
+  await game.until((s) => s.G.difficulty === 'modern');
+  await game.press('Space');
+  await game.until((s) => s.G.screen === 'play');
+  assert.equal(await game.read((s) => s.G.cams.length), 17, 'modern: the GAGGLE cameras are up');
+  await game.press('Escape');
+  await game.press('KeyY');
+  await game.until((s) => s.G.screen === 'title');
+  await game.press('KeyD');
+  await game.until((s) => s.G.difficulty === 'classic');
+  await game.press('Space');
+  await game.until((s) => s.G.screen === 'play');
+  assert.equal(await game.read((s) => s.G.cams.length), 0, 'classic: no cameras');
+});

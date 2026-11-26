@@ -1,6 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Draws every screen: boot, title, the city with its HUD, and the win screen.
-import { BOOT, BX, BY, GOAL, HELI, KIND, PAL, PI, SH, SW, TITLE_PAGES, VH, ZOOM } from './config.js';
+import {
+  BOOT,
+  BX,
+  BY,
+  GOAL,
+  HELI,
+  KIND,
+  DIFFICULTY_Y,
+  PAL,
+  PI,
+  SH,
+  SW,
+  TITLE_PAGES,
+  VH,
+  ZOOM,
+} from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { cx, g, scr } from './screen.js';
 import { ctext, text } from './font.js';
@@ -424,6 +439,7 @@ function drawTitle() {
   text('64', 264, 58, 7);
   ctext('A TOTALLY ORIGINAL CRIME SATIRE', 86, 15);
   ctext('8 BITS. 16 COLOURS. 0 SCRUPLES.', 96, 12);
+  ctext(help().difficulty(G.difficulty), DIFFICULTY_Y, G.difficulty === 'classic' ? 12 : 7);
   help().controls.forEach((line, i) => text(line, 48, 116 + i * 10, i < 4 ? 3 : 14));
   {
     const t = G.musicOn ? (radioAudible() ? 'NOW PLAYING: ' + npText() : 'TUNING IN ...') : help().musicOff;

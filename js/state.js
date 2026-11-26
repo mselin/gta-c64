@@ -67,6 +67,8 @@ export const G = {
   station: 0, // index of the tuned radio station
   nowPlaying: null, // the radio track that is loaded, or null
   infoOpen: false, // the information page is open
+  // The difficulty, one of DIFFICULTIES, chosen on the title screen (D): 'classic' to begin with.
+  difficulty: 'classic',
   ...freshGame(),
 };
 export const K = {},
@@ -105,6 +107,8 @@ export function pop(x, y, t, col) {
   G.pops.push({ x, y, t, col: col || 1, l: 1.2 });
 }
 export const ppos = () => P.car || P;
+/** Whether the game is on the modern difficulty: cursed driver assistance, car alarms and GAGGLE cameras. */
+export const modern = () => G.difficulty === 'modern';
 /**
  * The car whose body is at (x, y), with `r` to spare round it, or null: the car's length and width, turned with
  * it. Cars are solid for anyone on foot, stopped or moving; one on the bottom of the canal is out of the way.
