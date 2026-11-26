@@ -4,8 +4,8 @@ import { BOOT, GOAL, KIND, VIEW_H, VIEW_W, WPX } from './config.js';
 import { R, clamp, hyp } from './util.js';
 import { HOSP, parkSpots } from './world.js';
 import { engineSound } from './audio.js';
-import { G, P, edge, modern, msg, ppos, resetState } from './state.js';
-import { mkCar, mkHonk } from './entities.js';
+import { G, P, edge, isRider, modern, msg, ppos, resetState, rider } from './state.js';
+import { mkCar, mkHonk, mkPed } from './entities.js';
 import { fitAssists, immobilised } from './adas.js';
 import { resetHeat, updHeat } from './heat.js';
 import { updCars } from './cars.js';
@@ -56,6 +56,12 @@ function applyModern() {
   }
   G.cams = [];
   if (cityModern) placeCams();
+  // The riders about turn into the other kind: scooter riders on modern, skaters on classic.
+  for (const p of G.peds)
+    if (isRider(p)) {
+      const q = mkPed(p.x, p.y, rider());
+      Object.assign(p, { type: q.type, shirt: q.shirt, hair: q.hair, spd: q.spd });
+    }
 }
 function startGame() {
   applyModern();

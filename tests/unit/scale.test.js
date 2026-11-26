@@ -87,8 +87,9 @@ test('changing the scale in play keeps everyone where they are, at their pace on
   Object.assign(P, { x: 600, y: 400, car: null });
   const walker = mkPed(610, 400, 'civ'),
     cop = mkPed(620, 400, 'cop'),
-    scooter = mkPed(630, 400, 'scoot');
-  G.peds = [walker, cop, scooter];
+    scooter = mkPed(630, 400, 'scoot'),
+    skater = mkPed(640, 400, 'skate');
+  G.peds = [walker, cop, scooter, skater];
   const before = G.peds.map((p) => ({ x: p.x, y: p.y, spd: p.spd }));
   useZoom(3);
   assert.equal(ZOOM, 3);
@@ -96,6 +97,7 @@ test('changing the scale in play keeps everyone where they are, at their pace on
   assert.ok(Math.abs(walker.spd - (before[0].spd * 2) / 3) < 1e-9, 'a walker: the same pace on screen');
   assert.ok(Math.abs(cop.spd - PACE.cop) < 1e-9);
   assert.equal(scooter.spd, before[2].spd, "a scooter's speed is the scooter's");
+  assert.equal(skater.spd, before[3].spd, "and a skateboard's the skateboard's");
   // The view centres on the player at once.
   assert.ok(Math.abs(G.camX + VIEW_W / 2 - P.x) < 1e-9 && Math.abs(G.camY + VIEW_H / 2 - P.y) < 1e-9);
   assert.match(G.msgTxt, /SCALE 3X/);

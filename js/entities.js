@@ -2,7 +2,7 @@
 // Constructors for cars and pedestrians.
 import { CCOLS, DIRS, HONK, PACE } from './config.js';
 import { R, pick } from './util.js';
-import { COP } from './figures.js';
+import { COP, SKATE } from './figures.js';
 
 export function mkCar(kind, x, y, a, col) {
   return {
@@ -88,9 +88,18 @@ export function mkHonk() {
 }
 export function mkPed(x, y, type) {
   const d = pick(DIRS),
-    // Scooter riders wear light green and cultists purple robes with the hood up.
+    // Scooter riders wear light green, skaters a dark grey hoodie and cultists purple robes with the hood up.
     // A police officer's "hair" is a white cap.
-    shirt = type === 'cop' ? COP.shirt : type === 'scoot' ? 13 : type === 'cult' ? 4 : pick(CIV_SHIRTS);
+    shirt =
+      type === 'cop'
+        ? COP.shirt
+        : type === 'scoot'
+          ? 13
+          : type === 'skate'
+            ? SKATE.shirt
+            : type === 'cult'
+              ? 4
+              : pick(CIV_SHIRTS);
   let hair = type === 'cop' ? COP.cap : type === 'cult' ? 14 : pick(CIV_HAIR);
   // A head the same colour as the shirt would vanish into the shoulders.
   while (hair === shirt) hair = pick(CIV_HAIR);
@@ -100,9 +109,17 @@ export function mkPed(x, y, type) {
     dx: d[0],
     dy: d[1],
     type,
-    // A scooter is a vehicle: its speed is the scooter's, not its rider's pace.
+    // A scooter or a skateboard is a vehicle: its speed is its own, not its rider's pace.
     spd:
-      type === 'scoot' ? 52 : type === 'cop' ? PACE.cop : type === 'cult' ? 0 : PACE.civ + R() * PACE.civMore,
+      type === 'scoot'
+        ? 52
+        : type === 'skate'
+          ? SKATE.spd
+          : type === 'cop'
+            ? PACE.cop
+            : type === 'cult'
+              ? 0
+              : PACE.civ + R() * PACE.civMore,
     shirt,
     hair,
     legs: type === 'cop' ? COP.legs : pick(CIV_LEGS),

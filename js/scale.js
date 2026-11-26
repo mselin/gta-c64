@@ -3,7 +3,7 @@
 // button on the info page. See ZOOM and setZoom in config.js, and specs/design.md, "The scale".
 import { PERSON, VIEW_H, VIEW_W, WPX, ZOOM, ZOOMS, setZoom } from './config.js';
 import { clamp } from './util.js';
-import { G, msg, ppos } from './state.js';
+import { G, isRider, msg, ppos } from './state.js';
 
 const SAVED = 'sb64zoom';
 const SAY = {
@@ -25,8 +25,8 @@ export function useZoom(z, say = true) {
   if (!ZOOMS.includes(z)) return;
   const was = PERSON;
   setZoom(z);
-  // Pace is a person's, so it scales with them; a scooter's speed is the scooter's.
-  for (const p of G.peds) if (p.type !== 'scoot') p.spd *= PERSON / was;
+  // Pace is a person's, so it scales with them; a scooter's or a skateboard's speed is its own.
+  for (const p of G.peds) if (!isRider(p)) p.spd *= PERSON / was;
   const at = ppos();
   G.camX = clamp(at.x - VIEW_W / 2, 0, WPX - VIEW_W);
   G.camY = clamp(at.y - VIEW_H / 2, 0, WPX - VIEW_H);

@@ -19,7 +19,7 @@ import {
 import { R, hyp } from './util.js';
 import { decals, nearestLand, solidAt, tileAt, wallAt, waterAt, foot } from './world.js';
 import { sfx } from './audio.js';
-import { G, P, msg, onScreen, pop, ppos, carBodyAt } from './state.js';
+import { G, P, isRider, msg, onScreen, pop, ppos, carBodyAt } from './state.js';
 import { crime } from './heat.js';
 import { down } from './player.js';
 import { ARM_OUT_T, SHOOT } from './figures.js';
@@ -57,10 +57,10 @@ export function killPed(p, byPlayer, from = null) {
   if (onScreen(p.x, p.y, 10)) sfx.squish();
   if (byPlayer) {
     crime(p.type === 'cop' ? 28 : 6);
-    if (G.job && G.job.def.type === 'kill' && p.type === 'scoot') {
+    if (G.job && G.job.def.type === 'kill' && isRider(p)) {
       G.job.n++;
       pop(p.x, p.y - 8, G.job.n + '/' + G.job.def.n, 7);
-    } else if (p.type === 'scoot') pop(p.x, p.y - 8, '+$0 (PUBLIC SERVICE)', 13);
+    } else if (isRider(p)) pop(p.x, p.y - 8, '+$0 (PUBLIC SERVICE)', 13);
     else {
       const r = R();
       if (r < 0.4)

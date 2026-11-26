@@ -300,6 +300,8 @@ export const JOBS = [
     time: 110,
     pay: 2000,
     txt: 'FLATTEN 3 E-SCOOTER BROS. THE PAVEMENT THANKS YOU.',
+    // On the classic difficulty the riders are skaters, and the job says so.
+    classic: { t: 'SKATE OR DIE', txt: 'FLATTEN 3 SKATER DUDES. THE PAVEMENT THANKS YOU.' },
   },
   {
     t: 'EXECUTIVE TRANSPORT',
@@ -346,6 +348,7 @@ export const JOBS = [
     time: 140,
     pay: 3500,
     txt: '5 MORE SCOOTER BROS. THEY RESPAWN FASTER THAN POTHOLES.',
+    classic: { t: 'GNARLY AUDIT', txt: '5 MORE SKATER DUDES. THEY RESPAWN FASTER THAN POTHOLES.' },
   },
   {
     t: 'ASSET RELOCATION',

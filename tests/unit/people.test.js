@@ -33,7 +33,7 @@ import { updPlayer } from '../../js/player.js';
 import { updCars } from '../../js/cars.js';
 
 const DT = 1 / 60;
-const TYPES = ['civ', 'scoot', 'cop', 'cult'];
+const TYPES = ['civ', 'scoot', 'skate', 'cop', 'cult'];
 const ANGLES = Array.from({ length: 16 }, (_, a) => (a / 16) * Math.PI * 2);
 /** The filled pixels of a frame, as [x, y] pairs. */
 const cells = (px) => [...px].flatMap((c, i) => (c >= 0 ? [[i % FRAME, Math.floor(i / FRAME)]] : []));
@@ -130,8 +130,8 @@ test('the walk: five poses, arms and feet swinging opposite ways, in a cycle of 
   for (let i = 0; i < WALK_CYCLE.length; i++)
     assert.equal(Math.abs(WALK_CYCLE[i] - WALK_CYCLE[(i + 1) % WALK_CYCLE.length]), 1);
   assert.equal(walkPose(0), STAND);
-  // Scooter riders and cultists hold still whatever the walk is doing.
-  for (const type of ['scoot', 'cult']) {
+  // Scooter riders, skaters and cultists hold still whatever the walk is doing.
+  for (const type of ['scoot', 'skate', 'cult']) {
     const p = mkPed(0, 0, type);
     for (let pose = 1; pose < 5; pose++)
       assert.ok(same(pixels(p, 0, 0), pixels(p, pose, 0)), `${type} holds still`);
@@ -198,7 +198,7 @@ test("no pedestrian can get the player's look or a police officer's", () => {
   assert.ok(!CIV_LEGS.includes(COP.legs), 'or police trousers');
   assert.ok(!CIV_HAIR.includes(COP.cap), 'or a white police cap');
   for (let i = 0; i < 500; i++) {
-    for (const type of ['civ', 'scoot']) {
+    for (const type of ['civ', 'scoot', 'skate']) {
       const p = mkPed(0, 0, type);
       assert.notEqual(lookOf(p), 'player');
       assert.deepEqual(outlineOf(p), OUTLINE);

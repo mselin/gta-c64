@@ -3,7 +3,7 @@
 import { BLK, DIRS, GRASS, KIND, KNIFE, MW, NB, NOTICE, PI, PLAZA, WALK, WPX } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { COPS, HOSP, map, tileAt } from './world.js';
-import { G, P, onScreen, ppos } from './state.js';
+import { G, P, onScreen, ppos, rider } from './state.js';
 import { mkCar, mkPed } from './entities.js';
 import { fitAssists } from './adas.js';
 
@@ -78,7 +78,7 @@ function spawnPed() {
     const t = tileAt(x, y);
     if (t !== WALK && t !== PLAZA) continue;
     const sc = R() < (G.job && G.job.def.type === 'kill' ? 0.5 : 0.14);
-    G.peds.push(mkPed(Math.floor(x / 16) * 16 + 8, Math.floor(y / 16) * 16 + 8, sc ? 'scoot' : 'civ'));
+    G.peds.push(mkPed(Math.floor(x / 16) * 16 + 8, Math.floor(y / 16) * 16 + 8, sc ? rider() : 'civ'));
     return;
   }
 }

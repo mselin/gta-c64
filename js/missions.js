@@ -4,7 +4,7 @@ import { CULT, JOBS, KIND, MW, WALK } from './config.js';
 import { R, hyp } from './util.js';
 import { CHOP, CULT_SPOT, HALL, JOBPTS, map, nearestLand } from './world.js';
 import { sfx } from './audio.js';
-import { G, P, bigText, msg, onScreen, pop, ppos } from './state.js';
+import { G, P, bigText, modern, msg, onScreen, pop, ppos } from './state.js';
 import { mkCar, mkPed } from './entities.js';
 import { crime } from './heat.js';
 import { sidePos } from './cars.js';
@@ -26,6 +26,8 @@ function farSpot(min, max) {
   }
   return { x: HALL.x, y: HALL.y };
 }
+/** A job's title and text: a job about the riders speaks of scooters on the modern difficulty, of skaters on classic. */
+export const jobWords = (def) => (modern() || !def.classic ? def : def.classic);
 export function startJob() {
   const def = JOBS[jobI % JOBS.length],
     lap = Math.floor(jobI / JOBS.length);
@@ -49,8 +51,9 @@ export function startJob() {
     G.job.car = c;
     G.job.target = c;
   }
-  bigText(def.t, 'REWARD $' + G.job.pay, 7, 2.5);
-  msg(def.txt);
+  const words = jobWords(def);
+  bigText(words.t, 'REWARD $' + G.job.pay, 7, 2.5);
+  msg(words.txt);
   sfx.pick();
 }
 const CULT_RING = 20;
