@@ -49,6 +49,8 @@ export function policeNear() {
     if (q.type === 'cop' && !(q.ko > 0) && hyp(q.x - p.x, q.y - p.y) < NOTICE.foot) return true;
   return false;
 }
+/** Seconds on end that arrest a player at the wheel: boxed in by chasing cars, or an officer at the window. */
+export const BUST = { boxed: 2, window: 0.7 };
 export function updHeat(dt) {
   const p = ppos();
   let near = false;
@@ -103,17 +105,18 @@ export function updHeat(dt) {
   }
   // The siren, and the border flashing with it, only while the police are close in play.
   G.siren = G.heat > 0 && near && G.screen === 'play';
-  // cop cars boxing in
-  if (P.car && G.heat > 0 && G.screen === 'play' && hyp(P.car.vx, P.car.vy) < 12) {
-    let boxed = false;
-    for (const c of G.cars) if (c.ai === 'cop' && hyp(c.x - p.x, c.y - p.y) < 24) boxed = true;
-    if (boxed) {
-      P.car.bust += dt * 0.5;
-      if (P.car.bust > 1) {
-        P.car.bust = 0;
-        down('busted', 'BOXED IN. LIKE YOUR CAREER PROSPECTS.');
-      }
-    }
+  // Arrested at the wheel: boxed in by chasing cars for BUST.boxed seconds on end, or an officer at the window for
+  // BUST.window seconds on end. Each has its own count, back to 0 the moment the player gets free of it.
+  const car = P.car;
+  if (car && G.screen === 'play') {
+    const boxed =
+      G.heat > 0 &&
+      hyp(car.vx, car.vy) < 12 &&
+      G.cars.some((c) => c.ai === 'cop' && hyp(c.x - p.x, c.y - p.y) < 24);
+    car.boxedT = boxed ? car.boxedT + dt : 0;
+    car.windowT = G.copAtWindow ? car.windowT + dt : 0;
+    if (car.boxedT > BUST.boxed) down('busted', 'BOXED IN. LIKE YOUR CAREER PROSPECTS.');
+    else if (car.windowT > BUST.window) down('busted', 'PLEASE STEP OUT OF THE STOLEN VEHICLE');
   }
   // paint shop
   paintCd -= dt;

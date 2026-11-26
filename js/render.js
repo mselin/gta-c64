@@ -23,6 +23,7 @@ import { ARW, HELI_BODY, HELI_ROTOR, carSpr, pedSpr } from './sprites.js';
 import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
+import { jobWords } from './missions.js';
 import { G, forDifficulty, onScreen, P, ppos, sirenFlash, touch, weapon, weaponLabel } from './state.js';
 import { npText, radio, radioAudible } from './radio.js';
 import { drawEnding } from './endings.js';
@@ -363,7 +364,7 @@ function drawWorld() {
       const at = crossing(ppos().x, ppos().y);
       pr = at.ave + '-' + at.st;
     }
-    text(d.t.slice(0, 24), 0, VH + 9, 7);
+    text(jobWords(d).t.slice(0, 24), 0, VH + 9, 7);
     text(pr, 216, VH + 9, 1);
     text(tm, 280, VH + 9, t < 15 && Math.floor(G.clock * 4) & 1 ? 2 : 1);
   } else text('NO JOB. FOLLOW THE ARROW TO A "J".', 0, VH + 9, 12);

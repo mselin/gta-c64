@@ -20,6 +20,7 @@ const freshGame = () => ({
   heat: 0,
   heatPts: 0, // crime points; heat is the level they add up to
   heatCool: 0,
+  copAtWindow: false, // an officer is at the player's slow car's window this frame (updPeds); updHeat arrests
   holdFire: false, // fire is still held from the press that started the game: no shot until it is let go
   camX: 0,
   camY: 0,

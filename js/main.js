@@ -31,7 +31,8 @@ initPresence();
 
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  // Never more than a twentieth of a second, and never back in time.
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
   last = now;
   try {
     update(dt);

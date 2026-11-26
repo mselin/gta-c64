@@ -27,7 +27,8 @@ export function mkCar(kind, x, y, a, col) {
     stuck: 0,
     rev: 0,
     parked: false,
-    bust: 0,
+    boxedT: 0, // seconds the player has been boxed in in it, on end (updHeat)
+    windowT: 0, // seconds an officer has been at its window, on end
     smk: 0,
     ghost: 0,
     flooded: false,
