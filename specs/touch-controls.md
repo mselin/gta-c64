@@ -129,7 +129,7 @@ can carry on upright if I insist.
 | FR-09 | Steering ends when play is interrupted (crashed, busted, dead, game over, back to the title) and needs a new touch to start again. The tap that starts a game does not steer. |
 | FR-10 | The touch buttons are: fire, get in or out of a car, handbrake, back to title, music, next station, next tune, full screen, and information. None of them is an arrow. |
 | FR-11 | Every touch button shows a 16 × 16 pixel icon in the C64 palette, has no text, has an accessible name, and is at least 44 × 44 CSS pixels. |
-| FR-12 | In a car the fire button shows a horn and the handbrake button is shown; on foot the fire button shows a gun and the handbrake button is hidden. |
+| FR-12 | While driving, the fire button shows a horn and the handbrake button is shown; on foot the fire button shows a gun and the handbrake button is hidden. Behind a dialog, or the information page, the fire button shows the gun even in a car: the dialog names the gun button for yes (FR-16). |
 | FR-13 | The full-screen button toggles full screen and asks for landscape, failing silently where refused, and is hidden where full screen is not available. |
 | FR-14 | On a touch screen the 320 × 200 game area is scaled to fill the screen's height or width, whichever is smaller. |
 | FR-15 | On a phone sideways at 945 × 396 CSS pixels (Pixel 8 Pro) no button overlaps the game area. |
@@ -160,7 +160,7 @@ can carry on upright if I insist.
 | FR-08 | `touch.test.cjs`: one finger can steer while another fires; a second finger on the screen is ignored |
 | FR-09 | `touch.test.cjs`: the tap that starts the game does not steer; steering stops when play is interrupted |
 | FR-10, FR-11 | `touch.test.cjs`: the buttons are labelled icons of a usable size. `touch.test.js`: every icon is 16 by 16 |
-| FR-12 | `touch.test.cjs`: in a car the fire button becomes the horn and the handbrake appears |
+| FR-12 | `touch.test.cjs`: in a car the fire button becomes the horn and the handbrake appears; behind the return-to-title dialog it is the gun again |
 | FR-13 | `touch.test.cjs`: the full-screen button switches full screen on and off |
 | FR-14, FR-15 | `touch.test.cjs`: the game fills the screen and no button covers it |
 | FR-16 | `help.test.js`: touch texts name no keys and fit their space. `touch.test.cjs`: the dialogs answer to the buttons they name |

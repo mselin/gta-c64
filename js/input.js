@@ -203,9 +203,12 @@ function initTouch() {
 
 const pad = document.getElementById('pad');
 let padCar = null;
-/** Show the buttons that make sense right now: the horn instead of the gun, and the handbrake, in a car. */
+/**
+ * Show the buttons that make sense right now: the horn instead of the gun, and the handbrake, while driving. Not
+ * behind a dialog, even in a car: the dialog names the gun button for yes, so the gun is what it must show.
+ */
 export function syncPad() {
-  const car = P.car ? '1' : '0';
+  const car = P.car && G.screen === 'play' && !G.quitAsk && !G.infoOpen ? '1' : '0';
   if (car !== padCar) pad.dataset.car = padCar = car;
   // Steering ends when play does (a crash, an arrest, game over, back to the title), and the finger that was
   // steering cannot pick it up again: the player lifts it and touches again (FR-09).
