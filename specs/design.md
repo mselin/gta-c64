@@ -317,6 +317,16 @@ the handling in `HANDLING` there.
 | Police (white) | 20 × 11 | 188 | 165 | 140 | 1.1 | 510 |
 | Limousine (white) | 28 × 11 | 140 | 100 | 170 | 1.5 | 350 |
 
+**Traffic** (`spawnRoad` in `js/spawner.js`): every 0.35 seconds, while fewer than 13 traffic cars are about, a
+new one appears on a road 220 to 330 pixels from the player, out of sight. Its kind:
+
+| Sedan | Van | Taxi | Sports car | Police car on patrol |
+|---|---|---|---|---|
+| 50 % | 15 % | 15 % | 13 % | 7 % |
+
+A limousine never comes in traffic. The police cars that chase the player are not part of this mix: they come
+in their own turn (see Heat and the police).
+
 **Taking a car from its driver** (`enterCar` in `js/player.js`): the driver is thrown out at the door (the
 nearest clear spot beside it, as when the player gets out) and lands on the ground, facing away from the car. They
 lie there as anyone knocked down does (see Fighting on foot): 4 seconds (`KO.t`), with "OOF" over them and
@@ -627,7 +637,12 @@ who is not knocked down):
   2.2 seconds.
 - **Patrol cars join in:** a patrol car within 130 joins the chase.
 - **Officers on foot:** when a chasing car and the player are both slower than 30 px/s within 36 pixels of
-  each other, an officer gets out, up to four on foot at once.
+  each other, an officer gets out, up to four on foot at once. While heat is above 0 (`updPeds` in `js/peds.js`):
+  - **Pace:** an officer walks at 47 × PERSON px/s (`PACE.cop` in `js/config.js`): 23.5 at the default scale,
+    a little slower than the player on foot (58 × PERSON).
+  - **Way:** straight at the player, the shortest line, and stops walking within 6 × PERSON of them.
+  - **Arrest on foot:** an officer who is not knocked down arrests a player on foot the moment they are within
+    7 × PERSON of each other, with no count. A player at the wheel is arrested only as below.
 - **Officers shoot** from heat 3, at the player within 95 pixels, every 1.1 to 1.7 seconds, but not while they
   are swimming, in the canal or a fountain pool.
 - **Boxed in:** if the player's car is slower than 12 px/s with a chasing car within 24 pixels, the player is

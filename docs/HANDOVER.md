@@ -10,13 +10,15 @@ it lives (for example "the PRIVATE_TERMS Actions secret"), never by its value.
 
 ## Task
 
-Bootstrap only: create the handover docs in gta-c64 from the design doc, roadmap and git log. No code changes. Open a PR.
+continue (the Next item below: answer #108, then #111, in `specs/design.md`).
+
 
 ## Plan
 
-1. Create `docs/HANDOVER-PROTOCOL.md` (sections 2-5 of the short-context skill, verbatim). Check: the file exists. **Done.**
-2. Create this file from `specs/design.md`, mselin/Sleazeburg64 `docs/ROADMAP.md` and `git log`. Check: every section filled, under 150 lines. **Done.**
-3. Open a pull request with only these two files, and merge it when green (`.claude/CLAUDE.md`). Check: merged, all checks passed. **Done when #113 merges** (it merges itself on green; if this line is still here after that, the task is finished).
+1. #108: officers' pace, way and on-foot arrest under "The response" in `specs/design.md`. Check: matches `PACE.cop` (`js/config.js`) and `updPeds` (`js/peds.js`). **Done.**
+2. #111: the traffic mix under "Cars" in `specs/design.md`. Check: matches `spawnRoad` (`js/spawner.js`). **Done.**
+3. One docs-only PR closing #108 and #111, merged when green. Check: merged, all checks passed. **Done when the PR merges** (it merges itself on green).
+
 
 ## Established
 
@@ -71,12 +73,14 @@ Bootstrap only: create the handover docs in gta-c64 from the design doc, roadmap
 
 ## Changes
 
-- gta-c64, branch `handover-docs`, PR #113 (closes #112): adds `docs/HANDOVER-PROTOCOL.md` and `docs/HANDOVER.md`. No code changes.
+- gta-c64, branch `design-cops-traffic`: `specs/design.md` gains officers on foot (#108) and the traffic mix (#111). No code changes.
+
 
 ## Verification
 
-- `python3 .github/scripts/check_repo.py` with these files staged: OK, 178 tracked files checked.
+- `python3 .github/scripts/check_repo.py`: OK, 178 tracked files (PRIVATE_TERMS not set, #114). The numbers were read from the code, not measured in play.
 - Not run: the code tests, since no code changed. CI runs them on the PR.
+
 
 ## Dead ends
 
@@ -86,9 +90,8 @@ Bootstrap only: create the handover docs in gta-c64 from the design doc, roadmap
 
 ## Next
 
-Answer open issue #108, which the C64 sessions raised: the design doesn't give the officers' walking pace (`PACE.cop = 47 * PERSON` in `js/config.js`) or the on-foot arrest (`d < 7 * PERSON` in `js/peds.js` `updPeds`). Add both to "Heat and the police" in `specs/design.md`, in a PR that closes #108. Then #111: patrol-car share and traffic mix (`spawnRoad` in `js/spawner.js`).
+No item queued. Candidates: tell the C64 sessions on #108 and #111 that the design now answers them (the PR closes both); open owner issues #3–#8 and #114 (the PRIVATE_TERMS secret) need the owner.
 
-Other open issues: #3–#8 are repository settings, releases, desktop signing, the Discord page and SECURITY.md (owner decisions).
 
 ## Subagent files
 
