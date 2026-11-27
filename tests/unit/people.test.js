@@ -4,8 +4,8 @@
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { HIT, KIND, PERSON } from '../../js/config.js';
-import { genMap } from '../../js/world.js';
-import { G, K, P, resetState } from '../../js/state.js';
+import { foot, genMap } from '../../js/world.js';
+import { G, K, P, inBody, resetState } from '../../js/state.js';
 import { CIV_HAIR, CIV_LEGS, CIV_SHIRTS, mkCar, mkPed } from '../../js/entities.js';
 import {
   ARM_OUT_T,
@@ -249,43 +249,58 @@ test('a bullet hits someone it passes within HIT.shot of: their shoulders, as dr
   assert.equal(shoot(HIT.shot + 0.5, 1), false);
 });
 
-test('a moving car runs over someone it passes within HIT.car of its middle', () => {
-  const pass = (dy) => {
-    const c = mkCar(KIND.sedan, STREET.x, STREET.y, 0);
+test('a moving car runs over anyone whose shoulders touch its body, end to end, corners and all', () => {
+  /** Whether a car going 60 east from STREET runs over someone `dx` along and `dy` across from its middle. */
+  const hits = (dx, dy, kind = KIND.sedan) => {
+    const c = mkCar(kind, STREET.x, STREET.y, 0);
     c.vx = 60;
     G.cars = [c];
-    G.peds = [standing(STREET.x, STREET.y + dy)];
+    G.peds = [standing(STREET.x + dx, STREET.y + dy)];
     updPeds(DT);
     return G.peds.length === 0;
   };
-  assert.equal(pass(HIT.car - 0.5), true, 'the side of the car catches their shoulder');
-  assert.equal(pass(HIT.car + 0.5), false, 'but not someone half a pixel clear');
-  // Its front reaches HIT.nose past the point 6 px ahead of its middle.
-  const front = (dx) => {
-    const c = mkCar(KIND.sedan, STREET.x, STREET.y, 0);
-    c.vx = 60;
-    G.cars = [c];
-    G.peds = [standing(STREET.x + dx, STREET.y)];
-    updPeds(DT);
-    return G.peds.length === 0;
-  };
-  assert.equal(front(6 + HIT.nose - 0.5), true, 'the bumper is 10 px ahead and a person their shoulder deep');
-  assert.equal(front(6 + HIT.nose + 0.5), false);
+  const side = KIND.sedan.W / 2 + HIT.body,
+    end = KIND.sedan.L / 2 + HIT.body;
+  assert.equal(hits(0, side - 0.5), true, 'the side of the car catches their shoulder');
+  assert.equal(hits(0, side + 0.5), false, 'but not someone half a pixel clear');
+  assert.equal(hits(end - 0.5, 0), true, 'the front bumper');
+  assert.equal(hits(end + 0.5, 0), false);
+  assert.equal(hits(-(end - 0.5), 0), true, 'the back bumper too: it used to pass over');
+  assert.equal(hits(KIND.sedan.L / 2 - 1, side - 0.5), true, 'a front corner');
+  assert.equal(hits(-(KIND.sedan.L / 2 - 1), -(side - 0.5)), true, 'a back corner: it used to pass over');
+  // A limousine is 28 long: its ends used to be far outside the circles round its middle.
+  assert.equal(hits(KIND.limo.L / 2 - 1, 0, KIND.limo), true, "the limo's front");
+  assert.equal(hits(-(KIND.limo.L / 2 - 1), 0, KIND.limo), true, "the limo's back");
 });
 
-test('the player on foot is hit by a car passing within HIT.car', () => {
-  const pass = (dy) => {
+test('a slow car pushes people out of its way, to its side, and never rolls through them', () => {
+  const c = mkCar(KIND.sedan, STREET.x, STREET.y, 0);
+  c.vx = 20; // below running-over speed
+  G.cars = [c];
+  const q = standing(STREET.x + 4, STREET.y + 2);
+  G.peds = [q];
+  updPeds(DT);
+  assert.equal(G.peds.length, 1, 'not run over');
+  assert.ok(!inBody(c, q.x, q.y, foot()), 'but out of the car');
+  assert.ok(q.y > STREET.y, 'on the side they were nearer');
+  assert.ok(!(q.ko > 0), 'and on their feet');
+});
+
+test('the player on foot is hit by a car whose body their shoulders touch', () => {
+  const hit = (dx, dy) => {
     resetState();
     G.screen = 'play';
     const c = mkCar(KIND.sedan, STREET.x, STREET.y, 0);
     c.vx = 60;
     G.cars = [c];
-    Object.assign(P, { x: STREET.x, y: STREET.y + dy });
+    Object.assign(P, { x: STREET.x + dx, y: STREET.y + dy });
     updPlayer(DT);
     return P.hp < 100;
   };
-  assert.equal(pass(HIT.car - 0.5), true);
-  assert.equal(pass(HIT.car + 0.5), false);
+  const side = KIND.sedan.W / 2 + HIT.body;
+  assert.equal(hit(0, side - 0.5), true);
+  assert.equal(hit(0, side + 0.5), false);
+  assert.equal(hit(-(KIND.sedan.L / 2), side - 0.5), true, 'the back corner too');
 });
 
 test('traffic brakes for anyone close enough to its line that it would hit them', () => {

@@ -4,7 +4,7 @@ import { DIRS, HIT, JACK, KIND, KO, MELEE, ZOOM, PACE, PERSON } from './config.j
 import { angDiff, clamp, hyp, pick } from './util.js';
 import { COPS, HOSP, footClear, waterAt, foot } from './world.js';
 import { noise, sfx } from './audio.js';
-import { G, K, P, bigText, edge, msg, onScreen, pop, touch, weapon, carBodyAt } from './state.js';
+import { G, K, P, bigText, edge, inBody, msg, onScreen, pop, touch, weapon, carBodyAt } from './state.js';
 import { mkPed } from './entities.js';
 import { crime, policeNear } from './heat.js';
 import { carPhys, sidePos } from './cars.js';
@@ -302,7 +302,7 @@ export function updPlayer(dt) {
     if (edge.use) enterCar();
     for (const o of G.cars) {
       const sp = hyp(o.vx, o.vy);
-      if (sp > 45 && P.hitT <= 0 && hyp(o.x - P.x, o.y - P.y) < HIT.car) {
+      if (sp > 45 && P.hitT <= 0 && inBody(o, P.x, P.y, HIT.body)) {
         hurt(sp * 0.28, 'A PEDESTRIAN. IN THIS ECONOMY?');
         sfx.squish();
         const nx = P.x + o.vx * 0.06,

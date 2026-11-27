@@ -145,10 +145,11 @@ export const SHOPS = [
  * figures.js), so these match what is on screen. Their footprint against walls (footClear in world.js) stays
  * smaller, so doorways and pavements stay easy.
  */
-export const HIT = {}; // shot, car, nose, lane, ahead: set by setZoom
+export const HIT = {}; // shot, car, nose, body, lane, ahead: set by setZoom
 //  shot: a bullet: the shoulder, and half the 2 px bullet
 //  car: a moving car's middle: (about) half its 11 px width and the shoulder
 //  nose: the point 6 px ahead of a moving car's middle: its front bumper and the shoulder past it
+//  body: a person's shoulder: how near a car's body, its length and width turned with it, they are hit by it
 //  lane: traffic brakes for someone this far either side of the line it drives along
 //  ahead: and up to this far ahead of its middle, so it stops before its bumper gets there
 /** A person's pace, in city pixels a second: the player walking and swimming, and passers-by and police on foot. */
@@ -466,6 +467,7 @@ export function setZoom(z) {
     shot: 5 * PERSON + 1,
     car: 5 + 5 * PERSON,
     nose: 4 + 5 * PERSON,
+    body: 5 * PERSON,
     lane: 5.5 + 3.5 * PERSON,
     ahead: 26,
   });

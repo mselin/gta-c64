@@ -121,17 +121,18 @@ export const isRider = (p) => p.type === 'scoot' || p.type === 'skate';
  * it. Cars are solid for anyone on foot, stopped or moving; one on the bottom of the canal is out of the way.
  */
 export function carBodyAt(x, y, r) {
-  for (const c of G.cars) {
-    const dx = x - c.x,
-      dy = y - c.y;
-    if (Math.abs(dx) > 20 || Math.abs(dy) > 20) continue;
-    if (c.flooded && c.sink >= 1) continue;
-    const cs = Math.cos(c.a),
-      sn = Math.sin(c.a);
-    if (Math.abs(dx * cs + dy * sn) <= c.kind.L / 2 + r && Math.abs(-dx * sn + dy * cs) <= c.kind.W / 2 + r)
-      return c;
-  }
+  for (const c of G.cars) if (!(c.flooded && c.sink >= 1) && inBody(c, x, y, r)) return c;
   return null;
+}
+/** Whether (x, y) is on car `c`'s body, its length and width turned with it, with `r` to spare round it. */
+export function inBody(c, x, y, r) {
+  const dx = x - c.x,
+    dy = y - c.y,
+    reach = c.kind.L / 2 + r;
+  if (Math.abs(dx) > reach || Math.abs(dy) > reach) return false;
+  const cs = Math.cos(c.a),
+    sn = Math.sin(c.a);
+  return Math.abs(dx * cs + dy * sn) <= reach && Math.abs(-dx * sn + dy * cs) <= c.kind.W / 2 + r;
 }
 /**
  * Whether the screen border flashes red and blue: only while the siren is actually going, in play, with the game
