@@ -11,7 +11,7 @@ Bootstrap only: create the handover docs in gta-c64 from the design doc, roadmap
 
 1. Create `docs/HANDOVER-PROTOCOL.md` (sections 2-5 of the short-context skill, verbatim). Check: the file exists. **Done.**
 2. Create this file from `specs/design.md`, mselin/Sleazeburg64 `docs/ROADMAP.md` and `git log`. Check: every section filled, under 150 lines. **Done.**
-3. Open a pull request with only these two files, and merge it when green (`.claude/CLAUDE.md`). Check: merged, all checks passed. **In progress.**
+3. Open a pull request with only these two files, and merge it when green (`.claude/CLAUDE.md`). Check: merged, all checks passed. **Done when #113 merges** (it merges itself on green; if this line is still here after that, the task is finished).
 
 ## Established
 
@@ -61,7 +61,7 @@ Bootstrap only: create the handover docs in gta-c64 from the design doc, roadmap
 
 ## Changes
 
-- gta-c64, branch `handover-docs`: adds `docs/HANDOVER-PROTOCOL.md` and `docs/HANDOVER.md`. No code changes.
+- gta-c64, branch `handover-docs`, PR #113 (closes #112): adds `docs/HANDOVER-PROTOCOL.md` and `docs/HANDOVER.md`. No code changes.
 
 ## Verification
 
