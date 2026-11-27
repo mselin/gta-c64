@@ -3,6 +3,11 @@
 The working state for sessions on mselin/gta-c64. Read `docs/HANDOVER-PROTOCOL.md` for how to keep it. Where this
 file and a conversation summary disagree, this file wins.
 
+**What never goes in a handover file** (`docs/HANDOVER.md`, `docs/handover/*.md`): secrets, tokens and keys; the
+owner's or anyone's personal details (email, real name beyond the `mselin` handle, addresses); session or chat
+links; local paths of a session's machine or scratch space. They are committed and public. Name a secret by where
+it lives (for example "the PRIVATE_TERMS Actions secret"), never by its value.
+
 ## Task
 
 Bootstrap only: create the handover docs in gta-c64 from the design doc, roadmap and git log. No code changes. Open a PR.
@@ -57,6 +62,11 @@ Bootstrap only: create the handover docs in gta-c64 from the design doc, roadmap
   - other local users can reach the bridge on 127.0.0.1;
   - the page can be framed;
   - `blob:` in the desktop CSP, which the SID player's AudioWorklet and worker need.
+- **The private-details guard is off in this repository.** `check_repo.py` fails a build on any term in the
+  `PRIVATE_TERMS` Actions secret, but the secret is not set here: CI says "PRIVATE_TERMS not set" on main and on
+  PRs (the Repository checks job of #113, and main after it). Only the owner can add it, under the repository's
+  Settings, Secrets and variables, Actions. Until then, check by hand before committing anything about people.
+  Checked 2026-11-27: the owner's email and name appear nowhere in the repository or these files.
 - **The C64 roadmap** (mselin/Sleazeburg64 `docs/ROADMAP.md`) has notes on every browser change above, the latest in Sleazeburg64#102 (#110). That repository's ruleset wants branches up to date with main: merge main in rather than rebase.
 
 ## Changes
