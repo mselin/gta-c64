@@ -19,7 +19,7 @@ import {
 import { R, hyp } from './util.js';
 import { decals, nearestLand, solidAt, tileAt, wallAt, waterAt, foot } from './world.js';
 import { sfx } from './audio.js';
-import { G, P, isRider, msg, onScreen, pop, ppos, carBodyAt } from './state.js';
+import { G, P, inBody, isRider, msg, onScreen, pop, ppos, carBodyAt } from './state.js';
 import { crime } from './heat.js';
 import { down } from './player.js';
 import { ARM_OUT_T, SHOOT } from './figures.js';
@@ -403,20 +403,43 @@ export function updPeds(dt) {
     if (!p.round && (p.t <= 0 || !pedPref(tileAt(p.x + p.dx * 9, p.y + p.dy * 9), p))) pedPick(p);
     walkOn(p, dt);
   }
-  // run over
+  // A moving car and the people it meets. From 30 px/s it runs over anyone whose shoulders touch its body, its
+  // length and width turned with it, end to end. Slower, it does not run anyone over but nor does it roll through
+  // them: it pushes them out to its side, or, with a wall there, knocks them down.
   for (const c of G.cars) {
     const sp = hyp(c.vx, c.vy);
-    if (sp < 30) continue;
-    const fx = c.x + Math.cos(c.a) * 6,
-      fy = c.y + Math.sin(c.a) * 6;
-    for (const p of G.peds.slice())
-      if (hyp(p.x - c.x, p.y - c.y) < HIT.car || hyp(p.x - fx, p.y - fy) < HIT.nose) {
+    if (sp < 1 || c.dead || (c.flooded && c.sink >= 1)) continue;
+    for (const p of G.peds.slice()) {
+      if (sp >= 30) {
+        if (!inBody(c, p.x, p.y, HIT.body)) continue;
         const mine = c === P.car;
         killPed(p, mine, c);
         if (c.ai === 'cop' && !immunity) {
           immunity = true;
           msg('POLICE STATEMENT: "THE PEDESTRIAN WAS RESISTING."');
         }
-      }
+      } else if (!(p.ko > 0) && inBody(c, p.x, p.y, foot())) shove(c, p);
+    }
   }
+}
+/** Push someone out of the way of a slow car: to the nearer side of it, just clear; with a wall there, down. */
+function shove(c, p) {
+  const f = foot(),
+    sx = -Math.sin(c.a),
+    sy = Math.cos(c.a),
+    across = (p.x - c.x) * sx + (p.y - c.y) * sy,
+    out = c.kind.W / 2 + f + 0.5;
+  for (const k of across >= 0 ? [1, -1] : [-1, 1]) {
+    const x = p.x + sx * (k * out - across),
+      y = p.y + sy * (k * out - across);
+    if (!wallAt(x, y) && !carBodyAt(x, y, f)) {
+      p.x = x;
+      p.y = y;
+      return;
+    }
+  }
+  if (p.type === 'honk') return ruffle(p, c);
+  // Nowhere to go: down they go, and the car rolls over someone lying down only if it speeds up.
+  if (c === P.car) knockDown(p);
+  else p.ko = KO.t;
 }

@@ -154,9 +154,8 @@ distance is measured from the person's middle, in city pixels. The person's part
 | What | Distance | At the default scale |
 |---|---|---|
 | A bullet hits a person | 5 × PERSON + 1 | 3.5 |
-| A moving car runs someone over, from the car's middle | 5 + 5 × PERSON | 7.5 |
-| …or from the point 6 pixels ahead of its middle | 4 + 5 × PERSON | 6.5 |
-| A car hurts the player | 5 + 5 × PERSON | 7.5 |
+| A car going 30 px/s or more runs someone over: their shoulder this near its body, its length and width turned with it, end to end and corners included (`HIT.body`) | 5 × PERSON | 2.5 |
+| A car going faster than 45 px/s hurts the player: the same | 5 × PERSON | 2.5 |
 | Traffic brakes for someone this far either side of its line… | 5.5 + 3.5 × PERSON | 7.25 |
 | …and up to this far ahead of its middle | 26 | 26 |
 
@@ -167,6 +166,13 @@ pixel or two. The police arrest from 7 × PERSON.
 **Cars are solid for anyone on foot**, stopped or moving (`carBodyAt` in `js/state.js`). A car's body is its length
 and width, turned with it, and a person may come no nearer than their footprint. A car on the bottom of the canal
 is out of the way. (A moving car still runs people over, as under Hit distances.)
+- **A slow car never rolls through anyone.** Below 30 px/s a car does not run people over, but someone its body
+  comes onto (their footprint inside it) is pushed out to the side of it they were nearer, just clear of it. With
+  a wall or another car there, the other side; with neither free, they are knocked down. Big Honk is only
+  ruffled.
+- **The bug it fixes** (mselin/gta-c64#109): running over used to be two circles, round the car's middle and its
+  nose. A sedan's back corners and a limousine's ends were outside them, so a car could pass over people there.
+  A slow car could roll onto people, who then walked out through it.
 
 - **A passer-by, a scooter rider or a skater** with a car in the way stops just short of it and waits 0.4 seconds
   (`ROUND_CAR`). Then they step sideways, away from the car's middle, so round its nearer end, until their way is
