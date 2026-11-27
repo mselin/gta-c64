@@ -10,14 +10,15 @@ it lives (for example "the PRIVATE_TERMS Actions secret"), never by its value.
 
 ## Task
 
-continue (the Next item below: answer #108, then #111, in `specs/design.md`).
+continue (the Next item below: answer #108, then #111, in `specs/design.md`). Then: add to roadmap
 
 
 ## Plan
 
 1. #108: officers' pace, way and on-foot arrest under "The response" in `specs/design.md`. Check: matches `PACE.cop` (`js/config.js`) and `updPeds` (`js/peds.js`). **Done.**
 2. #111: the traffic mix under "Cars" in `specs/design.md`. Check: matches `spawnRoad` (`js/spawner.js`). **Done.**
-3. One docs-only PR closing #108 and #111, merged when green. Check: merged, all checks passed. **Done when the PR merges** (it merges itself on green).
+3. Roadmap note in mselin/Sleazeburg64 `docs/ROADMAP.md` (Sleazeburg64#110). Check: merged. **Done when it merges.**
+4. One docs-only PR closing #108 and #111, merged when green. Check: merged, all checks passed. **Done when the PR merges** (it merges itself on green).
 
 
 ## Established
