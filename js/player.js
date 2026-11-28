@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The player on foot and at the wheel: movement, weapons, getting in and out of cars, dying and getting arrested.
-import { DIRS, HIT, JACK, KIND, KO, MELEE, ZOOM, PACE, PERSON } from './config.js';
+import { DIRS, HIT, JACK, KIND, KO, MELEE, PACE, PENALTY, PERSON, ZOOM } from './config.js';
 import { angDiff, clamp, hyp, pick } from './util.js';
 import { COPS, HOSP, footClear, waterAt, foot } from './world.js';
 import { noise, sfx } from './audio.js';
@@ -22,6 +22,7 @@ export function resetPlayer() {
 }
 let downKind = '';
 let seized = false; // the police took the player's weapons when they last went down
+let unpaid = false; // wasted with less than the hospital's bill: busted instead
 let skidT = 0;
 /** The player loses `n` health; `cop`: an officer's shot did it. */
 export function hurt(n, why, cop = false) {
@@ -42,7 +43,9 @@ export const lastDown = () => downKind;
  */
 export function down(kind, why, cop = false) {
   // Before the car is let go: the police are looked for round where the player is, in it or on foot.
-  seized = kind === 'busted' || cop || policeNear();
+  // Wasted with less than the hospital's bill, the hospital hands the player to the police: busted all the same.
+  unpaid = kind === 'dead' && G.cash < PENALTY.bill;
+  seized = kind === 'busted' || unpaid || cop || policeNear();
   if (seized) {
     P.knife = false;
     P.ammo = 0;
@@ -64,13 +67,14 @@ export function down(kind, why, cop = false) {
   if (G.job) failJob(null);
 }
 export function respawn() {
-  // Arrested with nothing left to confiscate: the game ends here.
-  if (downKind === 'busted' && G.cash === 0) {
+  // Arrested with nothing left to confiscate (or wasted with nothing to pay the hospital): the game ends here.
+  const busted = downKind === 'busted' || unpaid;
+  if (busted && G.cash === 0) {
     G.screen = 'over';
     G.banner = null;
     return;
   }
-  const L = downKind === 'dead' ? HOSP : COPS;
+  const L = busted ? COPS : HOSP;
   P.x = L.x;
   P.y = L.y;
   P.hp = 100;
@@ -82,8 +86,8 @@ export function respawn() {
   G.heli = null;
   G.bullets = [];
   G.screen = 'play';
-  if (downKind === 'dead') {
-    const bill = Math.min(G.cash, 500);
+  if (!busted) {
+    const bill = PENALTY.bill;
     G.cash -= bill;
     msg(
       'ST. INVOICE HOSPITAL: AMBULANCE RIDE -$' +
@@ -92,9 +96,14 @@ export function respawn() {
         (seized ? '. THE POLICE KEPT YOUR WEAPONS AS "EVIDENCE"' : ''),
     );
   } else {
-    const f = Math.floor(G.cash * 0.2);
+    const f = Math.floor(G.cash * PENALTY.fine);
     G.cash -= f;
-    msg('CIVIL ASSET FORFEITURE: -$' + f + '. YOUR WEAPONS ARE NOW "EVIDENCE"');
+    msg(
+      (unpaid ? "CAN'T PAY ST. INVOICE? THE POLICE CAN. " : '') +
+        'CIVIL ASSET FORFEITURE: -$' +
+        f +
+        '. YOUR WEAPONS ARE NOW "EVIDENCE"',
+    );
   }
 }
 function enterCar() {

@@ -153,6 +153,8 @@ export const HIT = {}; // shot, car, nose, body, lane, ahead: set by setZoom
 //  lane: traffic brakes for someone this far either side of the line it drives along
 //  ahead: and up to this far ahead of its middle, so it stops before its bumper gets there
 /** A person's pace, in city pixels a second: the player walking and swimming, and passers-by and police on foot. */
+/** Going down (`down` and `respawn` in js/player.js): the hospital's bill, and the share of the cash an arrest takes. */
+export const PENALTY = { bill: 500, fine: 0.2 };
 export const PACE = {}; // walk, swim, civ (and up to civMore more), cop, flee, wade: set by setZoom
 /** How near a pickup the player on foot must come, and the player's car. */
 export const PICKUP = {}; // foot, car: set by setZoom

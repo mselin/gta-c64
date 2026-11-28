@@ -10,19 +10,21 @@ it lives (for example "the PRIVATE_TERMS Actions secret"), never by its value.
 
 ## Task
 
-continue (the Next item below: answer #108, then #111, in `specs/design.md`). Then: add to roadmap
+If you get flatlined by police or anyone whilst having $0 (or less than required) you should get busted and go to jail.
+
+Then (sent mid-task): Also after heat 3 or more police should ram you very aggresively if they don't
 
 
 ## Plan
 
-1. #108: officers' pace, way and on-foot arrest under "The response" in `specs/design.md`. Check: matches `PACE.cop` (`js/config.js`) and `updPeds` (`js/peds.js`). **Done.**
-2. #111: the traffic mix under "Cars" in `specs/design.md`. Check: matches `spawnRoad` (`js/spawner.js`). **Done.**
-3. Roadmap note in mselin/Sleazeburg64 `docs/ROADMAP.md` (Sleazeburg64#110). Check: merged. **Done when it merges.**
-4. One docs-only PR closing #108 and #111, merged when green. Check: merged, all checks passed. **Done when the PR merges** (it merges itself on green).
+1. #118, unpaid bill: wasted with less than `PENALTY.bill` ($500) goes as a bust (`down` / `respawn` in `js/player.js`). Check: `tests/unit/unpaid.test.js`, design "Wasted or busted". **Done** (branch `unpaid-bill`).
+2. One PR closing #118, merged when green. Check: merged, all checks passed.
+3. Police ramming from heat 3: new issue, then `copAI` in `js/cars.js`, tests, design, own PR. Check: merged.
 
 
 ## Established
 
+- **#118, read as:** "go to jail" = the bust rules. Short of $500: the police station and the fifth; with $0, the jail ending (BUSTED AND BROKE, `js/endings.js`). `lastDown()` stays 'dead' so the banner and Discord presence say flatlined.
 - **The project.** "Sleazeburg 64", a top-down C64-styled crime satire.
   - The browser game is this repository (live at https://mselin.github.io/gta-c64/).
   - The desktop app (`desktop/`, Tauri 2) runs the same code.
@@ -74,13 +76,13 @@ continue (the Next item below: answer #108, then #111, in `specs/design.md`). Th
 
 ## Changes
 
-- gta-c64, branch `design-cops-traffic`: `specs/design.md` gains officers on foot (#108) and the traffic mix (#111). No code changes.
+- gta-c64, branch `unpaid-bill` (#118): `PENALTY` in `js/config.js`; `unpaid` in `js/player.js`; `tests/unit/unpaid.test.js`; the knife test in `tests/unit/melee.test.js` now has the bill to hand; design "Wasted or busted".
 
 
 ## Verification
 
-- `python3 .github/scripts/check_repo.py`: OK, 178 tracked files (PRIVATE_TERMS not set, #114). The numbers were read from the code, not measured in play.
-- Not run: the code tests, since no code changed. CI runs them on the PR.
+- `npm run -s lint`: clean. `npm run -s test:unit`: 310 pass.
+- `npm run -s test:e2e`: 62 pass, 4 skip. CI runs all on the PR.
 
 
 ## Dead ends
@@ -91,7 +93,7 @@ continue (the Next item below: answer #108, then #111, in `specs/design.md`). Th
 
 ## Next
 
-No item queued. Candidates: tell the C64 sessions on #108 and #111 that the design now answers them (the PR closes both); open owner issues #3–#8 and #114 (the PRIVATE_TERMS secret) need the owner.
+Step 3: read `copAI` in `js/cars.js` (and its chase targeting), open the ramming issue, make chasing cars at heat 3+ drive into the player rather than alongside.
 
 
 ## Subagent files

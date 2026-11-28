@@ -656,11 +656,18 @@ who is not knocked down):
 
 **Wasted or busted** (`down` and `respawn` in `js/player.js`). The player comes back, with full health, no heat
 and no police about:
-- **Wasted:** at the hospital, billed up to $500: "ST. INVOICE HOSPITAL: AMBULANCE RIDE -$… (OUT OF NETWORK)".
-- **Busted:** at the police station, fined a fifth of their cash: "CIVIL ASSET FORFEITURE: -$…. YOUR WEAPONS ARE
-  NOW "EVIDENCE"". Busted with no cash at all, the game is over.
+- **Wasted:** at the hospital, billed $500 (`PENALTY.bill` in `js/config.js`): "ST. INVOICE HOSPITAL: AMBULANCE
+  RIDE -$500 (OUT OF NETWORK)".
+- **Busted:** at the police station, fined a fifth of their cash (`PENALTY.fine`): "CIVIL ASSET FORFEITURE: -$….
+  YOUR WEAPONS ARE NOW "EVIDENCE"". Busted with no cash at all, the game is over: the jail ending, BUSTED AND
+  BROKE.
+- **Wasted with less than the bill** (mselin/gta-c64#118), by the police or anyone else: the hospital hands the
+  player to the police, and it goes as a bust. The banner still says FLATLINED, but the police take the weapons,
+  and the player wakes at the police station, fined a fifth, with "CAN'T PAY ST. INVOICE? THE POLICE CAN." before
+  the forfeiture line. With no cash at all, the game is over, as for any bust. (Before, the hospital took
+  whatever there was, down to $0, and the game went on.)
 - **The police take the weapons:** the knife and all the ammo, the moment the player goes down:
-  - **Busted:** always.
+  - **Busted:** always, and wasted with less than the hospital's bill.
   - **Wasted with the police about:** a chasing car, a manned police car on patrol or an officer on foot who is not
     knocked down, within the distances they notice the player at (the table above). The player's own car does not
     count, nor an empty or wrecked police car. The hospital's line then ends ". THE POLICE KEPT YOUR WEAPONS AS
