@@ -2,7 +2,7 @@
 // Out of ammo, the player fights hand to hand: a punch knocks someone down, a knife kills (issue #11).
 import { test, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { AMMO_MAX, KNIFE, KO, MELEE, SW } from '../../js/config.js';
+import { AMMO_MAX, KNIFE, PENALTY, KO, MELEE, SW } from '../../js/config.js';
 import { genMap } from '../../js/world.js';
 import { G, K, P, resetState, weapon, weaponLabel } from '../../js/state.js';
 import { mkPed } from '../../js/entities.js';
@@ -155,6 +155,7 @@ test('picking up a knife arms the player; a spare one is pawned; the police take
   G.pickups = [{ x: P.x, y: P.y, type: 'knife', temp: 20, t: 0 }];
   updPickups(DT);
   assert.equal(G.cash, cash + 10);
+  G.cash = PENALTY.bill; // enough for the hospital, or the police have the player (tests/unit/unpaid.test.js)
   down('dead');
   assert.equal(P.knife, true, 'kept when wasted with no police about (tests/unit/seized.test.js)');
   G.screen = 'play';
