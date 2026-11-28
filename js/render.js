@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Draws every screen: boot, title, the city with its HUD, and the win screen.
-import { BOOT, BX, BY, GOAL, HELI, KIND, DIFFICULTY_Y, PAL, PI, SH, SW, VH, ZOOM } from './config.js';
+import { BOOT, BX, BY, GOAL, HELI, DIFFICULTY_Y, LIGHTS, PAL, PI, SH, SW, VH, ZOOM } from './config.js';
 import { R, clamp, hyp, mod } from './util.js';
 import { cx, g, scr } from './screen.js';
 import { ctext, text } from './font.js';
@@ -8,6 +8,7 @@ import { ARW, HELI_BODY, HELI_ROTOR, carSpr, pedSpr } from './sprites.js';
 import { FRAME, PLAYER_OUTLINE, poseOf } from './figures.js';
 import { CHOP, JOBPTS, PAINT, crossing, waterAt } from './world.js';
 import { mapC } from './worldview.js';
+import { copLights } from './cars.js';
 import { jobWords } from './missions.js';
 import {
   G,
@@ -216,14 +217,23 @@ function drawWorld() {
   for (const c of G.cars) {
     if (!onScreen(c.x, c.y, 20)) continue;
     drawSpr(carSpr(c), c.a, c.x, c.y);
-    if (c.kind === KIND.police && !c.dead && c.ai === 'cop' && G.heat > 0) {
-      const f = Math.floor(G.clock * 6) & 1,
-        bx = sx(c.x),
-        by = sy(c.y);
-      g.fillStyle = PAL[f ? 2 : 14];
-      g.fillRect(bx - 2 * ZOOM, by - ZOOM, 2 * ZOOM, 2 * ZOOM);
-      g.fillStyle = PAL[f ? 14 : 2];
-      g.fillRect(bx, by - ZOOM, 2 * ZOOM, 2 * ZOOM);
+    // A police car's light bar across its roof, light red (10) one side and light blue (14) the other, the two
+    // swapping LIGHTS.rate times a second; it turns with the car.
+    if (copLights(c)) {
+      const f = Math.floor(G.clock * LIGHTS.rate) & 1,
+        cs = Math.cos(c.a),
+        sn = Math.sin(c.a),
+        h = c.kind.W / 2 - 1;
+      for (let v = -h; v < h; v++)
+        for (const u of [-1, 0]) {
+          g.fillStyle = PAL[(v < 0) === !f ? 10 : 14];
+          g.fillRect(
+            sx(c.x + cs * (u + 0.5) - sn * (v + 0.5)) - Math.round(ZOOM / 2),
+            sy(c.y + sn * (u + 0.5) + cs * (v + 0.5)) - Math.round(ZOOM / 2),
+            ZOOM,
+            ZOOM,
+          );
+        }
     }
     // A car alarm flashes the hazard lights at its four corners, yellow, with its high note.
     if (c.alarmHi) {

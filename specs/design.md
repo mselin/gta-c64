@@ -647,6 +647,12 @@ who is not knocked down):
   - **No crime:** a knock the police car drove into is no crime of the player's; one where the player was going
     at it harder still is (the crime table above).
   - **On foot:** the player on foot is not run down; officers get out as below once both cars are slow.
+- **Lights** (mselin/gta-c64#122): a police car shows a light bar across its roof, turning with the car: light red
+  (10) on one side and light blue (14) on the other, the two halves swapping 6 times a second (`LIGHTS` in
+  `js/config.js`, `copLights` in `js/cars.js`).
+  - **When:** on a chasing car while heat is above 0; from heat 3, on every police car with an officer at the
+    wheel, patrols too.
+  - **Never:** on a wreck, an empty police car, or a police car the player is driving.
 - **Officers on foot:** when a chasing car and the player are both slower than 30 px/s within 36 pixels of
   each other, an officer gets out, up to four on foot at once. While heat is above 0 (`updPeds` in `js/peds.js`):
   - **Pace:** an officer walks at 47 × PERSON px/s (`PACE.cop` in `js/config.js`): 23.5 at the default scale,

@@ -195,6 +195,11 @@ export const GOAL = 25000,
  * than the player, or reversing from a car standing still), and come again.
  */
 export const RAM = { heat: 3, lead: 0.5, stall: 0.3, back: 1.5, runup: 70, drop: 60 };
+/**
+ * A police car's light bar (copLights in js/cars.js, drawn in js/render.js): flashing on a chasing car, and from heat
+ * `heat` on every police car with an officer at the wheel, patrols too. The two halves swap `rate` times a second.
+ */
+export const LIGHTS = { heat: 3, rate: 6 };
 export const NOTICE = {}; // car (chasing), foot (an officer), patrol: set by setZoom
 /** Driving a police car where the police can see it: the heat goes up to at least this. */
 export const STOLEN_CRUISER_HEAT = 2;

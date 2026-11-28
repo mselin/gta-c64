@@ -10,22 +10,23 @@ it lives (for example "the PRIVATE_TERMS Actions secret"), never by its value.
 
 ## Task
 
-If you get flatlined by police or anyone whilst having $0 (or less than required) you should get busted and go to jail.
+Also police cars should have flashing red and blue lights when chasing or heat is on.
 
-Then (sent mid-task): Also after heat 3 or more police should ram you very aggresively if they don't
-
+Then (sent mid-task): heat =>3
 
 ## Plan
 
-1. #118, unpaid bill: wasted with less than `PENALTY.bill` ($500) goes as a bust (`down` / `respawn` in `js/player.js`). Check: `tests/unit/unpaid.test.js`, design "Wasted or busted". **Done** (branch `unpaid-bill`).
-2. One PR closing #118, merged when green. Check: merged, all checks passed. **Done** (#120).
-3. Police ramming from heat 3 (#119): `copAI` in `js/cars.js`, `tests/unit/ram.test.js`, design "The response", own PR. Check: merged. **In review** (branch `police-ram`).
-
+1. Issue #122 (Feature). Check: open. **Done.**
+2. Rule `copLights` in `js/cars.js` (`LIGHTS` in `js/config.js`): chasing car with heat > 0, or any manned police car from heat 3; never a wreck, an empty car or the player's. Check: `tests/unit/lights.test.js`. **Done.**
+3. Light bar in `js/render.js`: across the roof, turning with the car, light red (10) and light blue (14) halves swapping (the dark blue 6 vanished into the bonnet paint, red 2 read brown). Check: lint, e2e, screenshot. **Done.**
+4. Design "The response", **Lights**. **Done.**
+5. One PR closing #122, merged when green.
 
 ## Established
 
 - **#118, read as:** "go to jail" = the bust rules. Short of $500: the police station and the fifth; with $0, the jail ending (BUSTED AND BROKE, `js/endings.js`). `lastDown()` stays 'dead' so the banner and Discord presence say flatlined.
 - **#119, ramming:** before it, a chasing car already coasted into a stopped car (about 10 hp), but eased off within 24 px and at wide angles. The fix: from heat 3 full throttle, aim ahead, and when pressed against the car with the gap not closing (speed reads high while pinned, so it watches the gap) drop back to 70 px and charge. Behind a moving car it brakes rather than reverses. Measured on a straight road, player at 40 px/s: 4 knocks (~20 hp each) in 6 s against 1 on main. A police ram is no longer the player's crime (it cost 9 points before).
+- **#122, read as:** "when chasing or heat is on" plus "heat =>3": chasing cars flash with any heat (as the old two-square flasher did); from heat 3 patrols with an officer flash too. The old flasher was two axis-aligned squares and easy to miss, so it became a rotated roof bar.
 - **Test note:** `updCars` does not move the player's car (`js/player.js` does), so a unit test of a moving player car moves it by hand.
 - **The project.** "Sleazeburg 64", a top-down C64-styled crime satire.
   - The browser game is this repository (live at https://mselin.github.io/gta-c64/).
@@ -79,14 +80,15 @@ Then (sent mid-task): Also after heat 3 or more police should ram you very aggre
 ## Changes
 
 - gta-c64 #120 (merged, #118): `PENALTY` in `js/config.js`; `unpaid` in `js/player.js`; `tests/unit/unpaid.test.js`; design "Wasted or busted".
-- gta-c64, branch `police-ram` (#119): `RAM` in `js/config.js`; ramming and back-off in `copAI`, and no crime for a police ram in `updCars` (`js/cars.js`); `tests/unit/ram.test.js`; design "The response" and the crime table.
+- gta-c64 #121 (merged, #119): `RAM` in `js/config.js`; ramming and back-off in `copAI`, and no crime for a police ram in `updCars` (`js/cars.js`); `tests/unit/ram.test.js`; design "The response" and the crime table.
+- gta-c64, branch `police-lights` (#122): `LIGHTS`, `copLights`, the bar in `js/render.js`, `tests/unit/lights.test.js`, design "The response".
+- Sleazeburg64 #122 (merged): roadmap notes for #120 and #121. Sleazeburg64 #124: the classic-only note (issue Sleazeburg64#123).
 
 
 ## Verification
 
-- `police-ram`, with main merged in: lint clean; unit 314 pass; e2e 62 pass, 4 skip. CI runs all on the PR.
-- Not felt in a real browser: how hard the ramming is to escape is judged from the unit-level runs only.
-
+- `police-lights`: lint clean, `tests/unit/lights.test.js` 3 pass; unit 317 pass, e2e 62 pass and 4 skip; a close-up screenshot shows the bar on a level and a turned police car.
+- Not seen by a person in a real browser: how the bar looks at speed.
 
 ## Dead ends
 
@@ -96,8 +98,7 @@ Then (sent mid-task): Also after heat 3 or more police should ram you very aggre
 
 ## Next
 
-Merge the `police-ram` PR once green. Then candidate: a C64 roadmap note for #118 and #119 if the owner asks.
-
+Merge the `police-lights` PR once green. Then candidate: a C64 roadmap note for #122 if the owner asks.
 
 ## Subagent files
 
