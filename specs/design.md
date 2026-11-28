@@ -558,7 +558,7 @@ Heat is in `js/heat.js`, and the police in `js/spawner.js` and `js/cars.js`.
 | Killing anyone else | 6 |
 | Taking a police car from its driver | 16 (heat 1) |
 | Taking any other car from its driver | 4 |
-| Ramming a police car with an officer in it | 9 |
+| Ramming a police car with an officer in it (not one that rammed the player) | 9 |
 | Ramming another car with a driver | 2 |
 | Ramming an empty car | 0.5 |
 | Hitting a police car with a shot | 5 |
@@ -636,6 +636,17 @@ who is not knocked down):
 - **Chasing cars:** while heat is above 0, the police keep up to `min(5, heat)` cars chasing, adding one every
   2.2 seconds.
 - **Patrol cars join in:** a patrol car within 130 joins the chase.
+- **Ramming, from heat 3** (mselin/gta-c64#119): with the player at the wheel, a chasing car drives into the
+  player's car rather than up to it (`RAM` in `js/config.js`, `copAI` in `js/cars.js`). Below heat 3 it follows
+  and eases off close by, as before.
+  - **Aim:** where the player's car will be when it gets there, at most 0.5 seconds ahead, full throttle at any
+    angle, and no easing off close by.
+  - **Again and again:** pressed against the player's car for 0.3 seconds without getting nearer, it drops back
+    until 70 pixels off (for at most 1.5 seconds) and charges again. Behind a moving car it drops back by braking
+    to 60 px/s slower than the player; behind one standing still, by reversing straight back.
+  - **No crime:** a knock the police car drove into is no crime of the player's; one where the player was going
+    at it harder still is (the crime table above).
+  - **On foot:** the player on foot is not run down; officers get out as below once both cars are slow.
 - **Officers on foot:** when a chasing car and the player are both slower than 30 px/s within 36 pixels of
   each other, an officer gets out, up to four on foot at once. While heat is above 0 (`updPeds` in `js/peds.js`):
   - **Pace:** an officer walks at 47 × PERSON px/s (`PACE.cop` in `js/config.js`): 23.5 at the default scale,

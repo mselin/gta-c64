@@ -13,6 +13,7 @@ import {
   PAL,
   PI,
   PLAZA,
+  RAM,
   ROAD,
   WALK,
 } from './config.js';
@@ -418,16 +419,45 @@ function copAI(c, dt) {
     carPhys(c, 0, 0, dt);
     return;
   }
-  const t = copTarget(c),
-    p = ppos(),
+  const p = ppos(),
     d = hyp(p.x - c.x, p.y - c.y),
-    df = angDiff(Math.atan2(t.y - c.y, t.x - c.x), c.a),
     spd = hyp(c.vx, c.vy);
+  let t = copTarget(c),
+    df = angDiff(Math.atan2(t.y - c.y, t.x - c.x), c.a);
+  // From RAM.heat, with the player at the wheel, the car drives into the player's car rather than up to it.
+  const ram = G.heat >= RAM.heat && !!P.car;
+  if (ram && t.x === p.x && t.y === p.y) {
+    // Where the player's car will be by the time this one gets there, as near as a straight run can say.
+    const k = Math.min(RAM.lead, d / (spd + 60));
+    t = { x: p.x + P.car.vx * k, y: p.y + P.car.vy * k };
+    df = angDiff(Math.atan2(t.y - c.y, t.x - c.x), c.a);
+  }
+  // Backing off for another run at the player's car: straight back until there is room to build up speed.
+  if (c.ramBack > 0 && (!ram || d > RAM.runup)) c.ramBack = 0;
+  if (c.ramBack > 0) {
+    c.ramBack -= dt;
+    // Behind a moving car it drops back by braking to RAM.drop slower than the player; behind one standing still
+    // that means reversing, straight back.
+    const go = hyp(P.car.vx, P.car.vy);
+    carPhys(c, spd > go - RAM.drop ? -1 : 0, go > 30 ? clamp(df * 2.5, -1, 1) : 0, dt);
+    return;
+  }
   if (c.rev > 0) {
     c.rev -= dt;
     carPhys(c, -1, -Math.sign(df) || 1, dt);
     return;
   }
+  // Stalled against the player's car: back off, and come again.
+  // (Pressed against it, its speed can still read high: what counts is that it gets no nearer.)
+  const closing = c.ramD === undefined ? 0 : (c.ramD - d) / Math.max(dt, 1e-6);
+  c.ramD = d;
+  if (ram && d < 28 && closing < 20) {
+    c.ramT = (c.ramT || 0) + dt;
+    if (c.ramT > RAM.stall) {
+      c.ramT = 0;
+      c.ramBack = RAM.back;
+    }
+  } else c.ramT = 0;
   if (spd < 8 && d > 26) {
     c.stuck += dt;
     if (c.stuck > 1) {
@@ -435,8 +465,8 @@ function copAI(c, dt) {
       c.stuck = 0;
     }
   } else c.stuck = 0;
-  let thr = Math.abs(df) > 1.3 ? 0.45 : 1;
-  if (d < 24) thr = 0;
+  let thr = Math.abs(df) > 1.3 && !ram ? 0.45 : 1;
+  if (d < 24 && !ram) thr = 0;
   if (G.heat < 3 && d < 60 && spd > 90) thr = 0;
   carPhys(c, thr, clamp(df * 2.5, -1, 1), dt);
   const pspd = P.car ? hyp(P.car.vx, P.car.vy) : 0;
@@ -603,7 +633,10 @@ export function updCars(dt) {
       px /= weight;
       py /= weight;
       const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny,
-        hard = rv < -35;
+        hard = rv < -35,
+        // How fast each was going at the other, before the knock: who rammed whom.
+        goA = a.vx * nx + a.vy * ny,
+        goB = -(b.vx * nx + b.vy * ny);
       const mvA = !at || hard,
         mvB = !bt || hard,
         sh = mvA && mvB ? 0.5 : 1;
@@ -648,8 +681,10 @@ export function updCars(dt) {
           if (!b.dead && !b.flooded) b.hp -= dm * ((2 * ma) / (ma + mb));
           if (onScreen(a.x, a.y, 0)) sfx.crash(-rv / 250);
           const mine = a === P.car ? b : b === P.car ? a : null;
+          // A chasing police car that did the ramming is no crime of the player's.
+          const copRam = mine && mine.ai === 'cop' && (mine === a ? goA > goB : goB > goA);
           if (mine) {
-            crime(mine.kind === KIND.police && mine.driver ? 9 : mine.driver ? 2 : 0.5);
+            if (!copRam) crime(mine.kind === KIND.police && mine.driver ? 9 : mine.driver ? 2 : 0.5);
             for (let k = 0; k < 5; k++)
               G.parts.push({
                 x: (a.x + b.x) / 2,

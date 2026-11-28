@@ -18,13 +18,15 @@ Then (sent mid-task): Also after heat 3 or more police should ram you very aggre
 ## Plan
 
 1. #118, unpaid bill: wasted with less than `PENALTY.bill` ($500) goes as a bust (`down` / `respawn` in `js/player.js`). Check: `tests/unit/unpaid.test.js`, design "Wasted or busted". **Done** (branch `unpaid-bill`).
-2. One PR closing #118, merged when green. Check: merged, all checks passed.
-3. Police ramming from heat 3: new issue, then `copAI` in `js/cars.js`, tests, design, own PR. Check: merged.
+2. One PR closing #118, merged when green. Check: merged, all checks passed. **Done** (#120).
+3. Police ramming from heat 3 (#119): `copAI` in `js/cars.js`, `tests/unit/ram.test.js`, design "The response", own PR. Check: merged. **In review** (branch `police-ram`).
 
 
 ## Established
 
 - **#118, read as:** "go to jail" = the bust rules. Short of $500: the police station and the fifth; with $0, the jail ending (BUSTED AND BROKE, `js/endings.js`). `lastDown()` stays 'dead' so the banner and Discord presence say flatlined.
+- **#119, ramming:** before it, a chasing car already coasted into a stopped car (about 10 hp), but eased off within 24 px and at wide angles. The fix: from heat 3 full throttle, aim ahead, and when pressed against the car with the gap not closing (speed reads high while pinned, so it watches the gap) drop back to 70 px and charge. Behind a moving car it brakes rather than reverses. Measured on a straight road, player at 40 px/s: 4 knocks (~20 hp each) in 6 s against 1 on main. A police ram is no longer the player's crime (it cost 9 points before).
+- **Test note:** `updCars` does not move the player's car (`js/player.js` does), so a unit test of a moving player car moves it by hand.
 - **The project.** "Sleazeburg 64", a top-down C64-styled crime satire.
   - The browser game is this repository (live at https://mselin.github.io/gta-c64/).
   - The desktop app (`desktop/`, Tauri 2) runs the same code.
@@ -76,13 +78,14 @@ Then (sent mid-task): Also after heat 3 or more police should ram you very aggre
 
 ## Changes
 
-- gta-c64, branch `unpaid-bill` (#118): `PENALTY` in `js/config.js`; `unpaid` in `js/player.js`; `tests/unit/unpaid.test.js`; the knife test in `tests/unit/melee.test.js` now has the bill to hand; design "Wasted or busted".
+- gta-c64 #120 (merged, #118): `PENALTY` in `js/config.js`; `unpaid` in `js/player.js`; `tests/unit/unpaid.test.js`; design "Wasted or busted".
+- gta-c64, branch `police-ram` (#119): `RAM` in `js/config.js`; ramming and back-off in `copAI`, and no crime for a police ram in `updCars` (`js/cars.js`); `tests/unit/ram.test.js`; design "The response" and the crime table.
 
 
 ## Verification
 
-- `npm run -s lint`: clean. `npm run -s test:unit`: 310 pass.
-- `npm run -s test:e2e`: 62 pass, 4 skip. CI runs all on the PR.
+- `police-ram`, with main merged in: lint clean; unit 314 pass; e2e 62 pass, 4 skip. CI runs all on the PR.
+- Not felt in a real browser: how hard the ramming is to escape is judged from the unit-level runs only.
 
 
 ## Dead ends
@@ -93,7 +96,7 @@ Then (sent mid-task): Also after heat 3 or more police should ram you very aggre
 
 ## Next
 
-Step 3: read `copAI` in `js/cars.js` (and its chase targeting), open the ramming issue, make chasing cars at heat 3+ drive into the player rather than alongside.
+Merge the `police-ram` PR once green. Then candidate: a C64 roadmap note for #118 and #119 if the owner asks.
 
 
 ## Subagent files
