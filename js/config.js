@@ -188,6 +188,13 @@ export const GOAL = 25000,
  * About the edge of the view, which is 1 / ZOOM of what it was: the police notice no one they are not on screen
  * with.
  */
+/**
+ * Chasing police cars ram the player's car from heat `heat` (copAI in js/cars.js, issue #119): they aim `lead`
+ * seconds ahead of it at most and keep the throttle down into it. Pressed against it for `stall` seconds without
+ * getting nearer, they drop back for up to `back` seconds, until `runup` pixels off (braking to `drop` px/s slower
+ * than the player, or reversing from a car standing still), and come again.
+ */
+export const RAM = { heat: 3, lead: 0.5, stall: 0.3, back: 1.5, runup: 70, drop: 60 };
 export const NOTICE = {}; // car (chasing), foot (an officer), patrol: set by setZoom
 /** Driving a police car where the police can see it: the heat goes up to at least this. */
 export const STOLEN_CRUISER_HEAT = 2;
