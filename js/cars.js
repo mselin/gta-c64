@@ -6,6 +6,7 @@ import {
   GRASS,
   GRIP,
   HANDLING,
+  LIGHTS,
   HIT,
   KIND,
   LOT,
@@ -484,6 +485,15 @@ function copAI(c, dt) {
  * Where someone getting out of a car ends up: beside a door if there is room to stand there,
  * otherwise the nearest clear spot round the car. Null if the car is completely boxed in.
  */
+/**
+ * Whether a police car's lights flash: a chasing car while there is any heat, and from LIGHTS.heat every police car
+ * an officer drives. Not a wreck, an empty car, or one the player has taken.
+ */
+export function copLights(c) {
+  if (c.kind !== KIND.police || c.dead || c === P.car || G.heat <= 0) return false;
+  return c.ai === 'cop' || (c.driver && G.heat >= LIGHTS.heat);
+}
+
 export function sidePos(c) {
   for (const s of [1, -1]) {
     const x = c.x - Math.sin(c.a) * 12 * s,
